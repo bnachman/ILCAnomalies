@@ -9,6 +9,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
+#import energyflow as ef
+#from energyflow.archs import PFN
+#from energyflow.datasets import qg_jets
+#from energyflow.utils import data_split, remap_pids, to_categorical
+from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.utils import shuffle
+
 
 
 
@@ -17,12 +24,12 @@ import glob
 
 #--------------------------- Variable defs
 # In[3]:
-def y23(jets):
+def lny23(jets):
     if len(jets) > 2:
         jet1_pt = float(jets[0][1])/np.cosh(float(jets[0][2]))
         jet2_pt = float(jets[1][1])/np.cosh(float(jets[1][2]))
         jet3_pt = float(jets[2][1])/np.cosh(float(jets[2][2]))
-        return (jet3_pt*jet3_pt)/((jet1_pt+jet2_pt)*(jet1_pt+jet2_pt))
+        return np.log((jet3_pt*jet3_pt)/((jet1_pt+jet2_pt)*(jet1_pt+jet2_pt)))
     return 0
 
 
@@ -31,9 +38,14 @@ def momentum_tensor(jets,r):
     m = np.zeros((3,3))
     totalPSq = 1e-10
     for jet in jets:
-        px = float(jet[1])*np.cos(float(jet[3]))/np.cosh(float(jet[2]))
-        py = float(jet[1])*np.sin(float(jet[3]))/np.cosh(float(jet[2]))
-        pz = float(jet[1])*np.sinh(float(jet[2]))/np.cosh(float(jet[2]))
+    #[index, p [GeV], eta, phi, m]
+        pt = float(jet[1]) / np.cosh(float(jet[2]))
+        px = pt*np.cos(float(jet[3]))
+        py = pt*np.sin(float(jet[3]))
+        pz = pt*np.sinh(float(jet[2]))
+        #px = float(jet[1])*np.cos(float(jet[3]))/np.cosh(float(jet[2]))
+        #py = float(jet[1])*np.sin(float(jet[3]))/np.cosh(float(jet[2]))
+        #pz = float(jet[1])*np.sinh(float(jet[2]))/np.cosh(float(jet[2]))
         pr = np.power(float(jet[1]),r-2)
         m += [[px*px*pr, px*py*pr, px*pz*pr], [py*px*pr, py*py*pr, py*pz*pr], [pz*px*pr, pz*py*pr, pz*pz*pr]]
         totalPSq += np.power(float(jet[1]),r)
@@ -46,30 +58,19 @@ def momentum_tensor(jets,r):
     return w, v
     #return m  #From this, the sphericity, aplanarity and planarity can be calculated by combinations of eigenvalues.
 
-
-# In[5]:
 def sphericity(w,v):
     return (3/2) * (sorted(w)[1]+sorted(w)[2])
-
-
-# In[6]:
 def aplanarity(w,v):
     return (3/2) * sorted(w)[2]
-
-
-# In[7]:
-def transverse_sphericity(w,v): #
-    #print(sorted(w)[0],sorted(w)[1])
+def transverse_sphericity(w,v): 
     return (2*sorted(w)[1])/(sorted(w)[0]+sorted(w)[1])
 
 
-# In[8]:
+#thrust
+
 #def planarity(w,v):
 #    return
 
-
-# In[9]:
-#thrust
 
 
 #--------------------------- 
@@ -103,7 +104,46 @@ def plot_jets(index,R,doLog):
     plt.savefig("plt_"+index+".pdf")
     plt.clf()
 
-#--------------------------- Parse text file
+#--------------------------- Parse text files
+def add_to_padded_part(records):
+  array = []
+  for record in records:
+      # convert to np array
+      these_particles = np.array(record['particles']).astype('float')
+      # omit index 0
+      these_particles = these_particles[:,1:]
+      # determine how many zero values to pad
+      pad_length = max_nparticles - these_particles.shape[0]
+      #pad
+      padded_particles = np.pad(these_particles, ((0,pad_length),(0,0)),'constant')
+      # check padding
+      assert padded_particles.shape == (max_nparticles, 4)
+      # add to list
+      array.append(padded_particles)
+
+  return array
+
+def add_to_padded_jet(records):
+  array = []
+  for record in records:
+    # convert to np array
+    these_jets = np.array(record['jets']).astype('float')
+    # omit index 0
+    if len(these_jets) == 0:
+        these_jets = np.zeros(11).reshape([1,11])
+    these_jets = these_jets[:,1:]
+        
+    # determine how many zero values to pad
+    pad_length = max_njets - these_jets.shape[0]
+    #pad
+    padded_jets = np.pad(these_jets, ((0,pad_length),(0,0)),'constant')
+    # check padding
+    assert padded_jets.shape == (max_njets, 10)
+    # add to list
+    array.append(padded_jets)
+
+  return array
+
 #From Ben, function to parse files:
 def parse_file(file_object):
     all_records = []
@@ -166,7 +206,7 @@ def parse_file(file_object):
 
         this_record['jets']=jets_vec
 
-        this_record['y23'] = y23(jets_vec)
+        this_record['lny23'] = lny23(jets_vec)
 
         w,v = momentum_tensor(jets_vec,2)
         this_record['sphericity'] = sphericity(w,v)
@@ -208,34 +248,91 @@ if __name__ == "__main__":
   for filename in bg_file_list:
       file = open(filename)
       bg_records += parse_file(file)
-      if len(bg_records) > 100: break
+      #if len(bg_records) > 300: break
   sig_records = []
   for filename in signal_file_list:
       file = open(filename)
       sig_records += parse_file(file)
-      if len(sig_records) > 100: break
+      #if len(sig_records) > 300: break
 
   print('Running over '+str(len(bg_records))+' background files and '+str(len(sig_records))+' signal files....')
 
-  for i in sig_records:
-      i['from_anomaly_data'] = True
-  for i in bg_records:
-      i['from_anomaly_data'] = False
+  #for i in sig_records:
+  #    i['from_anomaly_data'] = True
+  #for i in bg_records:
+  #    i['from_anomaly_data'] = False
 
-  all_records = sig_records[:100] + bg_records[:100]
-  #:79999
+  all_records = sig_records[:79999] + bg_records
 
+  # Make some plots 
   plot_something('truthsqrtshat',range(0,1000,20),1)
-  plot_something('y23',np.linspace(0,0.24,50),1)
-  plot_something('transverse_sphericity',np.linspace(0,10,100),1)
-  plot_something('sphericity',np.linspace(1.0,2,50),1)
-  plot_something('aplanarity',np.linspace(0,1,100),1)
+  plot_something('lny23',np.linspace(-10,-0.00001,10),1)
+  plot_something('transverse_sphericity',np.linspace(0,5,50),1)
+  plot_something('sphericity',np.linspace(0,1,50),1)
+  plot_something('aplanarity',np.linspace(0,1,50),1)
   
   # didn't validate this plotting function works
   # plot_jets?
   
-  
+  #----------------- ----------
   # # NN training
-  # TODO 
+  #----------------- ----------
+
+  plt.hist([i['nparticles'] for i in sig_records],label='signal')
+  plt.hist([i['nparticles'] for i in bg_records if (i['truthsqrtshat'] > 140 and i['truthsqrtshat'] < 560)],label='backgound')
+  plt.legend()
+  plt.savefig('nparticles.pdf')
+  plt.clf()
+
+  max_bg = max([i['nparticles'] for i in bg_records])
+  max_sig = max([i['nparticles'] for i in sig_records])
+  max_nparticles = max((max_bg, max_sig))
+
+  # Save particles only as X
+  X_bg = np.array(add_to_padded_part(bg_records))
+  X_sig = np.array(add_to_padded_part(sig_records))
+  y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
+  y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
+  print(X_bg.shape)
+  print(X_sig.shape)
+
+  # Save jets as Z
+  print(all_records[0]['jets'])
+  max_njets = max([i['njets'] for i in all_records])
+  Z= np.array(add_to_padded_jet(all_records))
+  y = np.array([i['truthsqrtshat'] for i in all_records])
+  print(Z.shape)
+  print(y.shape)
+
+  # Identify signal and side band 
+  side_band_left = 160
+  side_band_right = 540
+  signal_left = 300
+  signal_right = 400
+  def binary_side_band(y_thing):
+      if y_thing >= signal_left and y_thing < signal_right:
+          return 1
+      elif y_thing >= side_band_left and y_thing < side_band_right:
+          return 0
+      else:
+          return -1
+  y_binary = np.vectorize(binary_side_band)(y_bg)
+  side_band_indicator = (y_binary == 0) 
+  bg_signal_indicator = (y_binary == 1)
+  X_sideband = X_bg[side_band_indicator]
+  y_sideband = y_binary[side_band_indicator]
+  print(np.unique(y_sideband,return_counts = True))
+  X_bgsignal = X_bg[bg_signal_indicator]
+  y_bgsignal = y_binary[bg_signal_indicator]
+  #X_selected = X_sig[within_bounds_indicator]
+  #y_selected = y_binary[within_bounds_indicator]
+
+
+  # Pre processing   
+  print(X_bgsignal[:50000].shape)
+  print(X_sideband.shape)
+  print(np.concatenate([X_bgsignal]*3).shape)
+  print(np.concatenate([y_sideband, y_bgsignal]).shape)
+
 
 
