@@ -37,39 +37,23 @@ pythia = pythia8.Pythia()
 
 sph = pythia8.Sphericity()
 thr = pythia8.Thrust()
-lund = pythia8.ClusterJet()
-jade = pythia8.ClusterJet()
-durham = pythia8.ClusterJet()
-
 thrust = array('f',[0])
 sphericity = array('f',[0])
+aplanarity = array('f',[0])
 
-physics = 'bkgnd'
+physics = 'signal'
 histograms = []
 output = ROOT.TFile(physics+".root","RECREATE")
 tree = ROOT.TTree('T','T')
 tree.Branch('thrust',thrust,'thrust/F')
 tree.Branch('sphericity',sphericity,'sphericity/F')
-#tree.Branch('aplanarity',&aplanarity)
-
-# Histograms.
-hist_thrust   = TH1F('thrust','thrust', 100, 0.5, 1.)
-hist_sphericity   = TH1F('sphericity','sphericity', 100, 0.0, 1.)
-#hist_aplanarity   = TH1F('aplanarity','aplanarity', 100, 0.5, 1.)
+tree.Branch('aplanarity',aplanarity,'aplanarity/F')
 
 # Input pythia cmnd 
-pythia.readString("Main:numberOfEvents = 10000         ! number of events to generate")
-pythia.readString("Main:timesAllowErrors = 300          ! how many aborts before run stops")
-pythia.readString("Init:showChangedSettings = on      ! list changed settings")
-pythia.readString("Init:showChangedParticleData = off ! list changed particle data")
-pythia.readString("Next:numberCount = 100             ! print message every n events")
-pythia.readString("Beams:frameType = 4")
-pythia.readString("Beams:LHEF = /data/users/jgonski/snowmass/MG5_aMC_v2_7_3/0911_eeajj/Events/run_01/unweighted_events.lhe")
-pythia.readString("PartonLevel:Remnants = off")
-pythia.readString("Check:epTolErr = 1e-2")
+#pythia.readFile("config_bkgnd.cmnd")
+pythia.readFile("config_sig.cmnd")
 
 pythia.init()
-
 
 # Begin event loop. Generate event. Skip if error. List first one.
 for iEvent in range(0,1000):
@@ -81,10 +65,9 @@ for iEvent in range(0,1000):
     sph.analyze( pythia.event )
     thr.analyze( pythia.event )
 
-    hist_thrust.Fill(thr.thrust())
-    hist_sphericity.Fill(sph.sphericity())
     thrust[0] = thr.thrust()
     sphericity[0] = sph.sphericity()
+    aplanarity[0] = sph.aplanarity()
     tree.Fill()   
 
 ### after event loop
