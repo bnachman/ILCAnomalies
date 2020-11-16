@@ -9,13 +9,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
-#import energyflow as ef
-#from energyflow.archs import PFN
+import energyflow as ef
+from energyflow.archs import DNN
 #from energyflow.datasets import qg_jets
-#from energyflow.utils import data_split, remap_pids, to_categorical
+from energyflow.utils import data_split, remap_pids, to_categorical
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
-from training import *
+#from training import *
 
 
 
@@ -67,7 +67,7 @@ def transverse_sphericity(w,v):
 
 
 #thrust
-def thrust():
+#def thrust():
 
 
 #def planarity(w,v):
@@ -240,114 +240,248 @@ def parse_file(file_object):
         all_records.append(this_record)
     return all_records
 
+
 #-----------------------------------------------------------------------------------
-def prep_and_shufflesplit_data(anomaly_ratio, size_each = 5000, shuffle_seed = 69, train = 0.7, val = 0.2, test = 0.1):
-  
-    print('Starting prep and shuffle split....') 
-    print(X_sideband.shape[0], X_sig.shape[0]) 
-    assert (size_each <= min(X_sideband.shape[0], X_sig.shape[0]))
+#def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 69,
+#                               train = 0.8, val = 0.2, test_size_each = 5000):
+def prep_and_shufflesplit_data(anomaly_ratio, size_each = 100, shuffle_seed = 69,
+                               train = 0.8, val = 0.2, test_size_each = 50):
     
+    """
+    Pre-Data Selection
+    """
+        
     #how much bg and signal data to take?
-    anom_size = round(anomaly_ratio * size_each)
-    bg_sig_size = size_each - anom_size
+    
+    anom_size = int(round(anomaly_ratio * size_each))
+    bgsig_size = int(size_each - anom_size)
+
+    
+    # make sure we have enough data.
+    print('Anom size: ', anom_size, ', bgsig size: ', bgsig_size,', size each: ',size_each,', test size each: ', test_size_each) 
+    print('X sideband: ', X_sideband.shape)
+    print('X selected: ',X_selected.shape)
+    print('X sig: ',X_sig.shape)
+    assert (size_each <= X_sideband.shape[0])
+    assert (anom_size + test_size_each <= X_sig.shape[0])
+    assert (bgsig_size + test_size_each <= X_selected.shape[0])
+    
+    """
+    Data Selection
+    """
     
     # select sideband datapoints
-    this_X_sideband = X_sideband[:size_each]
-    this_y_sideband = y_sideband[:size_each]
+    this_X_sb = X_sideband[:size_each]
+    this_y_sb = np.zeros(size_each) # 0 for bg in SB
     
-    # duplicate bgsignal datapoints
-    this_X_bgsignal = np.copy(X_bgsignal)
-    this_y_bgsignal = np.copy(y_bgsignal)
-        
-    (this_X_bgsignal, this_X_bgsignal_v, this_X_bgsignal_t,
-     this_y_bgsignal, this_y_bgsignal_v, this_y_bgsignal_t) = data_split(this_X_bgsignal, this_y_bgsignal, val=val, test=test)
+    # select bgsig datapoints
+    this_X_bgsig = X_selected[:bgsig_size]
+    this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
     
-    bg_sig_size_tr = round(bg_sig_size * train)
+    # select anomaly datapoints
+    this_X_sig = X_sig[:anom_size]
+    this_y_sig = np.ones(anom_size) # 1 for signal in SR
     
-    if this_X_bgsignal.shape[0] < bg_sig_size_tr:
-        
-        multiplier = math.ceil(bg_sig_size_tr/this_X_bgsignal.shape[0])
-        
-        this_X_bgsignal = np.concatenate([this_X_bgsignal] * multiplier)
-        this_y_bgsignal = np.concatenate([this_y_bgsignal] * multiplier)
-        
-        this_X_bgsignal_v = np.concatenate([this_X_bgsignal_v] * multiplier)
-        this_y_bgsignal_v = np.concatenate([this_y_bgsignal_v] * multiplier)
-        
-        this_X_bgsignal_t = np.concatenate([this_X_bgsignal_t] * multiplier)
-        this_y_bgsignal_t = np.concatenate([this_y_bgsignal_t] * multiplier)
-        
-        
-        
-    assert this_X_bgsignal.shape[0] == this_y_bgsignal.shape[0]
+    """
+    Shuffle + Train-Val-Test Split (not test set)
+    """
+    # Combine all 3 data sets
+    this_X = np.concatenate([this_X_sb, this_X_bgsig, this_X_sig])
+    this_y = np.concatenate([this_y_sb, this_y_bgsig, this_y_sig])
     
-    #select bgsignal datapoints
-    this_X_bgsignal = this_X_bgsignal[:bg_sig_size_tr]
-    this_y_bgsignal = this_y_bgsignal[:bg_sig_size_tr]
-    
-    this_X_bgsignal_v = this_X_bgsignal_v[:round(bg_sig_size * val)]
-    this_y_bgsignal_v = this_y_bgsignal_v[:round(bg_sig_size * val)]
-    
-    this_X_bgsignal_t = this_X_bgsignal_t[:round(bg_sig_size * test)]
-    this_y_bgsignal_t = this_y_bgsignal_t[:round(bg_sig_size * test)]
-    
-    #select anomaly datapoints
-    this_X_anom = X_sig[:anom_size]
-    this_y_anom = np.ones(anom_size)
-    
-    
-    
-    # only bg_sig has been split. Now, we have to shuffle then split the others.
-    this_X = np.concatenate([this_X_sideband, this_X_anom])
-    this_y = np.concatenate([this_y_sideband, this_y_anom])
-    
-    assert this_X.shape[0] == this_y.shape[0]
+    # Shuffle before we split
     this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
     
-    (this_X_train, this_X_val, this_X_test,
-     this_y_train, this_y_val, this_y_test) = data_split(this_X, this_y, val=val, test=test)
     
-    # now, we can add the bg_sig to the rest of the data and shuffle again
-    X_train, y_train = shuffle(np.concatenate([this_X_train, this_X_bgsignal]),
-                               np.concatenate([this_y_train, this_y_bgsignal]),
-                              random_state = shuffle_seed)
-    X_val, y_val = shuffle(np.concatenate([this_X_val, this_X_bgsignal_v]),
-                               np.concatenate([this_y_val, this_y_bgsignal_v]),
-                              random_state = shuffle_seed)
-    X_test, y_test = shuffle(np.concatenate([this_X_test, this_X_bgsignal_t]),
-                               np.concatenate([this_y_test, this_y_bgsignal_t]),
-                              random_state = shuffle_seed)
+    (this_X_tr, this_X_v, _,
+     this_y_tr, this_y_v, _) = data_split(this_X, this_y, val=val, test=0)
+        
+    
+    print('Size of sb:')
+    print(this_X_sb.shape)
+    print('Size of bgsig:')
+    print(this_X_bgsig.shape)
+    print('Size of sig:')
+    print(this_X_sig.shape)
+        
+    
+    """
+    Get the test set
+    """
+    
+    # select the data
+    this_X_test_P = X_sig[anom_size:anom_size+test_size_each]
+    this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each]
+    
+    this_y_test_P = np.ones(test_size_each)
+    this_y_test_N = np.zeros(test_size_each)
+        
+    # Shuffle the combination    
+    this_X_te = np.concatenate([this_X_test_P, this_X_test_N])
+    this_y_te = np.concatenate([this_y_test_P, this_y_test_N])
+    
+    this_X_te, this_y_te = shuffle(this_X_te, this_y_te, random_state = shuffle_seed)
+#     print('Size of test set:')
+#     print(this_X_te.shape)
+#     print('Test set distribution:')
+#     print(np.unique(this_y_te,return_counts = True))
     
     
+    X_train, X_val, X_test, y_train, y_val, y_test \
+    = this_X_tr, this_X_v, this_X_te, this_y_tr, this_y_v, this_y_te
+    
+    """
+    Data processing
+    """
+    from sklearn import preprocessing
+    X_train = preprocessing.scale(X_train)
+    X_val = preprocessing.scale(X_val)
+    X_test = preprocessing.scale(X_test)
     # Centre and normalize all the Xs
+    '''
     for x in X_train:
-        mask = x[:,0] > 0
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
+        #print(x)
+        #mask = x[:,0] > 0
+        yphi_avg = np.average(x, axis=0)
+        x -= yphi_avg
+        x /= x.sum()
     for x in X_val:
-        mask = x[:,0] > 0
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
+        yphi_avg = np.average(x, axis=0)
+        x -= yphi_avg
+        x /= x.sum()
     for x in X_test:
-        mask = x[:,0] > 0
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
-    
+        yphi_avg = np.average(x, axis=0)
+        x -= yphi_avg
+        x /= x.sum()
+    '''
     # remap PIDs for all the Xs
-    remap_pids(X_train, pid_i=3)
-    remap_pids(X_val, pid_i=3)
-    remap_pids(X_test, pid_i=3)
+    #remap_pids(X_train, pid_i=3)
+    #remap_pids(X_val, pid_i=3)
+    #remap_pids(X_test, pid_i=3)
     
     # change Y to categorical Matrix
     Y_train = to_categorical(y_train, num_classes=2)
     Y_val = to_categorical(y_val, num_classes=2)
     Y_test = to_categorical(y_test, num_classes=2)
-
+    
+    print('Training set size, distribution:')
+    print(X_train.shape)
+    print(np.unique(y_train,return_counts = True))
+    print('Validations set size, distribution:')
+    print(X_val.shape)
+    print(np.unique(y_val,return_counts = True))
+    print('Test set size, distribution:')
+    print(X_test.shape)
+    print(np.unique(y_test,return_counts = True))
     
     return X_train, X_val, X_test, Y_train,Y_val,Y_test
+#def prep_and_shufflesplit_data(anomaly_ratio, size_each = 5000, shuffle_seed = 69, train = 0.7, val = 0.2, test = 0.1):
+#  
+#    print('Starting prep and shuffle split....') 
+#    print(X_sideband.shape[0], X_sig.shape[0]) 
+#    assert (size_each <= min(X_sideband.shape[0], X_sig.shape[0]))
+#    
+#    #how much bg and signal data to take?
+#    anom_size = round(anomaly_ratio * size_each)
+#    bg_sig_size = size_each - anom_size
+#    
+#    # select sideband datapoints
+#    this_X_sideband = X_sideband[:size_each]
+#    this_y_sideband = y_sideband[:size_each]
+#    
+#    # duplicate bgsignal datapoints
+#    this_X_bgsignal = np.copy(X_bgsignal)
+#    this_y_bgsignal = np.copy(y_bgsignal)
+#        
+#    (this_X_bgsignal, this_X_bgsignal_v, this_X_bgsignal_t,
+#     this_y_bgsignal, this_y_bgsignal_v, this_y_bgsignal_t) = data_split(this_X_bgsignal, this_y_bgsignal, val=val, test=test)
+#    
+#    bg_sig_size_tr = round(bg_sig_size * train)
+#    
+#    if this_X_bgsignal.shape[0] < bg_sig_size_tr:
+#        
+#        multiplier = math.ceil(bg_sig_size_tr/this_X_bgsignal.shape[0])
+#        
+#        this_X_bgsignal = np.concatenate([this_X_bgsignal] * multiplier)
+#        this_y_bgsignal = np.concatenate([this_y_bgsignal] * multiplier)
+#        
+#        this_X_bgsignal_v = np.concatenate([this_X_bgsignal_v] * multiplier)
+#        this_y_bgsignal_v = np.concatenate([this_y_bgsignal_v] * multiplier)
+#        
+#        this_X_bgsignal_t = np.concatenate([this_X_bgsignal_t] * multiplier)
+#        this_y_bgsignal_t = np.concatenate([this_y_bgsignal_t] * multiplier)
+#        
+#        
+#        
+#    assert this_X_bgsignal.shape[0] == this_y_bgsignal.shape[0]
+#    
+#    #select bgsignal datapoints
+#    this_X_bgsignal = this_X_bgsignal[:bg_sig_size_tr]
+#    this_y_bgsignal = this_y_bgsignal[:bg_sig_size_tr]
+#    
+#    this_X_bgsignal_v = this_X_bgsignal_v[:round(bg_sig_size * val)]
+#    this_y_bgsignal_v = this_y_bgsignal_v[:round(bg_sig_size * val)]
+#    
+#    this_X_bgsignal_t = this_X_bgsignal_t[:round(bg_sig_size * test)]
+#    this_y_bgsignal_t = this_y_bgsignal_t[:round(bg_sig_size * test)]
+#    
+#    #select anomaly datapoints
+#    this_X_anom = X_sig[:anom_size]
+#    this_y_anom = np.ones(anom_size)
+#    
+#    
+#    
+#    # only bg_sig has been split. Now, we have to shuffle then split the others.
+#    this_X = np.concatenate([this_X_sideband, this_X_anom])
+#    this_y = np.concatenate([this_y_sideband, this_y_anom])
+#    
+#    assert this_X.shape[0] == this_y.shape[0]
+#    this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
+#    
+#    (this_X_train, this_X_val, this_X_test,
+#     this_y_train, this_y_val, this_y_test) = data_split(this_X, this_y, val=val, test=test)
+#    
+#    # now, we can add the bg_sig to the rest of the data and shuffle again
+#    X_train, y_train = shuffle(np.concatenate([this_X_train, this_X_bgsignal]),
+#                               np.concatenate([this_y_train, this_y_bgsignal]),
+#                              random_state = shuffle_seed)
+#    X_val, y_val = shuffle(np.concatenate([this_X_val, this_X_bgsignal_v]),
+#                               np.concatenate([this_y_val, this_y_bgsignal_v]),
+#                              random_state = shuffle_seed)
+#    X_test, y_test = shuffle(np.concatenate([this_X_test, this_X_bgsignal_t]),
+#                               np.concatenate([this_y_test, this_y_bgsignal_t]),
+#                              random_state = shuffle_seed)
+#    
+#    
+#    # Centre and normalize all the Xs
+#    for x in X_train:
+#        mask = x[:,0] > 0
+#        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+#        x[mask,1:3] -= yphi_avg
+#        x[mask,0] /= x[:,0].sum()
+#    for x in X_val:
+#        mask = x[:,0] > 0
+#        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+#        x[mask,1:3] -= yphi_avg
+#        x[mask,0] /= x[:,0].sum()
+#    for x in X_test:
+#        mask = x[:,0] > 0
+#        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+#        x[mask,1:3] -= yphi_avg
+#        x[mask,0] /= x[:,0].sum()
+#    
+#    # remap PIDs for all the Xs
+#    remap_pids(X_train, pid_i=3)
+#    remap_pids(X_val, pid_i=3)
+#    remap_pids(X_test, pid_i=3)
+#    
+#    # change Y to categorical Matrix
+#    Y_train = to_categorical(y_train, num_classes=2)
+#    Y_val = to_categorical(y_val, num_classes=2)
+#    Y_test = to_categorical(y_test, num_classes=2)
+#
+#    
+#    return X_train, X_val, X_test, Y_train,Y_val,Y_test
 
 #-----------------------------------------------------------------------------------
 def train_models(X_train, X_val, X_test, Y_train,Y_val,Y_test):
@@ -361,23 +495,48 @@ def train_models(X_train, X_val, X_test, Y_train,Y_val,Y_test):
     
     return (history, Y_test, Y_predict)
 
+#-----------------------------------------------------------------------------------
+def make_evt_arrays(these_records):
+    padded_evt_arrays =[]
+    for i,record in enumerate(these_records):
+        #print(i, record)
+        # convert to np array
+        #these_jets = np.array(record['jets']).astype('float')
+        #if len(these_jets) == 0:
+        #    these_jets = np.zeros(11).reshape([1,11])
+        #these_jets = these_jets[:,6:11] # only want nsubjettiness
+
+        ## determine how many zero values to pad
+        #pad_length = max_njets - these_jets.shape[0]
+        ##pad_length = 2#max_njets - these_jets.shape[0]
+        ##pad
+        #padded_jets = np.pad(these_jets, ((0,pad_length),(0,0)))
+        ##print(i,pad_length, these_jets.shape[0], padded_jets.shape)
+        ## check padding
+        #assert padded_jets.shape == (max_njets, 5)
+        ## add to list
+        #padded_jet_arrays.append(padded_jets)
+        evt_vars = [record['lny23'],record['aplanarity'],record['sphericity']]
+        padded_evt_arrays.append(evt_vars)
+    return np.array(padded_evt_arrays)
+
 
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
 
-  bg_file_list = glob.glob("/data/users/jgonski/snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-  signal_file_list = glob.glob("/data/users/jgonski/snowmass/LHE_txt_fils/processed_lhe*signal.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
+  signal_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*signal.txt")
 
   bg_records = []
   for filename in bg_file_list:
       file = open(filename)
       bg_records += parse_file(file)
-      #if len(bg_records) > 300: break
+      if len(bg_records) > 300: break
   sig_records = []
   for filename in signal_file_list:
       file = open(filename)
       sig_records += parse_file(file)
-      #if len(sig_records) > 300: break
+      if len(sig_records) > 300: break
 
   print('Running over '+str(len(bg_records))+' background files and '+str(len(sig_records))+' signal files....')
 
@@ -402,54 +561,46 @@ if __name__ == "__main__":
   # # NN training
   #----------------- ----------
 
-  #plt.hist([i['nparticles'] for i in sig_records],label='signal')
-  #plt.hist([i['nparticles'] for i in bg_records if (i['truthsqrtshat'] > 140 and i['truthsqrtshat'] < 560)],label='backgound')
-  #plt.legend()
-  #plt.savefig('nparticles.pdf')
-  #plt.clf()
+  X = make_evt_arrays(all_records)
+  X_bg = make_evt_arrays(bg_records)
+  X_sig = make_evt_arrays(sig_records)
+  print(X_sig.shape)
+  y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
+  y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
 
-  #max_bg = max([i['nparticles'] for i in bg_records])
-  #max_sig = max([i['nparticles'] for i in sig_records])
-  #max_nparticles = max((max_bg, max_sig))
+  plt.hist(y_sig,label='signal')
+  plt.hist(y_bg,label='backgound')
+  plt.legend()
+  plt.savefig('truthsqrtshat.pdf')
+  plt.clf()
 
-  ## Save particles only as X
-  #X_bg = np.array(add_to_padded_part(bg_records))
-  #X_sig = np.array(add_to_padded_part(sig_records))
-  #y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
-  #y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
-  #print(X_bg.shape)
-  #print(X_sig.shape)
+  # Identify signal and side band 
+  sb_left = 160
+  sb_right = 540
+  sr_left = 300
+  sr_right = 400
 
-  ## Save jets as Z
-  #print(all_records[0]['jets'])
-  #max_njets = max([i['njets'] for i in all_records])
-  #Z= np.array(add_to_padded_jet(all_records))
-  #y = np.array([i['truthsqrtshat'] for i in all_records])
-  #print(Z.shape)
-  #print(y.shape)
+  #-----------------------------------------------------------------------------------
+  def binary_side_band(y_thing):
+      if y_thing >= sr_left and y_thing < sr_right:
+          return 1
+      elif y_thing >= sb_left and y_thing < sb_right:
+          return 0
+      else:
+          return -1
 
-  ## Identify signal and side band 
-  #side_band_left = 160
-  #side_band_right = 540
-  #signal_left = 300
-  #signal_right = 400
-  #def binary_side_band(y_thing):
-  #    if y_thing >= signal_left and y_thing < signal_right:
-  #        return 1
-  #    elif y_thing >= side_band_left and y_thing < side_band_right:
-  #        return 0
-  #    else:
-  #        return -1
-  #y_binary = np.vectorize(binary_side_band)(y_bg)
-  #side_band_indicator = (y_binary == 0) 
-  #bg_signal_indicator = (y_binary == 1)
-  #X_sideband = X_bg[side_band_indicator]
-  #y_sideband = y_binary[side_band_indicator]
-  #print(np.unique(y_sideband,return_counts = True))
-  #X_bgsignal = X_bg[bg_signal_indicator]
-  #y_bgsignal = y_binary[bg_signal_indicator]
-  ##X_selected = X_sig[within_bounds_indicator]
-  ##y_selected = y_binary[within_bounds_indicator]
+  y_bg_binary = np.vectorize(binary_side_band)(y_bg)
+  np.unique(y_bg_binary,return_counts = True)
+
+  side_band_indicator = (y_bg_binary == 0)
+  within_bounds_indicator = (y_bg_binary == 1)
+  # This is the background data in the SB
+  X_sideband = X_bg[side_band_indicator]
+  y_sideband = y_bg_binary[side_band_indicator]
+  # This is the background data in the SR
+  X_selected = X_bg[within_bounds_indicator]
+  y_selected = y_bg_binary[within_bounds_indicator]
+
 
 
   ## Pre processing   
@@ -458,7 +609,7 @@ if __name__ == "__main__":
   #print(np.concatenate([X_bgsignal]*3).shape)
   #print(np.concatenate([y_sideband, y_bgsignal]).shape)
 
-  #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(0.1)
+  X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(0.1)
 
   #Phi_sizes, F_sizes = (10, 10, 16), (40, 20)
   #num_epoch = 5
