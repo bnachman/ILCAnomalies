@@ -16,98 +16,10 @@ from energyflow.utils import data_split, remap_pids, to_categorical
 import sklearn
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
-#from training import *
+from eventHelper import *
 
 
-
-# # Defining event level variables
-# arXiv:1206.2135.pdf
-
-#--------------------------- Variable defs
-# In[3]:
-def lny23(jets):
-    if len(jets) > 2:
-        jet1_pt = float(jets[0][1])/np.cosh(float(jets[0][2]))
-        jet2_pt = float(jets[1][1])/np.cosh(float(jets[1][2]))
-        jet3_pt = float(jets[2][1])/np.cosh(float(jets[2][2]))
-        return np.log((jet3_pt*jet3_pt)/((jet1_pt+jet2_pt)*(jet1_pt+jet2_pt)))
-    return 0
-
-
-# In[4]:
-def momentum_tensor(jets,r):
-    m = np.zeros((3,3))
-    totalPSq = 1e-10
-    for jet in jets:
-    #[index, p [GeV], eta, phi, m]
-        pt = float(jet[1]) / np.cosh(float(jet[2]))
-        px = pt*np.cos(float(jet[3]))
-        py = pt*np.sin(float(jet[3]))
-        pz = pt*np.sinh(float(jet[2]))
-        #px = float(jet[1])*np.cos(float(jet[3]))/np.cosh(float(jet[2]))
-        #py = float(jet[1])*np.sin(float(jet[3]))/np.cosh(float(jet[2]))
-        #pz = float(jet[1])*np.sinh(float(jet[2]))/np.cosh(float(jet[2]))
-        pr = np.power(float(jet[1]),r-2)
-        m += [[px*px*pr, px*py*pr, px*pz*pr], [py*px*pr, py*py*pr, py*pz*pr], [pz*px*pr, pz*py*pr, pz*pz*pr]]
-        totalPSq += np.power(float(jet[1]),r)
-    #print(totalPSq)
-    m = m/totalPSq
-    from numpy import linalg as LA
-    w, v = LA.eig(m)
-    #print("eigenvalues: ", w)
-    #print("eigenvectors: ",v)
-    return w, v
-    #return m  #From this, the sphericity, aplanarity and planarity can be calculated by combinations of eigenvalues.
-
-def sphericity(w,v):
-    return (3/2) * (sorted(w)[1]+sorted(w)[2])
-def aplanarity(w,v):
-    return (3/2) * sorted(w)[2]
-def transverse_sphericity(w,v): 
-    return (2*sorted(w)[1])/(sorted(w)[0]+sorted(w)[1])
-
-
-#thrust
-#def thrust():
-
-
-#def planarity(w,v):
-#    return
-
-
-
-#--------------------------- 
-def plot_something(var,R,doLog):
-    #plt.figure(figsize=(20,5))
-    sig_arr = np.array([i[var] for i in sig_records[:79999]])
-    bkg_arr = np.array([i[var] for i in bg_records])    
-    plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background')
-    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal')
-    #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
-    #plt.xscale('log')
-    #plt.xticks(R)
-    plt.xlabel(var)
-    if doLog == True: plt.yscale('log')
-    plt.ylabel("Number of Events / bin")
-    plt.legend()
-    plt.savefig("plt_"+var+".pdf")
-    plt.clf()
-
-def plot_jets(index,R,doLog):
-    sig_arr = np.array([i['jets'][0][index] for i in sig_records[:79999]])
-    #bkg_arr = np.array([i['jets'][0][index] for i in bg_records[:]])    
-    plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2)
-    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2)
-    #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
-    #plt.xscale('log')
-    #plt.xticks(R)
-    plt.xlabel(var)
-    if doLog == True: plt.yscale('log')
-    plt.ylabel("Number of Events / bin")
-    plt.savefig("plt_"+index+".pdf")
-    plt.clf()
-
-#--------------------------- Parse text files
+#--------------------------- Helper methods
 def add_to_padded_part(records):
   array = []
   for record in records:
@@ -147,7 +59,8 @@ def add_to_padded_jet(records):
 
   return array
 
-#From Ben, function to parse files:
+
+#--------------------------- Parse text files
 def parse_file(file_object):
     all_records = []
     mymeasuredenergy = []
@@ -210,6 +123,7 @@ def parse_file(file_object):
         this_record['jets']=jets_vec
 
         this_record['lny23'] = lny23(jets_vec)
+        this_record['total_jet_mass'] = total_jet_mass(jets_vec)
 
         w,v = momentum_tensor(jets_vec,2)
         this_record['sphericity'] = sphericity(w,v)
@@ -408,7 +322,7 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['lny23'],record['aplanarity'],record['sphericity']]
+        evt_vars = [record['lny23'],record['aplanarity'],record['sphericity'],record['transverse_sphericity'],record['total_jet_mass']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -440,11 +354,12 @@ if __name__ == "__main__":
   all_records = sig_records[:79999] + bg_records
 
   # Make some plots 
-  plot_something('truthsqrtshat',range(0,1000,20),1)
-  plot_something('lny23',np.linspace(-10,-0.00001,10),1)
-  plot_something('transverse_sphericity',np.linspace(0,5,50),1)
-  plot_something('sphericity',np.linspace(0,1,50),1)
-  plot_something('aplanarity',np.linspace(0,1,50),1)
+  plot_something(sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
+  plot_something(sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
+  plot_something(sig_records,bg_records,'transverse_sphericity',np.linspace(0,5,50),1)
+  plot_something(sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
+  plot_something(sig_records,bg_records,'aplanarity',np.linspace(0,1,50),1)
+  plot_something(sig_records,bg_records,'total_jet_mass',np.linspace(0,500,50),1)
   
   # didn't validate this plotting function works
   # plot_jets?
@@ -467,10 +382,10 @@ if __name__ == "__main__":
   plt.clf()
 
   # Identify signal and side band 
-  sb_left = 160
-  sb_right = 540
-  sr_left = 300
-  sr_right = 400
+  sb_left = 225
+  sb_right = 475
+  sr_left = 325
+  sr_right = 375
 
   #-----------------------------------------------------------------------------------
   def binary_side_band(y_thing):
@@ -501,14 +416,17 @@ if __name__ == "__main__":
   # network training parameters
   num_epoch = 100
   batch_size = 100
-  
-  dnn = DNN(input_dim=3, dense_sizes=dense_sizes, summary=(i==0))
+ 
+  # dim of however many features we give in X  
+  dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=(i==0))
 
   aucs = []
   rocs = []
-  anomalyRatios = [0.01, 0.05, 0.1, 0.15, 0.2, 0.4]
+  anomalyRatios = [0.0,0.01, 0.05, 0.1, 0.15, 0.2, 0.4,1.0]
   for r in anomalyRatios:
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 2000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 2000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
+      # try skinnier SR
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 1000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
       
       dnn.fit(X_train, Y_train,
@@ -516,7 +434,6 @@ if __name__ == "__main__":
       batch_size=batch_size,
       validation_data=(X_val, Y_val),
       verbose=0)
-      
       
       Y_predict = dnn.predict(X_test)#,batch_size=1000)
       auc = roc_auc_score(Y_test[:,1], Y_predict[:,1])
