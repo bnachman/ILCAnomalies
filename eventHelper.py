@@ -63,9 +63,51 @@ def transverse_sphericity(w,v):
     return (2*sorted(w)[1])/(sorted(w)[0]+sorted(w)[1])
 
 
-#thrust
-#def thrust():
 
+
+#thrust
+# adapted from the jet-level thrust axis calculation, which uses constituents. See eg. https://gitlab.cern.ch/atlas/athena/-/blob/21.2/Reconstruction/Jet/JetSubStructureUtils/Root/Thrust.cxx 
+def thrust(jets):
+
+  thrust_major = -999
+  thrust_minor = -999
+  useThreeD = True
+
+  if len(jets) < 2: return [thrust_major,thrust_minor]
+  thrust = TVector3(0.,0.,0.)
+
+  agree = 0
+  disagree = 0
+  max_tests = 4 #TODO
+  n_0 = [TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.)] 
+  while (disagree>0 or agree<4 ) and n_tests < max_tests:
+    add0= [ 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1 ]
+    add1= [ 0, 1, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1, 1, 1, 1, 1,-1,-1,-1,-1 ]
+    add2= [ 0, 0, 1, 0, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1 ]
+    add3= [ 0, 0, 0, 1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1 ]
+
+    #jets are already pt sorted; take hardest 2 to find thrust
+    # assign direction of 2 most energetic particles
+    n_0[n_tests] += # this is a 3 vector
+      add0[n_tests] * (float(jets[0][1])*np.cos(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sin(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sinh(float(jets[0][2]))/np.cosh(float(jets[0][2]))) +
+      add1[n_tests] * (float(jets[1][1])*np.cos(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sin(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sinh(float(jets[1][2]))/np.cosh(float(jets[1][2]))) +
+      add2[n_tests] * (float(jets[2][1])*np.cos(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sin(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sinh(float(jets[2][2]))/np.cosh(float(jets[2][2]))) +
+      add3[n_tests] * (float(jets[3][1])*np.cos(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sin(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sinh(float(jets[3][2]))/np.cosh(float(jets[3][2]))) 
+ 
+    if not useThreeD: n_0[n_tests].SetZ(0.0)
+
+    #protect against small number of input particles (smaller than 4!)
+    #if (n_0[n_tests].Mag() > 0)
+    #  n_0[n_tests] *= 1/n_0[n_tests].Mag();
+  
+    loop = 0 
+    run = False
+    while run: 
+      n_1 = TVector3(0.,0.,0.)
+
+
+
+  return [thrust_major,thrust_minor]
 
 #def planarity(w,v):
 #    return
