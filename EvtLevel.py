@@ -13,6 +13,7 @@ import energyflow as ef
 from energyflow.archs import DNN
 #from energyflow.datasets import qg_jets
 from energyflow.utils import data_split, remap_pids, to_categorical
+import sklearn
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
 #from training import *
@@ -242,10 +243,8 @@ def parse_file(file_object):
 
 
 #-----------------------------------------------------------------------------------
-#def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 69,
-#                               train = 0.8, val = 0.2, test_size_each = 5000):
-def prep_and_shufflesplit_data(anomaly_ratio, size_each = 100, shuffle_seed = 69,
-                               train = 0.8, val = 0.2, test_size_each = 50):
+def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 69,
+                               train = 0.8, val = 0.2, test_size_each = 5000):
     
     """
     Pre-Data Selection
@@ -321,10 +320,10 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 100, shuffle_seed = 69
     this_y_te = np.concatenate([this_y_test_P, this_y_test_N])
     
     this_X_te, this_y_te = shuffle(this_X_te, this_y_te, random_state = shuffle_seed)
-#     print('Size of test set:')
-#     print(this_X_te.shape)
-#     print('Test set distribution:')
-#     print(np.unique(this_y_te,return_counts = True))
+    print('Size of test set:')
+    print(this_X_te.shape)
+    print('Test set distribution:')
+    print(np.unique(this_y_te,return_counts = True))
     
     
     X_train, X_val, X_test, y_train, y_val, y_test \
@@ -375,113 +374,6 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 100, shuffle_seed = 69
     print(np.unique(y_test,return_counts = True))
     
     return X_train, X_val, X_test, Y_train,Y_val,Y_test
-#def prep_and_shufflesplit_data(anomaly_ratio, size_each = 5000, shuffle_seed = 69, train = 0.7, val = 0.2, test = 0.1):
-#  
-#    print('Starting prep and shuffle split....') 
-#    print(X_sideband.shape[0], X_sig.shape[0]) 
-#    assert (size_each <= min(X_sideband.shape[0], X_sig.shape[0]))
-#    
-#    #how much bg and signal data to take?
-#    anom_size = round(anomaly_ratio * size_each)
-#    bg_sig_size = size_each - anom_size
-#    
-#    # select sideband datapoints
-#    this_X_sideband = X_sideband[:size_each]
-#    this_y_sideband = y_sideband[:size_each]
-#    
-#    # duplicate bgsignal datapoints
-#    this_X_bgsignal = np.copy(X_bgsignal)
-#    this_y_bgsignal = np.copy(y_bgsignal)
-#        
-#    (this_X_bgsignal, this_X_bgsignal_v, this_X_bgsignal_t,
-#     this_y_bgsignal, this_y_bgsignal_v, this_y_bgsignal_t) = data_split(this_X_bgsignal, this_y_bgsignal, val=val, test=test)
-#    
-#    bg_sig_size_tr = round(bg_sig_size * train)
-#    
-#    if this_X_bgsignal.shape[0] < bg_sig_size_tr:
-#        
-#        multiplier = math.ceil(bg_sig_size_tr/this_X_bgsignal.shape[0])
-#        
-#        this_X_bgsignal = np.concatenate([this_X_bgsignal] * multiplier)
-#        this_y_bgsignal = np.concatenate([this_y_bgsignal] * multiplier)
-#        
-#        this_X_bgsignal_v = np.concatenate([this_X_bgsignal_v] * multiplier)
-#        this_y_bgsignal_v = np.concatenate([this_y_bgsignal_v] * multiplier)
-#        
-#        this_X_bgsignal_t = np.concatenate([this_X_bgsignal_t] * multiplier)
-#        this_y_bgsignal_t = np.concatenate([this_y_bgsignal_t] * multiplier)
-#        
-#        
-#        
-#    assert this_X_bgsignal.shape[0] == this_y_bgsignal.shape[0]
-#    
-#    #select bgsignal datapoints
-#    this_X_bgsignal = this_X_bgsignal[:bg_sig_size_tr]
-#    this_y_bgsignal = this_y_bgsignal[:bg_sig_size_tr]
-#    
-#    this_X_bgsignal_v = this_X_bgsignal_v[:round(bg_sig_size * val)]
-#    this_y_bgsignal_v = this_y_bgsignal_v[:round(bg_sig_size * val)]
-#    
-#    this_X_bgsignal_t = this_X_bgsignal_t[:round(bg_sig_size * test)]
-#    this_y_bgsignal_t = this_y_bgsignal_t[:round(bg_sig_size * test)]
-#    
-#    #select anomaly datapoints
-#    this_X_anom = X_sig[:anom_size]
-#    this_y_anom = np.ones(anom_size)
-#    
-#    
-#    
-#    # only bg_sig has been split. Now, we have to shuffle then split the others.
-#    this_X = np.concatenate([this_X_sideband, this_X_anom])
-#    this_y = np.concatenate([this_y_sideband, this_y_anom])
-#    
-#    assert this_X.shape[0] == this_y.shape[0]
-#    this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
-#    
-#    (this_X_train, this_X_val, this_X_test,
-#     this_y_train, this_y_val, this_y_test) = data_split(this_X, this_y, val=val, test=test)
-#    
-#    # now, we can add the bg_sig to the rest of the data and shuffle again
-#    X_train, y_train = shuffle(np.concatenate([this_X_train, this_X_bgsignal]),
-#                               np.concatenate([this_y_train, this_y_bgsignal]),
-#                              random_state = shuffle_seed)
-#    X_val, y_val = shuffle(np.concatenate([this_X_val, this_X_bgsignal_v]),
-#                               np.concatenate([this_y_val, this_y_bgsignal_v]),
-#                              random_state = shuffle_seed)
-#    X_test, y_test = shuffle(np.concatenate([this_X_test, this_X_bgsignal_t]),
-#                               np.concatenate([this_y_test, this_y_bgsignal_t]),
-#                              random_state = shuffle_seed)
-#    
-#    
-#    # Centre and normalize all the Xs
-#    for x in X_train:
-#        mask = x[:,0] > 0
-#        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-#        x[mask,1:3] -= yphi_avg
-#        x[mask,0] /= x[:,0].sum()
-#    for x in X_val:
-#        mask = x[:,0] > 0
-#        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-#        x[mask,1:3] -= yphi_avg
-#        x[mask,0] /= x[:,0].sum()
-#    for x in X_test:
-#        mask = x[:,0] > 0
-#        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-#        x[mask,1:3] -= yphi_avg
-#        x[mask,0] /= x[:,0].sum()
-#    
-#    # remap PIDs for all the Xs
-#    remap_pids(X_train, pid_i=3)
-#    remap_pids(X_val, pid_i=3)
-#    remap_pids(X_test, pid_i=3)
-#    
-#    # change Y to categorical Matrix
-#    Y_train = to_categorical(y_train, num_classes=2)
-#    Y_val = to_categorical(y_val, num_classes=2)
-#    Y_test = to_categorical(y_test, num_classes=2)
-#
-#    
-#    return X_train, X_val, X_test, Y_train,Y_val,Y_test
 
 #-----------------------------------------------------------------------------------
 def train_models(X_train, X_val, X_test, Y_train,Y_val,Y_test):
@@ -517,7 +409,7 @@ def make_evt_arrays(these_records):
         ## add to list
         #padded_jet_arrays.append(padded_jets)
         evt_vars = [record['lny23'],record['aplanarity'],record['sphericity']]
-        padded_evt_arrays.append(evt_vars)
+        padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
 
@@ -531,12 +423,12 @@ if __name__ == "__main__":
   for filename in bg_file_list:
       file = open(filename)
       bg_records += parse_file(file)
-      if len(bg_records) > 300: break
+      #if len(bg_records) > 300: break
   sig_records = []
   for filename in signal_file_list:
       file = open(filename)
       sig_records += parse_file(file)
-      if len(sig_records) > 300: break
+      #if len(sig_records) > 300: break
 
   print('Running over '+str(len(bg_records))+' background files and '+str(len(sig_records))+' signal files....')
 
@@ -602,17 +494,44 @@ if __name__ == "__main__":
   y_selected = y_bg_binary[within_bounds_indicator]
 
 
+  # ---------------------------- Building the model 
 
-  ## Pre processing   
-  #print(X_bgsignal[:50000].shape)
-  #print(X_sideband.shape)
-  #print(np.concatenate([X_bgsignal]*3).shape)
-  #print(np.concatenate([y_sideband, y_bgsignal]).shape)
+  # network architecture parameters
+  dense_sizes = (100, 100)
+  # network training parameters
+  num_epoch = 100
+  batch_size = 100
+  
+  dnn = DNN(input_dim=3, dense_sizes=dense_sizes, summary=(i==0))
 
-  X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(0.1)
+  aucs = []
+  rocs = []
+  anomalyRatios = [0.01, 0.05, 0.1, 0.15, 0.2, 0.4]
+  for r in anomalyRatios:
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 2000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
+      
+      dnn.fit(X_train, Y_train,
+      epochs=num_epoch,
+      batch_size=batch_size,
+      validation_data=(X_val, Y_val),
+      verbose=0)
+      
+      
+      Y_predict = dnn.predict(X_test)#,batch_size=1000)
+      auc = roc_auc_score(Y_test[:,1], Y_predict[:,1])
+      #roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1])
+      roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1])
+      rocs.append(roc_curve)
+      aucs.append(auc)
 
-  #Phi_sizes, F_sizes = (10, 10, 16), (40, 20)
-  #num_epoch = 5
-  #batch_size = 10
+  print(aucs)
+  for i,r in enumerate(anomalyRatios):
+      plt.plot(rocs[i][0],rocs[i][1],label=r)
+  plt.xlabel('fpr')
+  plt.ylabel('tpr')
+  plt.title('ROC curve')
+  plt.legend()
+  plt.show()
 
 
