@@ -12,13 +12,10 @@ from ROOT import *
 
 #--------------------------- Variable defs
 def get_three_vec(jet):
-      print('Get three vec for jet: ', jet[1],jet[2],jet[3])
       pt = float(jet[1])/np.cosh(float(jet[2]))
-      print('--- pT: ', str(pt))
       px = pt*np.cos(float(jet[3]))
       py = pt*np.sin(float(jet[3]))
       pz = pt*np.sinh(float(jet[2]))
-      print('--- px py pz: ', str(px), str(py), str(pz))
  
       return [px,py,pz]
 
@@ -31,7 +28,8 @@ def total_jet_mass(jets):
       pt = float(jet[1])/np.cosh(float(jet[2]))
       vec.SetPtEtaPhiM(float(pt),float(jet[2]),float(jet[3]),float(jet[4]))
       sumVec = sumVec+vec
-    return np.divide(np.power(sumVec.M(),2),np.power(sumP,2))
+    tjm = np.divide(np.power(sumVec.M(),2),np.power(sumP,2))
+    return tjm
 
 def lny23(jets):
     if len(jets) > 2:
@@ -87,10 +85,12 @@ def thrust(jets):
   #n_0 = [TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.)] 
   n_0 = [0.,0.,0.]
   #while (disagree>0 or agree<2 ) and n_tests < max_tests:
-  add0= [ 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1 ]
-  add1= [ 0, 1, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1, 1, 1, 1, 1,-1,-1,-1,-1 ]
-  add2= [ 0, 0, 1, 0, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1 ]
-  add3= [ 0, 0, 0, 1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1 ]
+  add0= [ 1, 0, 1, 1,-1,-1 ]
+  add1= [ 0, 1, 1,-1, 1,-1 ]
+  #add0= [ 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1 ]
+  #add1= [ 0, 1, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1, 1, 1, 1, 1,-1,-1,-1,-1 ]
+  #add2= [ 0, 0, 1, 0, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1 ]
+  #add3= [ 0, 0, 0, 1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1 ]
 
 
   # ------- Determine n_0 = first guess
@@ -100,16 +100,11 @@ def thrust(jets):
   px1,py1,pz1 = get_three_vec(jets[1])
   j_0 = [float(px0),float(py0),float(pz0)]
   j_1 = [float(px1),float(py1),float(pz1)]
-  print('Jet 3 vec j_0: ', j_0[0], j_0[1], j_0[2])
-  print('Jet 3 vec j_1: ', j_1[0], j_1[1], j_1[2])
+  #print('Jet 3 vec j_0: ', j_0[0], j_0[1], j_0[2])
+  #print('Jet 3 vec j_1: ', j_1[0], j_1[1], j_1[2])
 
-
-  #n_0 += (add0[n_tests] * (float(jets[0][1])*np.cos(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sin(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sinh(float(jets[0][2]))/np.cosh(float(jets[0][2]))) + add1[n_tests] * (float(jets[1][1])*np.cos(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sin(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sinh(float(jets[1][2]))/np.cosh(float(jets[1][2]))) )
-  #+ add2[n_tests] * (float(jets[2][1])*np.cos(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sin(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sinh(float(jets[2][2]))/np.cosh(float(jets[2][2]))) 
-  #+ add3[n_tests] * (float(jets[3][1])*np.cos(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sin(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sinh(float(jets[3][2]))/np.cosh(float(jets[3][2]))) )
-  #n_0 = add0[n_tests] * j_0 + add1[n_tests] + j_1
-  n_0 +=  (add0[n_tests] * (px0,py0,pz0) + add1[n_tests]*(px1,py1,pz1))
-  print('Thrust axis n_0: ', n_0[0], n_0[1], n_0[2])
+  n_0 =  (add0[n_tests] * [px0,py0,pz0] + add1[n_tests]*[px1,py1,pz1])
+  #print('Thrust axis n_0: ', n_0[0], n_0[1], n_0[2])
  
     #if useThreeD==False: n_0.SetZ(0.0)
 
@@ -161,7 +156,7 @@ def thrust(jets):
       c = [float(px),float(py),float(pz)]
       #why ? c.setZ(0)
       numerator_t += abs(np.dot(c,n_0))
-      numerator_m += (np.cross(c,n_0)).Mag()
+      numerator_m += np.linalg.norm(np.cross(c,n_0))
       denominator += np.linalg.norm(c)
   inv_denominator = 1. / denominator
   if numerator_t * inv_denominator > thrust_major: 
