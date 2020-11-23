@@ -124,6 +124,10 @@ def parse_file(file_object):
 
         this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
+        thrust_maj, thrust_min = thrust(jets_vec)
+        this_record['thrust_major'] = thrust_maj
+        this_record['thrust_minor'] = thrust_min
+        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
 
         w,v = momentum_tensor(jets_vec,2)
         this_record['sphericity'] = sphericity(w,v)
@@ -165,19 +169,18 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     """
         
     #how much bg and signal data to take?
-    
-    anom_size = int(round(anomaly_ratio * size_each))
-    bgsig_size = int(size_each - anom_size)
+    anom_size = int(round(anomaly_ratio * size_each)) #amount of sig contamination
+    bgsig_size = int(size_each - anom_size) #remaining background to get to 100%
 
     
     # make sure we have enough data.
     print('Anom size: ', anom_size, ', bgsig size: ', bgsig_size,', size each: ',size_each,', test size each: ', test_size_each) 
-    print('X sideband: ', X_sideband.shape)
-    print('X selected: ',X_selected.shape)
-    print('X sig: ',X_sig.shape)
-    assert (size_each <= X_sideband.shape[0])
-    assert (anom_size + test_size_each <= X_sig.shape[0])
-    assert (bgsig_size + test_size_each <= X_selected.shape[0])
+    print('X sideband: ', X_sideband.shape) #amount of bkg in SB
+    print('X selected: ',X_selected.shape) #amount of bkg in SR
+    print('X sig: ',X_sig.shape) #total signal events
+    assert (size_each <= X_sideband.shape[0]) # size each = total data to train in SB
+    assert (anom_size + test_size_each <= X_sig.shape[0]) #test_size each = data to train in SR 
+    assert (bgsig_size + test_size_each <= X_selected.shape[0]) #test_size each = data to train in SR  
     
     """
     Data Selection
@@ -236,8 +239,8 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     this_X_te, this_y_te = shuffle(this_X_te, this_y_te, random_state = shuffle_seed)
     print('Size of test set:')
     print(this_X_te.shape)
-    print('Test set distribution:')
-    print(np.unique(this_y_te,return_counts = True))
+    #print('Test set distribution:')
+    #print(np.unique(this_y_te,return_counts = True))
     
     
     X_train, X_val, X_test, y_train, y_val, y_test \
@@ -279,13 +282,13 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     
     print('Training set size, distribution:')
     print(X_train.shape)
-    print(np.unique(y_train,return_counts = True))
+    #print(np.unique(y_train,return_counts = True))
     print('Validations set size, distribution:')
     print(X_val.shape)
-    print(np.unique(y_val,return_counts = True))
+    #print(np.unique(y_val,return_counts = True))
     print('Test set size, distribution:')
     print(X_test.shape)
-    print(np.unique(y_test,return_counts = True))
+    #print(np.unique(y_test,return_counts = True))
     
     return X_train, X_val, X_test, Y_train,Y_val,Y_test
 
@@ -322,7 +325,7 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['lny23'],record['aplanarity'],record['sphericity'],record['transverse_sphericity'],record['total_jet_mass']]
+        evt_vars = [record['lny23'],record['aplanarity'],record['sphericity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -330,28 +333,30 @@ def make_evt_arrays(these_records):
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
 
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger1.txt")
   signal_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*signal.txt")
 
   bg_records = []
   for filename in bg_file_list:
       file = open(filename)
       bg_records += parse_file(file)
-      #if len(bg_records) > 300: break
+      #if len(bg_records) > 100: break
   sig_records = []
   for filename in signal_file_list:
       file = open(filename)
       sig_records += parse_file(file)
-      #if len(sig_records) > 300: break
+      #if len(sig_records) > 100: break
 
-  print('Running over '+str(len(bg_records))+' background files and '+str(len(sig_records))+' signal files....')
+  print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
   #for i in sig_records:
   #    i['from_anomaly_data'] = True
   #for i in bg_records:
   #    i['from_anomaly_data'] = False
 
-  all_records = sig_records[:79999] + bg_records
+  #all_records = sig_records[:79999] + bg_records
+  all_records = sig_records + bg_records
 
   # Make some plots 
   plot_something(sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
@@ -359,7 +364,9 @@ if __name__ == "__main__":
   plot_something(sig_records,bg_records,'transverse_sphericity',np.linspace(0,5,50),1)
   plot_something(sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
   plot_something(sig_records,bg_records,'aplanarity',np.linspace(0,1,50),1)
-  plot_something(sig_records,bg_records,'total_jet_mass',np.linspace(0,500,50),1)
+  plot_something(sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  plot_something(sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
+  plot_something(sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
   
   # didn't validate this plotting function works
   # plot_jets?
@@ -384,8 +391,8 @@ if __name__ == "__main__":
   # Identify signal and side band 
   sb_left = 225
   sb_right = 475
-  sr_left = 325
-  sr_right = 375
+  sr_left = 320
+  sr_right = 380
 
   #-----------------------------------------------------------------------------------
   def binary_side_band(y_thing):
@@ -408,7 +415,6 @@ if __name__ == "__main__":
   X_selected = X_bg[within_bounds_indicator]
   y_selected = y_bg_binary[within_bounds_indicator]
 
-
   # ---------------------------- Building the model 
 
   # network architecture parameters
@@ -426,7 +432,7 @@ if __name__ == "__main__":
   for r in anomalyRatios:
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 2000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
       # try skinnier SR
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 1000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 5000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
       
       dnn.fit(X_train, Y_train,
@@ -444,7 +450,7 @@ if __name__ == "__main__":
 
   print(aucs)
   for i,r in enumerate(anomalyRatios):
-      plt.plot(rocs[i][0],rocs[i][1],label=r)
+      plt.plot(rocs[i][0],rocs[i][1],label=str(r)+", AUC="+str(np.round(aucs[i],2)))
   plt.xlabel('fpr')
   plt.ylabel('tpr')
   plt.title('ROC curve')

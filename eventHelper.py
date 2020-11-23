@@ -78,12 +78,14 @@ def thrust(jets):
 
   if len(jets) < 2: return [thrust_major,thrust_minor]
 
-  #agree = 0
-  #disagree = 0
-  #max_tests = 2 #TODO
+  agree = 0
+  disagree = 0
+  max_tests = 2 #TODO
   n_tests = 0
   #n_0 = [TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.)] 
-  n_0 = [0.,0.,0.]
+  n_0 = []
+  for n in range(max_tests):
+    n_0.append([0.,0.,0])
   #while (disagree>0 or agree<2 ) and n_tests < max_tests:
   add0= [ 1, 0, 1, 1,-1,-1 ]
   add1= [ 0, 1, 1,-1, 1,-1 ]
@@ -95,7 +97,7 @@ def thrust(jets):
 
   # ------- Determine n_0 = first guess
   #jets are already pt sorted; take hardest 2 to find thrust
-  # assign direction of 2 most energetic particles
+  # assign direction of 2 most energetic particles  
   px0,py0,pz0 = get_three_vec(jets[0])
   px1,py1,pz1 = get_three_vec(jets[1])
   j_0 = [float(px0),float(py0),float(pz0)]
@@ -103,66 +105,79 @@ def thrust(jets):
   #print('Jet 3 vec j_0: ', j_0[0], j_0[1], j_0[2])
   #print('Jet 3 vec j_1: ', j_1[0], j_1[1], j_1[2])
 
-  n_0 =  (add0[n_tests] * [px0,py0,pz0] + add1[n_tests]*[px1,py1,pz1])
-  #print('Thrust axis n_0: ', n_0[0], n_0[1], n_0[2])
+  while (disagree>0 or agree <2) and n_tests < max_tests:
+    n_0[n_tests] =  (add0[n_tests] * [px0,py0,pz0] + add1[n_tests]*[px1,py1,pz1])
+    #print('Thrust axis n_0: ', n_0[0], n_0[1], n_0[2])
  
     #if useThreeD==False: n_0.SetZ(0.0)
 
     #protect against small number of input particles (smaller than 4!)
     #if (n_0[n_tests].Mag() > 0)
     #  n_0[n_tests] *= 1/n_0[n_tests].Mag();
-  
+    
+
+
     #--------- SKIP FOR NOW: take only two hardest jets
     # ------- Determine n_1 = include all particles
-    #run = False
-    #loop = 0 
-    #while run: 
-    #  n_1 = TVector3(0.,0.,0.)
-    #  #loop over all jets this time: 
-    #  for j in range(len(jets)):
-    #    if (float(jets[j][1])*np.cos(float(jets[j][3]))/np.cosh(float(jets[j][2])) * n_0[n_tests].X() 
-    #      +float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])) * n_0[n_tests].Y()
-    #      +float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])) * n_0[n_tests].Z()) > 0: n_1 += TVector3(float(jets[j][1])*np.cos(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])))
-    #    else: n_1 -= TVector3(float(jets[j][1])*np.cos(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])))
-    #
-    #  if useThreeD==False: n_1[n_tests].SetZ(0.0)
-    #  #protect against small number of input particles (smaller than 4!)
-    #  #if (n_1[n_tests].Mag() > 0)
-    #  #  n_1[n_tests] *= 1/n_1[n_tests].Mag();
-  
+    run = False
+    loop = 0 
+    while run: 
+      n_1 = [0.,0.,0]
+      #loop over all jets this time: 
+      for j in range(len(jets)):
+        px0,py0,pz0 = get_three_vec(jets[j])
+        if (float(px)* n_0[n_tests][0] + float(py)* n_0[n_tests][1] + float(pz)* n_0[n_tests][2] ) > 0: 
+          n_1[0] += px
+          n_1[1] += py
+          n_1[2] += pz
+        else:
+          n_1[0] -= px
+          n_1[1] -= py
+          n_1[2] -= pz
+    
+      #if useThreeD==False: n_1[n_tests].SetZ(0.0)
+      #protect against small number of input particles (smaller than 4!)
+      #if (n_1[n_tests].Mag() > 0)
+      #  n_1[n_tests] *= 1/n_1[n_tests].Mag();
 
-    #  # has axis changed ? if so, try at most ten times (thrust axis has two fold ambiguity)
-    #  run = (n_0[n_tests] != n_1) and (-n_0[n_tests] != n_1) and loop < 10
-    #  n_0[n_tests] = n_1
-    #  while run: 
-    #      # agrees or disagrees with first result ?
-    #        #  thrust has a sign ambiguity
-    #        if (n_tests > 0 and (n_0[0] == n_0[n_tests] or n_0[0] == -n_0[n_tests])) agree+=1
-    #        if (n_tests > 0 and  n_0[0] != n_0[n_tests] and n_0[0] != -n_0[n_tests])  disagree+=1
+      # has axis changed ? if so, try at most ten times (thrust axis has two fold ambiguity)
+      run = (n_0[n_tests] != n_1) and (-n_0[n_tests] != n_1) and loop < 10
+      n_0[n_tests] = n_1
+      loop += 1
+
+    # agrees or disagrees with first result ?
+    #  thrust has a sign ambiguity
+    if n_tests > 0:
+      if n_0[0][0] == np.abs(n_0[n_tests][0]) and n_0[0][1] == np.abs(n_0[n_tests][1]) and n_0[0][2] == np.abs(n_0[n_tests][2]): 
+        agree+=1
+      else: disagree += 1
+    n_tests += 1
          
+
+
   # now that we have the thrust axis, we determine the thrust value
   #  if the various calculations of the thrust axes disagree, try all
   #  and take the maximum, calculate minor and mayor axis
   n_tests=0
-  #while n_tests < max_tests:
-  denominator = 0.0
-  numerator_t = 0.0
-  numerator_m = 0.0
-  for h in range(2): #just products of 2 leading jets 
-      pt = float(jets[h][1])/np.cosh(float(jets[h][2]))
-      px = pt*np.cos(float(jets[h][3]))
-      py = pt*np.sin(float(jets[h][3]))
-      pz = pt*np.sinh(float(jets[h][2]))
-      c = [float(px),float(py),float(pz)]
-      #why ? c.setZ(0)
-      numerator_t += abs(np.dot(c,n_0))
-      numerator_m += np.linalg.norm(np.cross(c,n_0))
-      denominator += np.linalg.norm(c)
-  inv_denominator = 1. / denominator
-  if numerator_t * inv_denominator > thrust_major: 
-      thrust_major = numerator_t * inv_denominator
-      thrust_minor = numerator_m * inv_denominator
-  #n_tests += 1
+  while n_tests < max_tests:
+    denominator = 0.0
+    numerator_t = 0.0
+    numerator_m = 0.0
+    for h in range(2): #just products of 2 leading jets 
+        pt = float(jets[h][1])/np.cosh(float(jets[h][2]))
+        px = pt*np.cos(float(jets[h][3]))
+        py = pt*np.sin(float(jets[h][3]))
+        pz = pt*np.sinh(float(jets[h][2]))
+        c = [float(px),float(py),float(pz)]
+        #why ? c.setZ(0)
+        numerator_t += abs(np.dot(c,n_0[n_tests]))
+        numerator_m += np.linalg.norm(np.cross(c,n_0[n_tests]))
+        denominator += np.linalg.norm(c)
+    inv_denominator = 1. / denominator
+    if numerator_t * inv_denominator > thrust_major: 
+        thrust_major = numerator_t * inv_denominator
+        thrust_minor = numerator_m * inv_denominator
+    n_tests += 1
 
   return [thrust_major,thrust_minor]
 
