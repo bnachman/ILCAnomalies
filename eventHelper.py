@@ -11,6 +11,17 @@ from ROOT import *
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
 #--------------------------- Variable defs
+def get_three_vec(jet):
+      print('Get three vec for jet: ', jet[1],jet[2],jet[3])
+      pt = float(jet[1])/np.cosh(float(jet[2]))
+      print('--- pT: ', str(pt))
+      px = pt*np.cos(float(jet[3]))
+      py = pt*np.sin(float(jet[3]))
+      pz = pt*np.sinh(float(jet[2]))
+      print('--- px py pz: ', str(px), str(py), str(pz))
+ 
+      return [px,py,pz]
+
 def total_jet_mass(jets):
     sumVec = TLorentzVector(0.,0.,0.,0.)
     sumP = 0.0
@@ -35,14 +46,8 @@ def momentum_tensor(jets,r):
     m = np.zeros((3,3))
     totalPSq = 1e-10
     for jet in jets:
-    #[index, p [GeV], eta, phi, m]
-        pt = float(jet[1]) / np.cosh(float(jet[2]))
-        px = pt*np.cos(float(jet[3]))
-        py = pt*np.sin(float(jet[3]))
-        pz = pt*np.sinh(float(jet[2]))
-        #px = float(jet[1])*np.cos(float(jet[3]))/np.cosh(float(jet[2]))
-        #py = float(jet[1])*np.sin(float(jet[3]))/np.cosh(float(jet[2]))
-        #pz = float(jet[1])*np.sinh(float(jet[2]))/np.cosh(float(jet[2]))
+        #[index, p [GeV], eta, phi, m]
+        px,py,pz = get_three_vec(jet)
         pr = np.power(float(jet[1]),r-2)
         m += [[px*px*pr, px*py*pr, px*pz*pr], [py*px*pr, py*py*pr, py*pz*pr], [pz*px*pr, pz*py*pr, pz*pz*pr]]
         totalPSq += np.power(float(jet[1]),r)
@@ -74,38 +79,95 @@ def thrust(jets):
   useThreeD = True
 
   if len(jets) < 2: return [thrust_major,thrust_minor]
-  thrust = TVector3(0.,0.,0.)
 
-  agree = 0
-  disagree = 0
-  max_tests = 4 #TODO
-  n_0 = [TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.)] 
-  while (disagree>0 or agree<4 ) and n_tests < max_tests:
-    add0= [ 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1 ]
-    add1= [ 0, 1, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1, 1, 1, 1, 1,-1,-1,-1,-1 ]
-    add2= [ 0, 0, 1, 0, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1 ]
-    add3= [ 0, 0, 0, 1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1 ]
+  #agree = 0
+  #disagree = 0
+  #max_tests = 2 #TODO
+  n_tests = 0
+  #n_0 = [TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.),TVector3(0.,0.,0.)] 
+  n_0 = [0.,0.,0.]
+  #while (disagree>0 or agree<2 ) and n_tests < max_tests:
+  add0= [ 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1,-1,-1,-1,-1,-1,-1 ]
+  add1= [ 0, 1, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1, 1, 1, 1, 1,-1,-1,-1,-1 ]
+  add2= [ 0, 0, 1, 0, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1 ]
+  add3= [ 0, 0, 0, 1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1, 1,-1 ]
 
-    #jets are already pt sorted; take hardest 2 to find thrust
-    # assign direction of 2 most energetic particles
-    n_0[n_tests] += # this is a 3 vector
-      add0[n_tests] * (float(jets[0][1])*np.cos(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sin(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sinh(float(jets[0][2]))/np.cosh(float(jets[0][2]))) +
-      add1[n_tests] * (float(jets[1][1])*np.cos(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sin(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sinh(float(jets[1][2]))/np.cosh(float(jets[1][2]))) +
-      add2[n_tests] * (float(jets[2][1])*np.cos(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sin(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sinh(float(jets[2][2]))/np.cosh(float(jets[2][2]))) +
-      add3[n_tests] * (float(jets[3][1])*np.cos(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sin(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sinh(float(jets[3][2]))/np.cosh(float(jets[3][2]))) 
+
+  # ------- Determine n_0 = first guess
+  #jets are already pt sorted; take hardest 2 to find thrust
+  # assign direction of 2 most energetic particles
+  px0,py0,pz0 = get_three_vec(jets[0])
+  px1,py1,pz1 = get_three_vec(jets[1])
+  j_0 = [float(px0),float(py0),float(pz0)]
+  j_1 = [float(px1),float(py1),float(pz1)]
+  print('Jet 3 vec j_0: ', j_0[0], j_0[1], j_0[2])
+  print('Jet 3 vec j_1: ', j_1[0], j_1[1], j_1[2])
+
+
+  #n_0 += (add0[n_tests] * (float(jets[0][1])*np.cos(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sin(float(jets[0][3]))/np.cosh(float(jets[0][2])), float(jets[0][1])*np.sinh(float(jets[0][2]))/np.cosh(float(jets[0][2]))) + add1[n_tests] * (float(jets[1][1])*np.cos(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sin(float(jets[1][3]))/np.cosh(float(jets[1][2])), float(jets[1][1])*np.sinh(float(jets[1][2]))/np.cosh(float(jets[1][2]))) )
+  #+ add2[n_tests] * (float(jets[2][1])*np.cos(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sin(float(jets[2][3]))/np.cosh(float(jets[2][2])), float(jets[2][1])*np.sinh(float(jets[2][2]))/np.cosh(float(jets[2][2]))) 
+  #+ add3[n_tests] * (float(jets[3][1])*np.cos(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sin(float(jets[3][3]))/np.cosh(float(jets[3][2])), float(jets[3][1])*np.sinh(float(jets[3][2]))/np.cosh(float(jets[3][2]))) )
+  #n_0 = add0[n_tests] * j_0 + add1[n_tests] + j_1
+  n_0 +=  (add0[n_tests] * (px0,py0,pz0) + add1[n_tests]*(px1,py1,pz1))
+  print('Thrust axis n_0: ', n_0[0], n_0[1], n_0[2])
  
-    if not useThreeD: n_0[n_tests].SetZ(0.0)
+    #if useThreeD==False: n_0.SetZ(0.0)
 
     #protect against small number of input particles (smaller than 4!)
     #if (n_0[n_tests].Mag() > 0)
     #  n_0[n_tests] *= 1/n_0[n_tests].Mag();
   
-    loop = 0 
-    run = False
-    while run: 
-      n_1 = TVector3(0.,0.,0.)
+    #--------- SKIP FOR NOW: take only two hardest jets
+    # ------- Determine n_1 = include all particles
+    #run = False
+    #loop = 0 
+    #while run: 
+    #  n_1 = TVector3(0.,0.,0.)
+    #  #loop over all jets this time: 
+    #  for j in range(len(jets)):
+    #    if (float(jets[j][1])*np.cos(float(jets[j][3]))/np.cosh(float(jets[j][2])) * n_0[n_tests].X() 
+    #      +float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])) * n_0[n_tests].Y()
+    #      +float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])) * n_0[n_tests].Z()) > 0: n_1 += TVector3(float(jets[j][1])*np.cos(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])))
+    #    else: n_1 -= TVector3(float(jets[j][1])*np.cos(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])), float(jets[j][1])*np.sin(float(jets[j][3]))/np.cosh(float(jets[j][2])))
+    #
+    #  if useThreeD==False: n_1[n_tests].SetZ(0.0)
+    #  #protect against small number of input particles (smaller than 4!)
+    #  #if (n_1[n_tests].Mag() > 0)
+    #  #  n_1[n_tests] *= 1/n_1[n_tests].Mag();
+  
 
-
+    #  # has axis changed ? if so, try at most ten times (thrust axis has two fold ambiguity)
+    #  run = (n_0[n_tests] != n_1) and (-n_0[n_tests] != n_1) and loop < 10
+    #  n_0[n_tests] = n_1
+    #  while run: 
+    #      # agrees or disagrees with first result ?
+    #        #  thrust has a sign ambiguity
+    #        if (n_tests > 0 and (n_0[0] == n_0[n_tests] or n_0[0] == -n_0[n_tests])) agree+=1
+    #        if (n_tests > 0 and  n_0[0] != n_0[n_tests] and n_0[0] != -n_0[n_tests])  disagree+=1
+         
+  # now that we have the thrust axis, we determine the thrust value
+  #  if the various calculations of the thrust axes disagree, try all
+  #  and take the maximum, calculate minor and mayor axis
+  n_tests=0
+  #while n_tests < max_tests:
+  denominator = 0.0
+  numerator_t = 0.0
+  numerator_m = 0.0
+  for h in range(2): #just products of 2 leading jets 
+      pt = float(jets[h][1])/np.cosh(float(jets[h][2]))
+      px = pt*np.cos(float(jets[h][3]))
+      py = pt*np.sin(float(jets[h][3]))
+      pz = pt*np.sinh(float(jets[h][2]))
+      c = [float(px),float(py),float(pz)]
+      #why ? c.setZ(0)
+      numerator_t += abs(np.dot(c,n_0))
+      numerator_m += (np.cross(c,n_0)).Mag()
+      denominator += np.linalg.norm(c)
+  inv_denominator = 1. / denominator
+  if numerator_t * inv_denominator > thrust_major: 
+      thrust_major = numerator_t * inv_denominator
+      thrust_minor = numerator_m * inv_denominator
+  #n_tests += 1
 
   return [thrust_major,thrust_minor]
 
