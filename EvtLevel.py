@@ -19,146 +19,6 @@ from sklearn.utils import shuffle
 from eventHelper import *
 
 
-#--------------------------- Helper methods
-def add_to_padded_part(records):
-  array = []
-  for record in records:
-      # convert to np array
-      these_particles = np.array(record['particles']).astype('float')
-      # omit index 0
-      these_particles = these_particles[:,1:]
-      # determine how many zero values to pad
-      pad_length = max_nparticles - these_particles.shape[0]
-      #pad
-      padded_particles = np.pad(these_particles, ((0,pad_length),(0,0)),'constant')
-      # check padding
-      assert padded_particles.shape == (max_nparticles, 4)
-      # add to list
-      array.append(padded_particles)
-
-  return array
-
-def add_to_padded_jet(records):
-  array = []
-  for record in records:
-    # convert to np array
-    these_jets = np.array(record['jets']).astype('float')
-    # omit index 0
-    if len(these_jets) == 0:
-        these_jets = np.zeros(11).reshape([1,11])
-    these_jets = these_jets[:,1:]
-        
-    # determine how many zero values to pad
-    pad_length = max_njets - these_jets.shape[0]
-    #pad
-    padded_jets = np.pad(these_jets, ((0,pad_length),(0,0)),'constant')
-    # check padding
-    assert padded_jets.shape == (max_njets, 10)
-    # add to list
-    array.append(padded_jets)
-
-  return array
-
-
-#--------------------------- Parse text files
-def parse_file(file_object):
-    all_records = []
-    mymeasuredenergy = []
-
-    count = 0
-    for line in file_object:
-
-        metadata = line.split("J")[0]
-        eventinfo = line.split("J")[1]
-        jets = eventinfo.split("P")[0]
-        particles = eventinfo.split("P")[1]
-
-        this_record = {}
-        this_record['label'] = count
-        count += 1
-        eventweight = float(metadata.split()[0])
-        this_record['eventweight'] = eventweight #this is the event "weight".  Let's ignoreit for now (we will need it later).
-        njets = int(len(jets.split())/11) #number of "jets"
-
-        nparticles  = int(len(particles.split())/5) #number of particles
-
-        #True collision quantities
-        this_record['truthcenterofmassenergy'] = float(metadata.split()[1]) #true total energy - should be delta function at 1000 GeV
-        this_record['truthsqrtshat'] = float(metadata.split()[2]) #energy available for making new particles (electron energy - photon)
-        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum |p| in units of GeV
-        this_record['truthphotoneta'] = float(metadata.split()[4]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        this_record['truthphotonphi'] = float(metadata.split()[5]) #photon azimuthal angle
-
-        #Measured collision quantities
-        measuredcenterofmassenergy  = float(metadata.split()[6]) #true measured energy - should be noisy version of truthcenterofmassenergy
-        this_record['measuredcenterofmassenergy'] = measuredcenterofmassenergy
-        this_record['measuredsqrtshat'] = float(metadata.split()[7]) #energy available for making new particles (electron energy - photon)
-        this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum |p| in units of GeV
-        this_record['measuredphotoneta'] = float(metadata.split()[9]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
-        this_record['metadata'] = metadata.split()
-
-        mymeasuredenergy+=[measuredcenterofmassenergy]
-
-        this_record['njets'] = njets
-        jets = jets.split()
-        jets_vec = []
-        for i in range(njets):
-            jet = np.zeros(11)
-            #order:
-            # - index
-            # - magnitude of momentum |p| (units of GeV)
-            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-            # - azimuthal angle
-            # - mass (units of GeV/c^2)
-            # - bit encoding of the jet "flavor" (not totally sure what the bit means, but will look it up)
-            # - 0th angular moment of jet radiation
-            # - 1th angular moment of jet radiation
-            # - 2th angular moment of jet radiation
-            # - 3th angular moment of jet radiation
-            # - 4th angular moment of jet radiation
-            jet = jets[i*11:i*11+11]
-            jets_vec+=[jet]
-
-        this_record['jets']=jets_vec
-
-        this_record['lny23'] = lny23(jets_vec)
-        this_record['total_jet_mass'] = total_jet_mass(jets_vec)
-        thrust_maj, thrust_min = thrust(jets_vec)
-        this_record['thrust_major'] = thrust_maj
-        this_record['thrust_minor'] = thrust_min
-        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
-
-        w,v = momentum_tensor(jets_vec,2)
-        this_record['sphericity'] = sphericity(w,v)
-        this_record['transverse_sphericity'] = transverse_sphericity(w,v)
-        this_record['aplanarity'] = aplanarity(w,v)
-
-        this_record['nparticles'] = nparticles
-
-        particles = particles.split()
-        particles_vec = []
-        for i in range(nparticles):
-            particle = np.zeros(5)
-            #order:
-            # - index
-            # - magnitude of momentum |p| (units of GeV)
-            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-            # - azimuthal angle
-            # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
-            particle = particles[i*5:i*5+5]
-            particles_vec+=[particle]
-            #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
-        this_record['particles'] = particles_vec
-        
-        #w,v = momentum_tensor(particles_vec,3)
-        #this_record['sphericity'] = sphericity(w,v)
-        #this_record['transverse_sphericity'] = transverse_sphericity(w,v)
-        #his_record['aplanarity'] = aplanarity(w,v)
-        
-        all_records.append(this_record)
-    return all_records
-
 
 #-----------------------------------------------------------------------------------
 def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 69,
@@ -325,7 +185,7 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['lny23'],record['aplanarity'],record['sphericity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
+        evt_vars = [record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -333,20 +193,8 @@ def make_evt_arrays(these_records):
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
 
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger1.txt")
-  signal_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*signal.txt")
-
-  bg_records = []
-  for filename in bg_file_list:
-      file = open(filename)
-      bg_records += parse_file(file)
-      #if len(bg_records) > 100: break
-  sig_records = []
-  for filename in signal_file_list:
-      file = open(filename)
-      sig_records += parse_file(file)
-      #if len(sig_records) > 100: break
+  sig_records = np.ndarray.tolist(np.load("1202_sig_records.npy",allow_pickle=True))
+  bg_records = np.ndarray.tolist(np.load("1202_bg_records_smaller.npy",allow_pickle=True))
 
   print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
@@ -360,7 +208,7 @@ if __name__ == "__main__":
 
   # Make some plots 
   plot_something(sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
-  plot_something(sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
+  plot_something(sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,50),1)
   plot_something(sig_records,bg_records,'transverse_sphericity',np.linspace(0,5,50),1)
   plot_something(sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
   plot_something(sig_records,bg_records,'aplanarity',np.linspace(0,1,50),1)
@@ -385,7 +233,7 @@ if __name__ == "__main__":
   plt.hist(y_sig,label='signal')
   plt.hist(y_bg,label='backgound')
   plt.legend()
-  plt.savefig('truthsqrtshat.pdf')
+  plt.savefig('plots/truthsqrtshat.pdf')
   plt.clf()
 
   # Identify signal and side band 
@@ -420,7 +268,7 @@ if __name__ == "__main__":
   # network architecture parameters
   dense_sizes = (100, 100)
   # network training parameters
-  num_epoch = 100
+  num_epoch = 500
   batch_size = 100
  
   # dim of however many features we give in X  
@@ -430,17 +278,35 @@ if __name__ == "__main__":
   rocs = []
   anomalyRatios = [0.0,0.01, 0.05, 0.1, 0.15, 0.2, 0.4,1.0]
   for r in anomalyRatios:
-      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 2000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
       # try skinnier SR
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 5000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 100)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 24000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 2400)
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
       
-      dnn.fit(X_train, Y_train,
+      h = dnn.fit(X_train, Y_train,
       epochs=num_epoch,
       batch_size=batch_size,
       validation_data=(X_val, Y_val),
       verbose=0)
-      
+ 
+       
+      plt.plot(h.history['acc'])
+      plt.plot(h.history['val_acc'])
+      plt.title('model accuracy')
+      plt.ylabel('accuracy')
+      plt.xlabel('epoch')
+      plt.legend(['train', 'test'], loc='upper left')
+      plt.savefig('plots/accVsEpoch_anomalyRatio'+str(r)+'.pdf')
+      plt.clf()
+      plt.plot(h.history['loss'])
+      plt.plot(h.history['val_loss'])
+      plt.title('model loss')
+      plt.ylabel('loss')
+      plt.xlabel('epoch')
+      plt.legend(['train', 'test'], loc='upper left')
+      plt.savefig('plots/lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
+      plt.clf()
+       
+    
       Y_predict = dnn.predict(X_test)#,batch_size=1000)
       auc = roc_auc_score(Y_test[:,1], Y_predict[:,1])
       #roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1])
@@ -455,6 +321,7 @@ if __name__ == "__main__":
   plt.ylabel('tpr')
   plt.title('ROC curve')
   plt.legend()
-  plt.show()
+  plt.savefig('plots/roc_aucs.pdf')
+  #plt.show()
 
 

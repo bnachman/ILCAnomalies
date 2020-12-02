@@ -201,7 +201,7 @@ def plot_something(sig_records,bg_records,var,R,doLog):
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of Events / bin")
     plt.legend()
-    plt.savefig("plt_"+var+".pdf")
+    plt.savefig("plots/plt_"+var+".pdf")
     plt.clf()
 
 def plot_jets(index,R,doLog):
@@ -215,6 +215,6 @@ def plot_jets(index,R,doLog):
     plt.xlabel(var)
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of Events / bin")
-    plt.savefig("plt_"+index+".pdf")
+    plt.savefig("plots/plt_"+index+".pdf")
     plt.clf()
 
