@@ -190,29 +190,38 @@ def make_evt_arrays(these_records):
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
 
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
-  #bg_file_list = ["/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger1.txt","/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger2.txt","/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger3.txt","/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger4.txt"]
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
   signal_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*signal.txt")
 
-  bg_records = []
+  # ------------- Low stat
+  #bg_records = []
+  #for filename in bg_file_list:
+  #    file = open(filename)
+  #    bg_records += parse_file(file)
+  #    #if len(bg_records) > 100: break
+  ##sig_records = []
+  ##for filename in signal_file_list:
+  ##    file = open(filename)
+  ##    sig_records += parse_file(file)
+  ##    #if len(sig_records) > 100: break
+
+  ##print('Parsed '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
+  #
+  #np.save("1202_bg_records_smaller.npy",np.asarray(bg_records))
+  #np.save("1202_sig_records.npy",np.asarray(sig_records))
+
+  # ------------- High stat
   for filename in bg_file_list:
+      if 'bigger1' in filename or 'bigger2' in filename: continue
+      saveName = filename.split(".")[0].split("/")[-1].split("_")[-1]
+      bg_records = []
       file = open(filename)
+      print('Parsing '+filename)
       bg_records += parse_file(file)
-      #if len(bg_records) > 100: break
-  sig_records = []
-  for filename in signal_file_list:
-      file = open(filename)
-      sig_records += parse_file(file)
-      #if len(sig_records) > 100: break
-
-  print('Parsed '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
-  
-  print("======================= regular: ", bg_records)
-  print("======================= as array: " , np.asarray(bg_records))
-  np.save("1202_bg_records_smaller.npy",np.asarray(bg_records))
-  np.save("1202_sig_records.npy",np.asarray(sig_records))
-
+      print('Parsed '+str(len(bg_records))+' background events into '+ saveName)
+      np.save("1202_bg_records_"+saveName+".npy",np.asarray(bg_records))
+      file.close()
   
 
 

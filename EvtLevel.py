@@ -268,19 +268,20 @@ if __name__ == "__main__":
   # network architecture parameters
   dense_sizes = (100, 100)
   # network training parameters
-  num_epoch = 500
-  batch_size = 100
+  num_epoch = 50
+  batch_size = 1000
  
   # dim of however many features we give in X  
-  dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=(i==0))
+  dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=(i==0),dropouts=0.001,l2_regs=0.005)
 
   aucs = []
   rocs = []
   anomalyRatios = [0.0,0.01, 0.05, 0.1, 0.15, 0.2, 0.4,1.0]
   for r in anomalyRatios:
       # try skinnier SR
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 24000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 2400)
-      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 24000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 2400)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
+      #X_val, X_train, X_test, Y_val,Y_train,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
       
       h = dnn.fit(X_train, Y_train,
       epochs=num_epoch,
