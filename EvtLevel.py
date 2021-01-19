@@ -13,6 +13,8 @@ import energyflow as ef
 from energyflow.archs import DNN
 #from energyflow.datasets import qg_jets
 from energyflow.utils import data_split, remap_pids, to_categorical
+from keras.models import Sequential
+from keras.layers import Dense 
 import sklearn
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
@@ -35,9 +37,9 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     
     # make sure we have enough data.
     print('Anom size: ', anom_size, ', bgsig size: ', bgsig_size,', size each: ',size_each,', test size each: ', test_size_each) 
-    print('X sideband: ', X_sideband.shape) #amount of bkg in SB
-    print('X selected: ',X_selected.shape) #amount of bkg in SR
-    print('X sig: ',X_sig.shape) #total signal events
+    print('Bg in sideband: ', X_sideband.shape) #amount of bkg in SB
+    print('Bg in SR: ',X_selected.shape) #amount of bkg in SR
+    print('Total sig: ',X_sig.shape) #total signal events
     assert (size_each <= X_sideband.shape[0]) # size each = total data to train in SB
     assert (anom_size + test_size_each <= X_sig.shape[0]) #test_size each = data to train in SR 
     assert (bgsig_size + test_size_each <= X_selected.shape[0]) #test_size each = data to train in SR  
@@ -45,12 +47,13 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     """
     Data Selection
     """
-    
+   
+    # training to separate SB from SR: 0 for all SB events, 1 for all SR events 
     # select sideband datapoints
     this_X_sb = X_sideband[:size_each]
     this_y_sb = np.zeros(size_each) # 0 for bg in SB
     
-    # select bgsig datapoints
+    # select bg in SR datapoints
     this_X_bgsig = X_selected[:bgsig_size]
     this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
     
@@ -73,11 +76,11 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
      this_y_tr, this_y_v, _) = data_split(this_X, this_y, val=val, test=0)
         
     
-    print('Size of sb:')
+    print('Size of sb (0s):')
     print(this_X_sb.shape)
-    print('Size of bgsig:')
+    print('Size of bg in SR (1s):')
     print(this_X_bgsig.shape)
-    print('Size of sig:')
+    print('Size of sig in SR (1s):')
     print(this_X_sig.shape)
         
     
@@ -186,6 +189,7 @@ def make_evt_arrays(these_records):
         ## add to list
         #padded_jet_arrays.append(padded_jets)
         evt_vars = [record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
+        #evt_vars = [record['total_jet_mass']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -193,8 +197,10 @@ def make_evt_arrays(these_records):
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
 
-  sig_records = np.ndarray.tolist(np.load("1202_sig_records.npy",allow_pickle=True))
-  bg_records = np.ndarray.tolist(np.load("1202_bg_records_smaller.npy",allow_pickle=True))
+  print('hello!')
+  dataDir = '/data/users/jgonski/Snowmass/training_npy/'
+  sig_records = np.ndarray.tolist(np.load(dataDir+"1202_sig_records.npy",allow_pickle=True))
+  bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_smaller.npy",allow_pickle=True))
 
   print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
@@ -268,52 +274,78 @@ if __name__ == "__main__":
   # network architecture parameters
   dense_sizes = (100, 100)
   # network training parameters
-  num_epoch = 50
-  batch_size = 1000
+  num_epoch = 100
+  batch_size = 100
  
   # dim of however many features we give in X  
-  dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=(i==0),dropouts=0.001,l2_regs=0.005)
+  #dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=(i==0),dropouts=0.001,l2_regs=0.005)
+  #dnn = DNN(input_dim=int(len(X[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+  #dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=True)
+ 
+
+  # by hand 
+  #base_model = Sequential()
+  #base_model.add(Dense(64, activation='relu', input_dim=len(X[0])))
+  #base_model.add(Dense(64, activation='relu'))
+  #base_model.add(Dense(3, activation='softmax'))
+  #base_model.name = 'Baseline model'
+  #base_model.compile(optimizer='adam'
+  #                , loss='categorical_crossentropy'
+  #                , metrics=['accuracy'])
 
   aucs = []
   rocs = []
   anomalyRatios = [0.0,0.01, 0.05, 0.1, 0.15, 0.2, 0.4,1.0]
+  anomalyRatios = [0.0, 0.05, 0.4, 1.0]
+  #anomalyRatios = [1.0]
   for r in anomalyRatios:
+
+      dnn = DNN(input_dim=int(len(X[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       # try skinnier SR
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 24000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 2400)
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 1000, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = 200)
       #X_val, X_train, X_test, Y_val,Y_train,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 100, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 50)
+      print('number of inputs :', len(X[0]))
+      print('training input shape: ', np.shape(X_train))
       
       h = dnn.fit(X_train, Y_train,
       epochs=num_epoch,
       batch_size=batch_size,
       validation_data=(X_val, Y_val),
       verbose=0)
+      #h = base_model.fit(X_train,Y_train,
+      #epochs=num_epoch,
+      #batch_size=batch_size,
+      #validation_data=(X_val, Y_val),
+      #verbose=0)
  
        
-      plt.plot(h.history['acc'])
-      plt.plot(h.history['val_acc'])
-      plt.title('model accuracy')
-      plt.ylabel('accuracy')
-      plt.xlabel('epoch')
-      plt.legend(['train', 'test'], loc='upper left')
-      plt.savefig('plots/accVsEpoch_anomalyRatio'+str(r)+'.pdf')
-      plt.clf()
+      #plt.plot(h.history['acc'])
+      #plt.plot(h.history['val_acc'])
+      #plt.title('model accuracy')
+      #plt.ylabel('accuracy')
+      #plt.xlabel('epoch')
+      #plt.legend(['train', 'test'], loc='upper left')
+      #plt.savefig('plots/0119_accVsEpoch_anomalyRatio'+str(r)+'.pdf')
+      #plt.clf()
       plt.plot(h.history['loss'])
       plt.plot(h.history['val_loss'])
       plt.title('model loss')
       plt.ylabel('loss')
       plt.xlabel('epoch')
-      plt.legend(['train', 'test'], loc='upper left')
-      plt.savefig('plots/lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
+      plt.legend(['train', 'val'], loc='upper left')
+      plt.savefig('plots/0119_lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
       plt.clf()
        
-    
+      # ROCs for SB vs. SR  
       Y_predict = dnn.predict(X_test)#,batch_size=1000)
-      auc = roc_auc_score(Y_test[:,1], Y_predict[:,1])
+      auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
       #roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1])
       roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1])
       rocs.append(roc_curve)
       aucs.append(auc)
+
+      # ROCs for signal vs. bkg 
 
   print(aucs)
   for i,r in enumerate(anomalyRatios):
@@ -322,7 +354,7 @@ if __name__ == "__main__":
   plt.ylabel('tpr')
   plt.title('ROC curve')
   plt.legend()
-  plt.savefig('plots/roc_aucs.pdf')
+  plt.savefig('plots/0119_roc_aucs.pdf')
   #plt.show()
 
 
