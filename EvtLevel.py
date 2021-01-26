@@ -19,6 +19,7 @@ import sklearn
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
 from eventHelper import *
+from datetime import datetime
 
 #-----------------------------------------------------------------------------------
 def binary_side_band(y_thing):
@@ -63,7 +64,6 @@ def make_evt_arrays(these_records):
         ## add to list
         #padded_jet_arrays.append(padded_jets)
         evt_vars = [record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
-        #evt_vars = [record['total_jet_mass']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -124,13 +124,14 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
       
     """
     Get the test set  """ 
-    #---  test = truth S vs truth B 
+    #---  test = truth S vs truth B in SR only 
     #this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
     #this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
-    #---  test = sr vs. sb
-    print(X_sig[anom_size:anom_size+test_size_each])
-    print(X_selected[bgsig_size:bgsig_size+test_size_each])
-    this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
+    #---  test = mixed sig + bkg in sr vs. bkg sb
+    #this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
+    #this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
+    #---  test = bkg sr vs. bkg sb
+    this_X_test_P = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
     this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #labels
     this_y_test_P = np.ones(test_size_each)
@@ -196,10 +197,11 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
 
-  print('hello!')
+  startTime = datetime.now()
+  print('hello! start time = ', str(startTime))
   dataDir = '/data/users/jgonski/Snowmass/training_npy/'
   sig_records = np.ndarray.tolist(np.load(dataDir+"1202_sig_records.npy",allow_pickle=True))
-  bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_smaller.npy",allow_pickle=True))
+  bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_bigger1.npy",allow_pickle=True))
 
   print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
@@ -208,7 +210,8 @@ if __name__ == "__main__":
   #for i in bg_records:
   #    i['from_anomaly_data'] = False
 
-  all_records = sig_records[:79999] + bg_records
+  #all_records = sig_records[:79999] + bg_records
+  all_records = sig_records + bg_records
 
   # Make some plots 
   make_var_plots(sig_records,bg_records)
@@ -225,10 +228,11 @@ if __name__ == "__main__":
   y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
 
   # Identify signal and side band 
-  sb_left = 225
-  sb_right = 475
-  sr_left = 320
-  sr_right = 380
+  # 0126 harmonized Ines
+  sb_left = 275
+  sb_right = 425
+  sr_left = 325
+  sr_right = 375
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -272,10 +276,12 @@ if __name__ == "__main__":
   aucs = []
   rocs = []
   anomalyRatios = [0.0,0.01, 0.05, 0.1, 0.15, 0.2, 0.4,1.0]
-  anomalyRatios = [0.0, 0.05, 0.4, 1.0]
-  anomalyRatios = [1.0]
+  #anomalyRatios = [0.0, 0.05, 0.4, 1.0]
+  anomalyRatios = [0.0, 1.0]
+  #anomalyRatios = [1.0]
   for r in anomalyRatios:
 
+      print('-------------- Anomaly Ratio = '+str(r))
       dnn = DNN(input_dim=int(len(X[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       # try skinnier SR
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each = 24000, shuffle_seed = 69,train = 0.8, val = 0.2, test_size_each = 2400)
@@ -294,7 +300,7 @@ if __name__ == "__main__":
       #validation_data=(X_val, Y_val),
       #verbose=0)
  
-      plot_loss(h) 
+      plot_loss(h,r) 
        
       # ROCs for SB vs. SR  
       Y_predict = dnn.predict(X_test)
@@ -309,9 +315,10 @@ if __name__ == "__main__":
       plt.plot(rocs[i][0],rocs[i][1],label=str(r)+", AUC="+str(np.round(aucs[i],2)))
   plt.xlabel('fpr')
   plt.ylabel('tpr')
-  plt.title('ROC curve: truth SR vs. truth SB')
+  plt.title('ROC curve: bkg in SR vs. bkg in SB')
+  #plt.title('ROC curve: truth S vs. truth B')
   plt.legend()
-  plt.savefig('plots/0120_roc_aucs_srVsSb.pdf')
+  plt.savefig('plots/0120_roc_aucs_bkgSrVsSB_nojetmass.pdf')
   #plt.show()
-
-
+   
+  print('runtime: ',datetime.now() - startTime)
