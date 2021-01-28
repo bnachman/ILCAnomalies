@@ -160,16 +160,20 @@ if __name__ == "__main__":
   #bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_bigger3.npy",allow_pickle=True))
   bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
   bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_background.txt")
-  sig_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_signal.txt")
+  sig_file_list = []
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
 
   sig_records = []
   bg_records = []  
   for filename in bg_file_list:
+      if 'bigger1' in filename: continue
+      print('Running filename ', filename)
       file = open(filename)
       bg_records += parse_file(file)
-  for filename in sig_file_list:
-      file = open(filename)
-      sig_records += parse_file(file)
+  #for filename in sig_file_list:
+  #    file = open(filename)
+  #    sig_records += parse_file(file)
 
   print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
@@ -185,14 +189,14 @@ if __name__ == "__main__":
   #----------------- ----------
   #X = make_evt_arrays(all_records)
   X_bg = make_evt_arrays(bg_records)
-  X_sig = make_evt_arrays(sig_records)
+  #X_sig = make_evt_arrays(sig_records)
   y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
-  y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
+  #y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
 
   np.save("training_data/X_bg", X_bg)
   np.save("training_data/y_bg", y_bg)
-  np.save("training_data/X_sig", X_sig)
-  np.save("training_data/y_sig", y_sig)
+  #np.save("training_data/X_sig", X_sig)
+  #np.save("training_data/y_sig", y_sig)
 
   # Identify signal and side band 
   # 0126 harmonized Ines
