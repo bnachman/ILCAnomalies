@@ -122,6 +122,30 @@ def parse_file(file_object):
         #if(len(all_records)) > 5000000: break
     return all_records
 
+#-----------------------------------------------------------------------------------
+def make_evt_arrays(these_records):
+    padded_evt_arrays =[]
+    for i,record in enumerate(these_records):
+        #print(i, record)
+        # convert to np array
+        #these_jets = np.array(record['jets']).astype('float')
+        #if len(these_jets) == 0:
+        #    these_jets = np.zeros(11).reshape([1,11])
+        #these_jets = these_jets[:,6:11] # only want nsubjettiness
+
+        ## determine how many zero values to pad
+        #pad_length = max_njets - these_jets.shape[0]
+        ##pad_length = 2#max_njets - these_jets.shape[0]
+        ##pad
+        #padded_jets = np.pad(these_jets, ((0,pad_length),(0,0)))
+        ##print(i,pad_length, these_jets.shape[0], padded_jets.shape)
+        ## check padding
+        #assert padded_jets.shape == (max_njets, 5)
+        ## add to list
+        #padded_jet_arrays.append(padded_jets)
+        evt_vars = [record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
+        padded_evt_arrays.append(np.array(evt_vars).real)
+    return np.array(padded_evt_arrays)
 
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
@@ -138,7 +162,8 @@ if __name__ == "__main__":
   bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_background.txt")
   sig_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_signal.txt")
 
-
+  sig_records = []
+  bg_records = []  
   for filename in bg_file_list:
       file = open(filename)
       bg_records += parse_file(file)
@@ -148,13 +173,6 @@ if __name__ == "__main__":
 
   print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
-  #for i in sig_records:
-  #    i['from_anomaly_data'] = True
-  #for i in bg_records:
-  #    i['from_anomaly_data'] = False
-
-  #all_records = sig_records[:79999] + bg_records
-  #all_records = sig_records + bg_records
 
   # Make some plots 
   #make_var_plots(sig_records,bg_records)
