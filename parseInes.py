@@ -41,6 +41,9 @@ def parse_file(file_object):
         eventweight = float(metadata.split()[0])
         this_record['eventweight'] = eventweight #this is the event "weight".  Let's ignoreit for now (we will need it later).
         njets = int(len(jets.split())/11) #number of "jets"
+        if len(jets.split()) % 11 != 0: 
+          print('PROBlEM!!!!!!!!!!!!!!!!!!!!!')
+          sys.exit(1)
 
         nparticles  = int(len(particles.split())/5) #number of particles
 
@@ -86,37 +89,38 @@ def parse_file(file_object):
 
         this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
-        thrust_maj, thrust_min = thrust(jets_vec)
-        this_record['thrust_major'] = thrust_maj
-        this_record['thrust_minor'] = thrust_min
-        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
 
-        w,v = momentum_tensor(jets_vec,2)
-        this_record['sphericity'] = sphericity(w,v)
-        this_record['transverse_sphericity'] = transverse_sphericity(w,v)
-        this_record['aplanarity'] = aplanarity(w,v)
+        #w,v = momentum_tensor(jets_vec,2)
+        #this_record['sphericity'] = sphericity(w,v)
+        #this_record['transverse_sphericity'] = transverse_sphericity(w,v)
+        #this_record['aplanarity'] = aplanarity(w,v)
 
         this_record['nparticles'] = nparticles
 
-        #particles = particles.split()
-        #particles_vec = []
-        #for i in range(nparticles):
-        #    particle = np.zeros(5)
-        #    #order:
-        #    # - index
-        #    # - magnitude of momentum |p| (units of GeV)
-        #    # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        #    # - azimuthal angle
-        #    # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
-        #    particle = particles[i*5:i*5+5]
-        #    particles_vec+=[particle]
-        #    #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
+        particles = particles.split()
+        particles_vec = []
+        for i in range(nparticles):
+            particle = np.zeros(5)
+            #order:
+            # - index
+            # - magnitude of momentum |p| (units of GeV)
+            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+            # - azimuthal angle
+            # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
+            particle = particles[i*5:i*5+5]
+            particles_vec+=[particle]
+            #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
+
         #this_record['particles'] = particles_vec
+        thrust_maj, thrust_min = thrust(particles_vec)
+        this_record['thrust_major'] = thrust_maj
+        this_record['thrust_minor'] = thrust_min
+        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
         
-        #w,v = momentum_tensor(particles_vec,3)
-        #this_record['sphericity'] = sphericity(w,v)
-        #this_record['transverse_sphericity'] = transverse_sphericity(w,v)
-        #his_record['aplanarity'] = aplanarity(w,v)
+        w,v = momentum_tensor(particles_vec,2)
+        this_record['sphericity'] = sphericity(w,v)
+        this_record['transverse_sphericity'] = transverse_sphericity(w,v)
+        this_record['aplanarity'] = aplanarity(w,v)
         
         all_records.append(this_record)
         #if(len(all_records)) > 5000000: break
@@ -158,28 +162,28 @@ if __name__ == "__main__":
   #sig_records = np.ndarray.tolist(np.load(dataDir+"1202_sig_records.npy",allow_pickle=True))
   #bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_smaller.npy",allow_pickle=True))
   #bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_bigger3.npy",allow_pickle=True))
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_background.txt")
-  sig_file_list = []
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*1_background.txt")
+  sig_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*1_signal.txt")
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
 
   sig_records = []
   bg_records = []  
   for filename in bg_file_list:
-      if 'bigger1' in filename: continue
       print('Running filename ', filename)
       file = open(filename)
       bg_records += parse_file(file)
-  #for filename in sig_file_list:
-  #    file = open(filename)
-  #    sig_records += parse_file(file)
+  for filename in sig_file_list:
+      print('Running filename ', filename)
+      file = open(filename)
+      sig_records += parse_file(file)
 
   print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
 
 
   # Make some plots 
-  #make_var_plots(sig_records,bg_records)
+  make_var_plots(sig_records,bg_records,'0208_debug')
 
   
 

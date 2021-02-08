@@ -21,6 +21,7 @@ from sklearn.utils import shuffle
 from eventHelper import *
 from datetime import datetime
 from ROOT import *
+import ipdb
 
 #-----------------------------------------------------------------------------------
 def get_sigma_rs(size_each=900):
@@ -182,7 +183,8 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     # Shuffle the combination    
     this_X_te = np.concatenate([this_X_test_P, this_X_test_N])
     this_y_te = np.concatenate([this_y_test_P, this_y_test_N])
-    
+   
+    #ipdb.set_trace() 
     this_X_te, this_y_te = shuffle(this_X_te, this_y_te, random_state = shuffle_seed)
     print('Size of test set:',this_X_te.shape)
     print('Test set distribution:',np.unique(this_y_te,return_counts = True))
@@ -244,11 +246,11 @@ if __name__ == "__main__":
 
   sizeeach = 15000
   # janky way to get yields for desired signal sensitivities 
-  #for i in range(0,100):
-  #  ar = i*0.01
-  #  sigYield = int(round(ar * sizeeach)) #amount of sig contamination
-  #  bkgYield  = int(sizeeach - sigYield) #remaining background to get to 100%
-  #  print(str(ar)+" "+str(RooStats.NumberCountingUtils.BinomialExpZ(sigYield,bkgYield,0.2)))
+  for i in range(0,100):
+    ar = i*0.01
+    sigYield = int(round(ar * sizeeach)) #amount of sig contamination
+    bkgYield  = int(sizeeach - sigYield) #remaining background to get to 100%
+    print("Ar: "+str(ar)+"; sig="+str(sigYield)+", bkg="+str(bkgYield)+". Sigma="+str(RooStats.NumberCountingUtils.BinomialExpZ(sigYield,bkgYield,0.2)))
 
   # load all bkg
   X_alllhe = np.load("training_data/X_bg_alllhe.npy")
@@ -278,8 +280,6 @@ if __name__ == "__main__":
 
   side_band_indicator = (y_bg_binary == 0)
   within_bounds_indicator = (y_bg_binary == 1)
-  s_side_band_indicator = (y_bg_binary == 0)
-  s_within_bounds_indicator = (y_bg_binary == 1)
   # This is the background data in the SB
   X_sideband = X_bg[side_band_indicator]
   y_sideband = y_bg_binary[side_band_indicator]
@@ -287,12 +287,19 @@ if __name__ == "__main__":
   X_selected = X_bg[within_bounds_indicator]
   y_selected = y_bg_binary[within_bounds_indicator]
   # This is the signal yield in the SR
-  #X_allsignal = X_sig[s_within_bounds_indicator]
+  y_sig_binary = np.vectorize(binary_side_band)(y_sig)
+  np.unique(y_sig_binary,return_counts = True)
+  s_side_band_indicator = (y_sig_binary == 0)
+  s_within_bounds_indicator = (y_sig_binary == 1)
+  X_sig_sr = X_sig[s_within_bounds_indicator]
+  X_sig_sb = X_sig[s_side_band_indicator]
 
 
-  #print('Yields!') 
-  #print('Bkg in SR: ', len(X_selected))
-  #print('Sig in SR: ', len(X_allsignal))
+  print('Yields!') 
+  print('Bkg in SR: ', len(X_selected))
+  print('Bkg in SB: ', len(X_sideband))
+  print('Sig in SR: ', len(X_sig_sr))
+  print('Sig in SB: ', len(X_sig_sb))
 
 
 
@@ -323,14 +330,14 @@ if __name__ == "__main__":
   aucs = []
   rocs = []
   anomalyRatios = [0.0,0.05,0.4,1.0]
-  anomalyRatios = [0.0,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
+  anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
 
   for r in anomalyRatios:
 
       print('-------------- Anomaly Ratio = '+str(r))
       dnn = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       # try skinnier SR
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each =np.divide(sizeeach,2))
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = np.divide(sizeeach,2))
       print('number of inputs :', len(X_sig[0]))
       print('training input shape: ', np.shape(X_train))
       

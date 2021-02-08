@@ -44,8 +44,10 @@ def momentum_tensor(jets,r):
     m = np.zeros((3,3))
     totalPSq = 1e-10
     for jet in jets:
+        #print(jet)
         #[index, p [GeV], eta, phi, m]
         px,py,pz = get_three_vec(jet)
+        #print('three vec: ', px, py, pz)
         pr = np.power(float(jet[1]),r-2)
         m += [[px*px*pr, px*py*pr, px*pz*pr], [py*px*pr, py*py*pr, py*pz*pr], [pz*px*pr, pz*py*pr, pz*pz*pr]]
         totalPSq += np.power(float(jet[1]),r)
@@ -53,17 +55,18 @@ def momentum_tensor(jets,r):
     m = m/totalPSq
     from numpy import linalg as LA
     w, v = LA.eig(m)
-    #print("eigenvalues: ", w)
+    #print("eigenvalues (sum should be normalized to 1): ", sorted(w))
     #print("eigenvectors: ",v)
     return w, v
     #return m  #From this, the sphericity, aplanarity and planarity can be calculated by combinations of eigenvalues.
 
-def sphericity(w,v):
-    return (3/2) * (sorted(w)[1]+sorted(w)[2])
+
 def aplanarity(w,v):
-    return (3/2) * sorted(w)[2]
+    return (3/2) * sorted(w)[0] #lambda3
+def sphericity(w,v): 
+    return (3/2) * (sorted(w)[1]+sorted(w)[0]) #lambda2 + lamdba3
 def transverse_sphericity(w,v): 
-    return (2*sorted(w)[1])/(sorted(w)[0]+sorted(w)[1])
+    return (2*sorted(w)[1])/(sorted(w)[2]+sorted(w)[1]) #2*lambda2 / (lam1+lam2)
 
 
 
@@ -187,8 +190,27 @@ def thrust(jets):
 
 
 #---------------------------  Plotting help
+def plot_loss(h,r,save):
+      plt.plot(h.history['loss'])
+      plt.plot(h.history['val_loss'])
+      plt.title('model loss, ar='+str(r))
+      plt.ylabel('loss')
+      plt.xlabel('epoch')
+      plt.legend(['train', 'val'], loc='upper left')
+      plt.savefig('plots/'+save+'_lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
+      plt.clf()
 
-def plot_something(sig_records,bg_records,var,R,doLog):
+def make_var_plots(sig_records,bg_records,save):
+  plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
+  plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
+  plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
+  plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
+  plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
+  plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
+  plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
+
+def plot_something(save,sig_records,bg_records,var,R,doLog):
     #plt.figure(figsize=(20,5))
     sig_arr = np.array([i[var] for i in sig_records[:79999]])
     bkg_arr = np.array([i[var] for i in bg_records])    
@@ -201,7 +223,7 @@ def plot_something(sig_records,bg_records,var,R,doLog):
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of Events / bin")
     plt.legend()
-    plt.savefig("plots/plt_"+var+".pdf")
+    plt.savefig("plots/"+save+"_plt_"+var+".pdf")
     plt.clf()
 
 def plot_jets(index,R,doLog):
