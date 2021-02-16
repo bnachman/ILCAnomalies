@@ -6,6 +6,7 @@
 #source activate fullenv
 #python -m ipykernel install --user --name fullenv --display-name "fullenv"
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
@@ -26,9 +27,19 @@ from ROOT import *
 def parse_file(file_object):
     all_records = []
     mymeasuredenergy = []
+    ## Generate spherical sample
+    sphereSample = np.array([sphericalGen(i) for i in range(5)])
+    sphereEng = np.array([engFromVec(sphereSample[j]) for j in range(5)])
+    
+    ## Choose sphere n points
+    sphInd = 2
+    spherePoints1 = sphereSample[sphInd]
+    sphereEng1 = sphereEng[sphInd]
+
 
     count = 0
     for line in file_object:
+        if count%100 == 0: print('Line '+str(count))
 
         metadata = line.split("J")[0]
         eventinfo = line.split("J")[1]
@@ -41,10 +52,6 @@ def parse_file(file_object):
         eventweight = float(metadata.split()[0])
         this_record['eventweight'] = eventweight #this is the event "weight".  Let's ignoreit for now (we will need it later).
         njets = int(len(jets.split())/11) #number of "jets"
-        if len(jets.split()) % 11 != 0: 
-          print('PROBlEM!!!!!!!!!!!!!!!!!!!!!')
-          sys.exit(1)
-
         nparticles  = int(len(particles.split())/5) #number of particles
 
         #True collision quantities
@@ -85,11 +92,15 @@ def parse_file(file_object):
             jet = jets[i*11:i*11+11]
             jets_vec+=[jet]
 
-        #this_record['jets']=jets_vec
+        this_record['jets']=jets_vec
 
-        this_record['lny23'] = lny23(jets_vec)
+        #this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
 
+        #thrust_maj, thrust_min = thrust(jets_vec)
+        #this_record['thrust_major'] = thrust_maj
+        #this_record['thrust_minor'] = thrust_min
+        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
         #w,v = momentum_tensor(jets_vec,2)
         #this_record['sphericity'] = sphericity(w,v)
         #this_record['transverse_sphericity'] = transverse_sphericity(w,v)
@@ -110,20 +121,19 @@ def parse_file(file_object):
             particle = particles[i*5:i*5+5]
             particles_vec+=[particle]
             #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
-
-        #this_record['particles'] = particles_vec
-        thrust_maj, thrust_min = thrust(particles_vec)
-        this_record['thrust_major'] = thrust_maj
-        this_record['thrust_minor'] = thrust_min
-        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
+        this_record['particles'] = particles_vec
         
+        this_record['lny23'] = lny23(particles_vec)
         w,v = momentum_tensor(particles_vec,2)
         this_record['sphericity'] = sphericity(w,v)
         this_record['transverse_sphericity'] = transverse_sphericity(w,v)
         this_record['aplanarity'] = aplanarity(w,v)
+
+        # Event isotropy 
+        this_record['evIsoSphere'] = evIsoSphere(particles_vec,spherePoints1,sphereEng1)
+         
         
         all_records.append(this_record)
-        #if(len(all_records)) > 5000000: break
     return all_records
 
 #-----------------------------------------------------------------------------------
@@ -147,7 +157,7 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['total_jet_mass'],record['thrust_major'],record['thrust_minor']]
+        evt_vars = [record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -156,79 +166,41 @@ if __name__ == "__main__":
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
+  tag=sys.argv[1]
 
 
-  #dataDir = '/data/users/jgonski/Snowmass/training_npy/'
-  #sig_records = np.ndarray.tolist(np.load(dataDir+"1202_sig_records.npy",allow_pickle=True))
-  #bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_smaller.npy",allow_pickle=True))
-  #bg_records = np.ndarray.tolist(np.load(dataDir+"1202_bg_records_bigger3.npy",allow_pickle=True))
   #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*1_background.txt")
-  sig_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*1_signal.txt")
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*1_background.txt")
+  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
+  sig_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_signal.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
 
   sig_records = []
   bg_records = []  
-  for filename in bg_file_list:
-      print('Running filename ', filename)
-      file = open(filename)
-      bg_records += parse_file(file)
   for filename in sig_file_list:
+      if '01' in filename: continue
       print('Running filename ', filename)
       file = open(filename)
       sig_records += parse_file(file)
+      X_sig = make_evt_arrays(sig_records)
+      y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
+      np.save("training_data/"+tag+"_X_sig_"+filename.split('/')[-1].split('.')[0], X_sig)
+      np.save("training_data/"+tag+"_y_sig_"+filename.split('/')[-1].split('.')[0], y_sig)
 
-  print('Running over '+str(len(bg_records))+' background events and '+str(len(sig_records))+' signal events....')
+  for filename in bg_file_list:
+      if '01' in filename: continue
+      print('Running filename ', filename)
+      file = open(filename)
+      bg_records += parse_file(file)
+      X_bg = make_evt_arrays(bg_records)
+      y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
+      np.save("training_data/"+tag+"_X_bg_"+filename.split('/')[-1].split('.')[0], X_bg)
+      np.save("training_data/"+tag+"_y_bg_"+filename.split('/')[-1].split('.')[0], y_bg)
 
 
   # Make some plots 
-  make_var_plots(sig_records,bg_records,'0208_debug')
+  make_var_plots(sig_records,bg_records,tag)
 
   
-
-
-  #----------------- ----------
-  # # NN training
-  #----------------- ----------
-  #X = make_evt_arrays(all_records)
-  X_bg = make_evt_arrays(bg_records)
-  #X_sig = make_evt_arrays(sig_records)
-  y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
-  #y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
-
-  np.save("training_data/X_bg", X_bg)
-  np.save("training_data/y_bg", y_bg)
-  #np.save("training_data/X_sig", X_sig)
-  #np.save("training_data/y_sig", y_sig)
-
-  # Identify signal and side band 
-  # 0126 harmonized Ines
-  #sb_left = 275
-  #sb_right = 425
-  #sr_left = 325
-  #sr_right = 375
-
-  #y_bg_binary = np.vectorize(binary_side_band)(y_bg)
-  #np.unique(y_bg_binary,return_counts = True)
-
-  #side_band_indicator = (y_bg_binary == 0)
-  #within_bounds_indicator = (y_bg_binary == 1)
-  #s_side_band_indicator = (y_bg_binary == 0)
-  #s_within_bounds_indicator = (y_bg_binary == 1)
-  ## This is the background data in the SB
-  #X_sideband = X_bg[side_band_indicator]
-  #y_sideband = y_bg_binary[side_band_indicator]
-  ## This is the background data in the SR
-  #X_selected = X_bg[within_bounds_indicator]
-  #y_selected = y_bg_binary[within_bounds_indicator]
-  ## This is the signal yield in the SR
-  ##X_allsignal = X_sig[s_within_bounds_indicator]
-
-
-  ##print('Yields!') 
-  ##print('Bkg in SR: ', len(X_selected))
-  ##print('Sig in SR: ', len(X_allsignal))
-
    
   print('runtime: ',datetime.now() - startTime)
