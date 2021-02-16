@@ -32,10 +32,10 @@ if __name__ == "__main__":
    #os.system("echo 'Requirements = (machine != \"xenia00.nevis.columbia.edu\")' >> submit.sub")
    os.system("echo 'should_transfer_files = YES' >> submit.sub")
    os.system("echo 'when_to_transfer_output = ON_EXIT' >> submit.sub")
-   os.system("echo 'initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/' >> submit.sub")
+   os.system("echo 'initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/condor' >> submit.sub")
    #os.system("echo 'sampledir = /nevis/xenia/data/users/jgonski/xbb/Xbb_merged_samples/0121_PCJKDL1r' >> submit.sub")
    os.system("echo 'workdir = /data/users/jgonski/Snowmass/LHE_txt_fils/' >> submit.sub")
-   os.system("echo 'transfer_input_files = $(initialdir)/condor/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(workdir)/"+myFile+" ' >> submit.sub")
+   os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(workdir)/"+myFile+" ' >> submit.sub")
    os.system("echo 'queue arguments from args.txt' >> submit.sub")
 
    os.system("condor_submit submit.sub")

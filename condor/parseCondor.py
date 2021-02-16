@@ -24,7 +24,7 @@ from datetime import datetime
 from ROOT import *
 
 #--------------------------- Parse text files
-def parse_file(file_object):
+def parse_file(file_object,startNum,endNum):
     all_records = []
     mymeasuredenergy = []
     ## Generate spherical sample
@@ -39,6 +39,8 @@ def parse_file(file_object):
 
     count = 0
     for line in file_object:
+        if count < int(startNum): continue 
+        if count > int(endNum): break
         if count%100 == 0: print('Line '+str(count))
 
         metadata = line.split("J")[0]
@@ -168,15 +170,17 @@ if __name__ == "__main__":
   print('hello! start time = ', str(startTime))
   tag=sys.argv[1]
   filename=sys.argv[2]
+  startNum=sys.argv[3]
+  endNum=sys.argv[4]
 
   records = []
-  print('Running filename ', filename)
+  print('Running filename ', filename, ' from line ', startNum, ' to ', endNum)
   file = open(filename)
-  records += parse_file(file)
+  records += parse_file(file,startNum,endNum)
   X = make_evt_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])
-  np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0], X)
-  np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0], y)
+  np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+str(startNum)+"to"+str(endNum), X)
+  np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+str(startNum)+"to"+str(endNum), y)
 
 
   
