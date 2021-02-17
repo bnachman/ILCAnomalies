@@ -9,38 +9,41 @@ if __name__ == "__main__":
    parser.add_argument("-f", "--fileName", default = [], type=str, nargs='+',
                       help="file name")
    args = parser.parse_args()
-   myFile = args.fileName[0]
+   #myFile = args.fileName[0]
 
 
-   # SUBMIT HERE
-   print("SUBMITTING: "+myFile)
-   args = open("args.txt","w")
-   os.system("echo 0216_condor_test "+myFile+" >>  args.txt")
-   args.close()
-   open("submit.sub","w")
+   files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/*bigger*")
 
-   os.system("echo '#!/bin/bash' >> submit.sub")
-   os.system("echo 'executable            = condor_parse.sh' >> submit.sub") ##expand here to PC 
-   os.system("echo 'output                = logs.$(ClusterId).$(ProcId).out' >> submit.sub")
-   os.system("echo 'error                 = logs.$(ClusterId).$(ProcId).err' >> submit.sub")
-   os.system("echo 'log                   = logs.$(ClusterId).log' >> submit.sub")
-   os.system("echo 'universe         = vanilla' >> submit.sub")
-   os.system("echo 'getenv           = True' >> submit.sub")
-   os.system("echo 'Rank            = Mips' >> submit.sub")
-   os.system("echo '' >> submit.sub")
-   #os.system("echo '#some other stuff from Bill's twiki' >> submit.sub")
-   #os.system("echo 'Requirements = (machine != \"xenia00.nevis.columbia.edu\")' >> submit.sub")
-   os.system("echo 'should_transfer_files = YES' >> submit.sub")
-   os.system("echo 'when_to_transfer_output = ON_EXIT' >> submit.sub")
-   os.system("echo 'initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/condor' >> submit.sub")
-   #os.system("echo 'sampledir = /nevis/xenia/data/users/jgonski/xbb/Xbb_merged_samples/0121_PCJKDL1r' >> submit.sub")
-   os.system("echo 'workdir = /data/users/jgonski/Snowmass/LHE_txt_fils/' >> submit.sub")
-   os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(workdir)/"+myFile+" ' >> submit.sub")
-   os.system("echo 'queue arguments from args.txt' >> submit.sub")
+   for myFile in files:
+     # SUBMIT HERE
+     for i in range(0,2776081,100000): # number of events in largest file
+       print("SUBMITTING: "+myFile+" from  "+str(i)+" to "+str(i+100000))
+       args = open("args.txt","w")
+       os.system("echo '0217_condor_all "+myFile+" " + str(i) + " " +str(i+100000)+"'>>  args.txt")
+       args.close()
+       open("submit.sub","w")
 
-   os.system("condor_submit submit.sub")
-   #time.sleep(.2)
-   
-   #open('submit.sub', 'w').close()
+       os.system("echo '#!/bin/bash' >> submit.sub")
+       os.system("echo 'executable            = condor_parse.sh' >> submit.sub") ##expand here to PC 
+       os.system("echo 'output                = logs.$(ClusterId).$(ProcId).out' >> submit.sub")
+       os.system("echo 'error                 = logs.$(ClusterId).$(ProcId).err' >> submit.sub")
+       os.system("echo 'log                   = logs.$(ClusterId).log' >> submit.sub")
+       os.system("echo 'universe         = vanilla' >> submit.sub")
+       os.system("echo 'getenv           = True' >> submit.sub")
+       os.system("echo 'Rank            = Mips' >> submit.sub")
+       os.system("echo '' >> submit.sub")
+       #os.system("echo '#some other stuff from Bill's twiki' >> submit.sub")
+       #os.system("echo 'Requirements = (machine != \"xenia00.nevis.columbia.edu\")' >> submit.sub")
+       os.system("echo 'should_transfer_files = YES' >> submit.sub")
+       os.system("echo 'when_to_transfer_output = ON_EXIT' >> submit.sub")
+       os.system("echo 'initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/condor' >> submit.sub")
+       os.system("echo 'workdir = /data/users/jgonski/Snowmass/LHE_txt_fils/' >> submit.sub")
+       os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, "+myFile+" ' >> submit.sub")
+       os.system("echo 'queue arguments from args.txt' >> submit.sub")
 
-   print("DONE SUBMITTING... ")
+       os.system("condor_submit submit.sub")
+       #time.sleep(.2)
+       
+       #open('submit.sub', 'w').close()
+
+       print("DONE SUBMITTING... ")

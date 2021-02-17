@@ -3,7 +3,7 @@ mkdir event_isotropy
 tar -xzf event_isotropy.tar.gz
 cd event_isotropy
 mv ../*txt .
-python parseCondor.py $1 $2 
+python parseCondor.py $1 $2 $3 $4
 mv *npy ../
 rm -rf event_isotropy
 
