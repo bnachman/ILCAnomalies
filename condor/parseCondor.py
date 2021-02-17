@@ -39,7 +39,6 @@ def parse_file(file_object,startNum,endNum):
 
     count = 0
     for line in file_object:
-        print(count)
         if count < int(startNum): 
           count += 1
           continue 
@@ -182,8 +181,8 @@ if __name__ == "__main__":
   records += parse_file(file,startNum,endNum)
   X = make_evt_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])
-  np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+str(startNum)+"to"+str(endNum), X)
-  np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+str(startNum)+"to"+str(endNum), y)
+  np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
+  np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
 
 
   
