@@ -39,7 +39,10 @@ def parse_file(file_object,startNum,endNum):
 
     count = 0
     for line in file_object:
-        if count < int(startNum): continue 
+        print(count)
+        if count < int(startNum): 
+          count += 1
+          continue 
         if count > int(endNum): break
         if count%100 == 0: print('Line '+str(count))
 
