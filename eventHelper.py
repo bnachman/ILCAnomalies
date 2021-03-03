@@ -1,16 +1,38 @@
 #!/usr/bin/env python
 # coding: utf-8
 import numpy as np
+import argparse
 import matplotlib.pyplot as plt
 import glob
 from ROOT import *
+from eventIsotropy.spherGen import sphericalGen, engFromVec
+from eventIsotropy.emdVar import _cdist_cos, emd_Calc
 
 
 # # Defining event level variables
 # IO: arXiv:1206.2135.pdf
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
+d_npy={
+'leadingjetpT':0,
+'subleadingjetpT':1,
+'measuredXpT':2,
+'measuredphotonpT':3,
+'njets':4,
+'nparticles':5,
+'lny23':6,
+'aplanarity':7,
+'transverse_sphericity':8,
+'sphericity':9,
+'total_jet_mass':10,
+'evIsoSphere':11
+}
+
 #--------------------------- Variable defs
+def getpt(jet):
+      pt = float(jet[1])/np.cosh(float(jet[2]))
+      return pt
+
 def get_three_vec(jet):
       pt = float(jet[1])/np.cosh(float(jet[2]))
       px = pt*np.cos(float(jet[3]))
@@ -18,6 +40,24 @@ def get_three_vec(jet):
       pz = pt*np.sinh(float(jet[2]))
  
       return [px,py,pz]
+
+def evIsoSphere(particles_vec,spherePoints1,sphereEng1):
+  momenta=[]
+  engL=[]
+  
+  for p in particles_vec:
+    v = TLorentzVector(0,0,0,0)
+    v.SetPtEtaPhiM(getpt(p),float(p[2]),float(p[3]),0.0)
+    eng, px, py, pz = v.E(), v.Px(), v.Py(), v.Pz()
+    if eng > 1e-05:
+        momenta.append(np.array([px, py, pz]))
+        engL.append(eng)
+  
+  ## Calculate the \semd values
+  M = _cdist_cos(spherePoints1,np.array(momenta)) # Calculates distance with 1 - \cos metric
+  emdval = emd_Calc(sphereEng1, np.array(engL), M) # Computes EMD
+  print(emdval)
+  return emdval
 
 def total_jet_mass(jets):
     sumVec = TLorentzVector(0.,0.,0.,0.)
@@ -190,6 +230,22 @@ def thrust(jets):
 
 
 #---------------------------  Plotting help
+def make_roc_plots(anomalyRatios,saveTag,Ylabel,rocs,aucs,sigs):
+  for i,r in enumerate(anomalyRatios):
+      #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i]))
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(r)+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
+      else: plt.plot(rocs[i][0],rocs[i][1],label=str(r)+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
+  if 'sqrt' in Ylabel: 
+    plt.xlabel('tpr')
+    plt.ylim(0,6.0)
+  else: plt.xlabel('fpr')
+  plt.ylabel(Ylabel)
+  plt.title('ROC curve: S vs. B in SR')
+  plt.legend()
+  plt.savefig('plots/'+saveTag+'_roc_aucs_benchmark_'+Ylabel.replace("/","")+'.pdf')
+  plt.clf()
+  #plt.show()
+
 def plot_loss(h,r,save):
       plt.plot(h.history['loss'])
       plt.plot(h.history['val_loss'])
@@ -200,20 +256,41 @@ def plot_loss(h,r,save):
       plt.savefig('plots/'+save+'_lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
       plt.clf()
 
+#def make_npy_plots(X_sig,X_bg,var,R,save,doLog=True):
+#  sig_arr = np.array([float(i[d_npy[var]]) for i in X_sig])
+#  bkg_arr = np.array([float(i[d_npy[var]]) for i in X_bg])    
+#  print('bkg arr: ', bkg_arr)
+#  plt.hist(bkg_arr, np.linspace(0,2.0,100), Color="steelblue", histtype='step', linewidth=2,label='Background')
+#  #plt.hist(sig_arr, Color="tomato", histtype='step', linewidth=2,label='Signal')
+#  plt.xlabel(var)
+#  if doLog == True: plt.yscale('log')
+#  plt.ylabel("Number of Events / bin")
+#  plt.legend()
+#  plt.savefig("plots/"+save+"_plt_"+var+".pdf")
+#  plt.clf()
+#
+
 def make_var_plots(sig_records,bg_records,save):
-  plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
-  plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
-  plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
-  plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
-  plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
-  plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
+  #plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
+  #plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
+  #plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
+  #plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
+  #plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
+  #plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,300,100),1)
+  plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,300,100),1)
+  plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,300,100),1)
+  #plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
+  #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
 def plot_something(save,sig_records,bg_records,var,R,doLog):
     #plt.figure(figsize=(20,5))
-    sig_arr = np.array([i[var] for i in sig_records[:79999]])
-    bkg_arr = np.array([i[var] for i in bg_records])    
+    if 'npy' in save: 
+      sig_arr = np.array([float(i[d_npy[var]]) for i in sig_records])
+      bkg_arr = np.array([float(i[d_npy[var]]) for i in bg_records])    
+    else:
+      sig_arr = np.array([i[var] for i in sig_records[:79999]])
+      bkg_arr = np.array([i[var] for i in bg_records])    
     plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background')
     plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal')
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
