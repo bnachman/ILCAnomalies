@@ -24,6 +24,7 @@ from ROOT import *
 
 #-----------------------------------------------------------------------------------
 def load_arrs(typee,savee):
+  print('getting files of form ', "training_data_eviso/"+savee+"*X*"+typee+"*.npy")
   X_arr = []
   y_arr=[]
   for s in glob.glob("training_data_eviso/"+savee+"*X*"+typee+"*.npy"):
@@ -78,7 +79,7 @@ def train_models(X_train, X_val, X_test, Y_train,Y_val,Y_test):
 
 
 #-----------------------------------------------------------------------------------
-def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 69,
+def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
                                train = 0.8, val = 0.2, test_size_each = 5000):
     
     """
@@ -103,30 +104,33 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     Data Selection"""
     # training to separate SB from SR: 0 for all SB events, 1 for all SR events 
     # select sideband datapoints
-    this_X_sb = X_sideband[:size_each]
-    this_y_sb = np.zeros(size_each) # 0 for bg in SB
-    
-    # select bg in SR datapoints
-    this_X_bgsig = X_selected[:bgsig_size]
-    this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
-    
-    # select anomaly datapoints
-    this_X_sig = X_sig[:anom_size]
-    this_y_sig = np.ones(anom_size) # 1 for signal in SR
+    if train_set=='CWoLa':
+      this_X_sb = X_sideband[:size_each]
+      this_y_sb = np.zeros(size_each) # 0 for bg in SB
+      
+      # select bg in SR datapoints
+      this_X_bgsig = X_selected[:bgsig_size]
+      this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
+      
+      # select anomaly datapoints
+      this_X_sig = X_sig[:anom_size]
+      this_y_sig = np.ones(anom_size) # 1 for signal in SR
   
     # 0128 benchmark
     # select bg in SR datapoints
-    #print('# inputs of X: ', len(X_selected[0]))
-    #this_X_sb= X_selected[:size_each]
-    #this_y_sb = np.zeros(size_each) # 0 for bg in SR
-    #
-    ## select anomaly datapoints
-    #this_X_sig = X_sig[:anom_size]
-    #this_y_sig = np.ones(anom_size) # 1 for signal in SR
+    elif train_set == 'benchmark':
+      #print('# inputs of X: ', len(X_selected[0]))
+      this_X_sb= X_selected[:size_each]
+      this_y_sb = np.zeros(size_each) # 0 for bg in SR
+      
+      # select anomaly datapoints
+      this_X_sig = X_sig[:anom_size]
+      this_y_sig = np.ones(anom_size) # 1 for signal in SR
    
-    ## select bg in SR datapoints
-    #this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
-    #this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
+      # select bg in SR datapoints
+      this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
+      #this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
+      this_y_bgsig = np.zeros(bgsig_size) #0 for other bg in SR
    
     #import ipdb
     #ipdb.set_trace()
@@ -151,17 +155,21 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
     """
     Get the test set  """ 
     #---  test = truth S vs truth B in SR only 
-    #this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
-    #this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
+    if train_set=='CWoLa' and test_set == 'SvsB':
+      this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
+      this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
     #---  test = mixed sig + bkg in sr vs. bkg sb
     #this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
     #this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = bkg sr vs. bkg sb
-    #this_X_test_P = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
-    #this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
+    if test_set == 'BvsB':
+      this_X_test_P = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
+      this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = truth S vs truth B in SR only, benchmark training
-    this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
-    this_X_test_N = X_selected[size_each+bgsig_size:size_each+bgsig_size+test_size_each] #truth bkg in SR
+    elif train_set=='benchmark' and test_set == 'SvsB':
+      this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
+      this_X_test_N = X_selected[size_each+bgsig_size:size_each+bgsig_size+test_size_each] #truth bkg in SR
+
     #labels
     this_y_test_P = np.ones(test_size_each)
     this_y_test_N = np.zeros(test_size_each)
@@ -228,46 +236,29 @@ def prep_and_shufflesplit_data(anomaly_ratio, size_each = 76000, shuffle_seed = 
 if __name__ == "__main__":
 
   parser = argparse.ArgumentParser()
-  parser.add_argument("-t", "--tag", default = '', type=str, nargs='+',
-                     help="file name")
+  parser.add_argument("-n", "--savename", default = '', type=str, nargs='+',
+                     help="savename")
   parser.add_argument("-s", "--sizeeach", default = 15000, type=int, nargs='+',
                      help="sizeeach")
+  parser.add_argument("-te", "--testset", default = '', type=str, nargs='+',
+                     help="testset")
+  parser.add_argument("-tr", "--trainset", default = '', type=str, nargs='+',
+                     help="trainset")
   args = parser.parse_args()
-  arg_sizeeach = int(args.sizeeach[0])
-  saveTag = args.tag[0]
+  sizeeach = int(args.sizeeach[0])
+  savename = args.savename[0]
+  testset = args.testset[0]
+  trainset = args.trainset[0]
+  saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
+  print('arguments: sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset)
 
-  sizeeach = arg_sizeeach
-  # janky way to get yields for desired signal sensitivities 
-  #for i in range(0,100):
-  #  ar = i*0.01
-  #  sigYield = int(round(ar * sizeeach)) #amount of sig contamination
-  #  bkgYield  = int(sizeeach - sigYield) #remaining background to get to 100%
-  #  print("Ar: "+str(ar)+"; sig="+str(sigYield)+", bkg="+str(bkgYield)+". Sigma="+str(RooStats.NumberCountingUtils.BinomialExpZ(sigYield,bkgYield,0.2)))
 
-  X_sig_arr = []
-  y_sig_arr = []
-  X_bg_arr = []
-  y_bg_arr = []
-  #for s in glob.glob("training_data_eviso/0210_evIso_test_X_sig*.npy"):
-  #  X_sig_arr.append(np.load(s))
-  #for s in glob.glob("training_data_eviso/0210_evIso_test_y_sig*.npy"):
-  #  y_sig_arr.append(np.load(s))
-  #for s in glob.glob("training_data_eviso/021*_evIso_test_X_bg*.npy"):
-  #  X_bg_arr.append(np.load(s))
-  #for s in glob.glob("training_data_eviso/021*_evIso_test_y_bg*.npy"):
-  #  y_bg_arr.append(np.load(s))
-  ##add what we managed to get off condor 
-  #for s in glob.glob("training_data_eviso/0224_condor_all_X_processed_background_randomseeds_bigger1*.npy"):
-  #  X_bg_arr.append(np.load(s))
-  #for s in glob.glob("training_data_eviso/0224_condor_all_y_processed_background_randomseeds_bigger1*.npy"):
-  #  y_bg_arr.append(np.load(s))
-
-  X_bg_arr, y_bg_arr = load_arrs("background","0303")
-  X_sig_arr, y_sig_arr = load_arrs("signal","0303")
-
+  # -- Get input files 
+  X_bg_arr, y_bg_arr = load_arrs("background","02")
+  X_sig_arr, y_sig_arr = load_arrs("signal","02")
   X_bg = np.vstack(X_bg_arr)
   X_sig = np.vstack(X_sig_arr)
   y_bg = np.concatenate(y_bg_arr)
@@ -275,118 +266,90 @@ if __name__ == "__main__":
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
-  make_npy_plots(X_sig,X_bg,'total_jet_mass',np.linspace(0,2.0,100),saveTag)
+  make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
-  # Identify signal and side band 
+  # --  Identify signal and side band 
   # 0126 harmonized Ines
-  #sb_left = 275
-  #sb_right = 425
-  #sr_left = 325
-  #sr_right = 375
+  sb_left = 275
+  sb_right = 425
+  sr_left = 325
+  sr_right = 375
 
-  #y_bg_binary = np.vectorize(binary_side_band)(y_bg)
-  #np.unique(y_bg_binary,return_counts = True)
+  y_bg_binary = np.vectorize(binary_side_band)(y_bg)
+  np.unique(y_bg_binary,return_counts = True)
 
-  #side_band_indicator = (y_bg_binary == 0)
-  #within_bounds_indicator = (y_bg_binary == 1)
-  ## This is the background data in the SB
-  #X_sideband = X_bg[side_band_indicator]
-  #y_sideband = y_bg_binary[side_band_indicator]
-  ## This is the background data in the SR
-  #X_selected = X_bg[within_bounds_indicator]
-  #y_selected = y_bg_binary[within_bounds_indicator]
-  ## This is the signal yield in the SR
-  #y_sig_binary = np.vectorize(binary_side_band)(y_sig)
-  #np.unique(y_sig_binary,return_counts = True)
-  #s_side_band_indicator = (y_sig_binary == 0)
-  #s_within_bounds_indicator = (y_sig_binary == 1)
-  #X_sig_sr = X_sig[s_within_bounds_indicator]
-  #X_sig_sb = X_sig[s_side_band_indicator]
-
-
-  #print('Yields!') 
-  #print('Bkg in SR: ', len(X_selected))
-  #print('Bkg in SB: ', len(X_sideband))
-  #print('Sig in SR: ', len(X_sig_sr))
-  #print('Sig in SB: ', len(X_sig_sb))
+  side_band_indicator = (y_bg_binary == 0)
+  within_bounds_indicator = (y_bg_binary == 1)
+  # This is the background data in the SB
+  X_sideband = X_bg[side_band_indicator]
+  y_sideband = y_bg_binary[side_band_indicator]
+  # This is the background data in the SR
+  X_selected = X_bg[within_bounds_indicator]
+  y_selected = y_bg_binary[within_bounds_indicator]
+  # This is the signal yield in the SR
+  y_sig_binary = np.vectorize(binary_side_band)(y_sig)
+  np.unique(y_sig_binary,return_counts = True)
+  s_side_band_indicator = (y_sig_binary == 0)
+  s_within_bounds_indicator = (y_sig_binary == 1)
+  X_sig_sr = X_sig[s_within_bounds_indicator]
+  X_sig_sb = X_sig[s_side_band_indicator]
 
 
+  print('Yields!') 
+  print('Bkg in SR: ', len(X_selected))
+  print('Bkg in SB: ', len(X_sideband))
+  print('Sig in SR: ', len(X_sig_sr))
+  print('Sig in SB: ', len(X_sig_sb))
 
 
-  ## ---------------------------- Building the model 
 
-  ## network architecture parameters
-  #dense_sizes = (100, 100)
-  ## network training parameters
-  #num_epoch = 100
-  #batch_size = 200
+
+  # ---------------------------- Building the model 
+
+  # network architecture parameters
+  dense_sizes = (100, 100)
+  # network training parameters
+  num_epoch = 100
+  batch_size = 200
  
-  ## dim of however many features we give in X  
-  ##dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=(i==0),dropouts=0.001,l2_regs=0.005)
-  ##dnn = DNN(input_dim=int(len(X[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
-  ##dnn = DNN(input_dim=int(len(X[0])), dense_sizes=dense_sizes, summary=True)
+  aucs = []
+  rocs = []
+  sigs=[]
+  anomalyRatios = [0.0,0.05,0.4,1.0]
+  anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
+  anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
+  anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
+  for r in anomalyRatios:
 
-  ## by hand 
-  ##base_model = Sequential()
-  ##base_model.add(Dense(64, activation='relu', input_dim=len(X[0])))
-  ##base_model.add(Dense(64, activation='relu'))
-  ##base_model.add(Dense(3, activation='softmax'))
-  ##base_model.name = 'Baseline model'
-  ##base_model.compile(optimizer='adam'
-  ##                , loss='categorical_crossentropy'
-  ##                , metrics=['accuracy'])
+      anom_size = int(round(r* sizeeach)) #amount of sig contamination
+      bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
+      B = bgsig_size+sizeeach
+      sigs.append(np.round(anom_size/np.sqrt(B),3))
+      print('S :', anom_size, ", B: ", B, ", sig: ", anom_size/np.sqrt(B))
 
-  #aucs = []
-  #rocs = []
-  #sigs=[]
-  #anomalyRatios = [0.0,0.05,0.4,1.0]
-  #anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
-  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
-  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
-  #for r in anomalyRatios:
-
-  #    anom_size = int(round(r* sizeeach)) #amount of sig contamination
-  #    bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
-  #    B = bgsig_size+sizeeach
-  #    sigs.append(np.round(anom_size/np.sqrt(B),3))
-  #    print('S :', anom_size, ", B: ", B, ", sig: ", anom_size/np.sqrt(B))
-
-  #    print('-------------- Anomaly Ratio = '+str(r))
-  #    dnn = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
-  #    # try skinnier SR
-  #    X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
-  #    print('number of inputs :', len(X_sig[0]))
-  #    print('training input shape: ', np.shape(X_train))
-  #    
-  #    h = dnn.fit(X_train, Y_train,
-  #    epochs=num_epoch,
-  #    batch_size=batch_size,
-  #    validation_data=(X_val, Y_val),
-  #    verbose=0)
-  #    #h = base_model.fit(X_train,Y_train,
-  #    #epochs=num_epoch,
-  #    #batch_size=batch_size,
-  #    #validation_data=(X_val, Y_val),
-  #    #verbose=0)
+      print('-------------- Anomaly Ratio = '+str(r))
+      dnn = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+      # try skinnier SR
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
+      print('number of inputs :', len(X_sig[0]))
+      print('training input shape: ', np.shape(X_train))
+      
+      h = dnn.fit(X_train, Y_train,
+      epochs=num_epoch,
+      batch_size=batch_size,
+      validation_data=(X_val, Y_val),
+      verbose=0)
  
-  #    plot_loss(h,r,saveTag) 
-  #     
-  #    # ROCs for SB vs. SR  
-  #    Y_predict = dnn.predict(X_test)
-  #    auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
-  #    new_fpr = []
-  #    for ele in Y_test[:,1]:
-  #      new_fpr.append(ele+0.0000000000001)
-  #    #print('fpr: ', new_fpr)
-  #    #print('tpr: ', Y_predict[:,1])
-  #    #print('tpr/sqrt(fpr): ',np.divide(Y_predict[:,1], np.sqrt(new_fpr) ))
-  #    roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
-  #    rocs.append(roc_curve)
-  #    aucs.append(auc)
+      #plot_loss(h,r,saveTag) 
+       
+      # ROCs for SB vs. SR  
+      Y_predict = dnn.predict(X_test)
+      auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
+      roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
+      rocs.append(roc_curve)
+      aucs.append(auc)
 
-
-  #print(aucs)
-  #make_roc_plots(anomalyRatios,saveTag,'tpr',rocs,aucs,sigs)
-  #make_roc_plots(anomalyRatios,saveTag,'tpr/sqrt(fpr)',rocs,aucs,sigs)
+  make_roc_plots(anomalyRatios,saveTag,'tpr',rocs,aucs,sigs)
+  make_roc_plots(anomalyRatios,saveTag,'tpr/sqrt(fpr)',rocs,aucs,sigs)
    
   print('runtime: ',datetime.now() - startTime)

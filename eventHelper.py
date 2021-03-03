@@ -5,27 +5,37 @@ import argparse
 import matplotlib.pyplot as plt
 import glob
 from ROOT import *
-from eventIsotropy.spherGen import sphericalGen, engFromVec
-from eventIsotropy.emdVar import _cdist_cos, emd_Calc
+#from eventIsotropy.spherGen import sphericalGen, engFromVec
+#from eventIsotropy.emdVar import _cdist_cos, emd_Calc
 
 
 # # Defining event level variables
 # IO: arXiv:1206.2135.pdf
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
+#d_npy={
+#'leadingjetpT':0,
+#'subleadingjetpT':1,
+#'measuredXpT':2,
+#'measuredphotonpT':3,
+#'njets':4,
+#'nparticles':5,
+#'lny23':6,
+#'aplanarity':7,
+#'transverse_sphericity':8,
+#'sphericity':9,
+#'total_jet_mass':10,
+#'evIsoSphere':11
+#}
 d_npy={
-'leadingjetpT':0,
-'subleadingjetpT':1,
-'measuredXpT':2,
-'measuredphotonpT':3,
-'njets':4,
-'nparticles':5,
-'lny23':6,
-'aplanarity':7,
-'transverse_sphericity':8,
-'sphericity':9,
-'total_jet_mass':10,
-'evIsoSphere':11
+'njets':0,
+'nparticles':1,
+'lny23':2,
+'aplanarity':3,
+'transverse_sphericity':4,
+'sphericity':5,
+'total_jet_mass':6,
+'evIsoSphere':7
 }
 
 #--------------------------- Variable defs
@@ -240,9 +250,9 @@ def make_roc_plots(anomalyRatios,saveTag,Ylabel,rocs,aucs,sigs):
     plt.ylim(0,6.0)
   else: plt.xlabel('fpr')
   plt.ylabel(Ylabel)
-  plt.title('ROC curve: S vs. B in SR')
+  plt.title('ROC curve: '+saveTag)
   plt.legend()
-  plt.savefig('plots/'+saveTag+'_roc_aucs_benchmark_'+Ylabel.replace("/","")+'.pdf')
+  plt.savefig('plots/'+saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
   plt.clf()
   #plt.show()
 
@@ -256,30 +266,23 @@ def plot_loss(h,r,save):
       plt.savefig('plots/'+save+'_lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
       plt.clf()
 
-#def make_npy_plots(X_sig,X_bg,var,R,save,doLog=True):
-#  sig_arr = np.array([float(i[d_npy[var]]) for i in X_sig])
-#  bkg_arr = np.array([float(i[d_npy[var]]) for i in X_bg])    
-#  print('bkg arr: ', bkg_arr)
-#  plt.hist(bkg_arr, np.linspace(0,2.0,100), Color="steelblue", histtype='step', linewidth=2,label='Background')
-#  #plt.hist(sig_arr, Color="tomato", histtype='step', linewidth=2,label='Signal')
-#  plt.xlabel(var)
-#  if doLog == True: plt.yscale('log')
-#  plt.ylabel("Number of Events / bin")
-#  plt.legend()
-#  plt.savefig("plots/"+save+"_plt_"+var+".pdf")
-#  plt.clf()
 #
 
 def make_var_plots(sig_records,bg_records,save):
+  print('Making plots with name ', save)
+  #02 files: record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']
   #plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
-  #plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
-  #plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
-  #plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
-  #plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
-  #plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
-  plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,300,100),1)
-  plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,300,100),1)
-  plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,300,100),1)
+  plot_something(save,sig_records,bg_records,'njets',np.linspace(0,30,30),1)
+  plot_something(save,sig_records,bg_records,'nparticles',np.linspace(0,200,200),1)
+  plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
+  plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
+  plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
+  plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
+  plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  plot_something(save,sig_records,bg_records,'evIsoSphere',np.linspace(0,2.0,100),1)
+  #plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,300,100),1)
+  #plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,300,100),1)
+  #plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,300,100),1)
   #plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
   #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
@@ -300,7 +303,7 @@ def plot_something(save,sig_records,bg_records,var,R,doLog):
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of Events / bin")
     plt.legend()
-    plt.savefig("plots/"+save+"_plt_"+var+".pdf")
+    plt.savefig("plots/"+save+"_"+var+".pdf")
     plt.clf()
 
 def plot_jets(index,R,doLog):

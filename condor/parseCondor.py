@@ -8,20 +8,17 @@
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import glob
-import energyflow as ef
-from energyflow.archs import DNN
+#import energyflow as ef
+#from energyflow.archs import DNN
 #from energyflow.datasets import qg_jets
-from energyflow.utils import data_split, remap_pids, to_categorical
-from keras.models import Sequential
-from keras.layers import Dense 
-import sklearn
-from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.utils import shuffle
+#from energyflow.utils import data_split, remap_pids, to_categorical
+#from keras.models import Sequential
+#from keras.layers import Dense 
 from eventHelper import *
 from datetime import datetime
-from ROOT import *
+#from ROOT import *
 
 #--------------------------- Parse text files
 def parse_file(file_object,startNum,endNum):
@@ -35,7 +32,6 @@ def parse_file(file_object,startNum,endNum):
     sphInd = 2
     spherePoints1 = sphereSample[sphInd]
     sphereEng1 = sphereEng[sphInd]
-
 
     count = 0
     for line in file_object:
@@ -97,8 +93,11 @@ def parse_file(file_object,startNum,endNum):
             jets_vec+=[jet]
 
         this_record['jets']=jets_vec
+        this_record['leadingjetpT']= float(jets_vec[0][1]) if len(jets_vec)>0 else -1
+        this_record['subleadingjetpT']= float(jets_vec[1][1]) if len(jets_vec)>1 else -1
+        this_record['measuredXpT']= float(jets_vec[0][1]) + float(jets_vec[1][1]) if len(jets_vec)>1 else -1
 
-        #this_record['lny23'] = lny23(jets_vec)
+        this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
 
         #thrust_maj, thrust_min = thrust(jets_vec)
@@ -127,7 +126,7 @@ def parse_file(file_object,startNum,endNum):
             #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
         this_record['particles'] = particles_vec
         
-        this_record['lny23'] = lny23(particles_vec)
+        #this_record['lny23'] = lny23(particles_vec)
         w,v = momentum_tensor(particles_vec,2)
         this_record['sphericity'] = sphericity(w,v)
         this_record['transverse_sphericity'] = transverse_sphericity(w,v)
@@ -161,7 +160,7 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
+        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
