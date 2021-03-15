@@ -118,7 +118,7 @@ def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 760
   
     # 0128 benchmark
     # select bg in SR datapoints
-    elif train_set == 'benchmark':
+    elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
       #print('# inputs of X: ', len(X_selected[0]))
       this_X_sb= X_selected[:size_each]
       this_y_sb = np.zeros(size_each) # 0 for bg in SR
@@ -129,8 +129,7 @@ def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 760
    
       # select bg in SR datapoints
       this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
-      #this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
-      this_y_bgsig = np.zeros(bgsig_size) #0 for other bg in SR
+      this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
    
     #import ipdb
     #ipdb.set_trace()
@@ -145,10 +144,15 @@ def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 760
     this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
     
     (this_X_tr, this_X_v, _,this_y_tr, this_y_v, _) = data_split(this_X, this_y, val=val, test=0)
-        
-    print('Size of bkg sr (0s):',this_X_sb.shape)
-    print('Size of bg in SR (1s):',this_X_bgsig.shape)
-    print('Size of sig in SR (1s):',this_X_sig.shape)
+  
+    if 'benchmark' in train_set:      
+      print('Size of bkg #1 in SR (0s):',this_X_sb.shape)
+      print('Size of bkg #2 in SR (1s):',this_X_bgsig.shape)
+      print('Size of sig in SR (1s):',this_X_sig.shape)
+    elif 'CWoLa' in train_set:      
+      print('Size of bg in SB (0s):',this_X_sb.shape)
+      print('Size of bg in SR (1s):',this_X_bgsig.shape)
+      print('Size of sig in SR (1s):',this_X_sig.shape)
     
     
       
@@ -162,7 +166,7 @@ def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 760
     #this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
     #this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = bkg sr vs. bkg sb
-    if test_set == 'BvsB':
+    elif test_set == 'BvsB':
       this_X_test_P = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
       this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = truth S vs truth B in SR only, benchmark training
@@ -259,6 +263,8 @@ if __name__ == "__main__":
   # -- Get input files 
   X_bg_arr, y_bg_arr = load_arrs("background","02")
   X_sig_arr, y_sig_arr = load_arrs("signal","02")
+  #X_bg_arr, y_bg_arr = load_arrs("background","0303_condor")
+  #X_sig_arr, y_sig_arr = load_arrs("signal","0303_condor")
   X_bg = np.vstack(X_bg_arr)
   X_sig = np.vstack(X_sig_arr)
   y_bg = np.concatenate(y_bg_arr)
@@ -318,7 +324,8 @@ if __name__ == "__main__":
   anomalyRatios = [0.0,0.05,0.4,1.0]
   anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
-  anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
+  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
+  #anomalyRatios =[0.0]
   for r in anomalyRatios:
 
       anom_size = int(round(r* sizeeach)) #amount of sig contamination
@@ -340,7 +347,7 @@ if __name__ == "__main__":
       validation_data=(X_val, Y_val),
       verbose=0)
  
-      #plot_loss(h,r,saveTag) 
+      plot_loss(h,r,saveTag) 
        
       # ROCs for SB vs. SR  
       Y_predict = dnn.predict(X_test)
@@ -349,6 +356,7 @@ if __name__ == "__main__":
       rocs.append(roc_curve)
       aucs.append(auc)
 
+  print(aucs)
   make_roc_plots(anomalyRatios,saveTag,'tpr',rocs,aucs,sigs)
   make_roc_plots(anomalyRatios,saveTag,'tpr/sqrt(fpr)',rocs,aucs,sigs)
    
