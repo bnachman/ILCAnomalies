@@ -57,7 +57,7 @@ def parse_file(file_object,startNum,endNum):
         #True collision quantities
         this_record['truthcenterofmassenergy'] = float(metadata.split()[1]) #true total energy - should be delta function at 1000 GeV
         this_record['truthsqrtshat'] = float(metadata.split()[2]) #energy available for making new particles (electron energy - photon)
-        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum |p| in units of GeV
+        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum pT in units of GeV
         this_record['truthphotoneta'] = float(metadata.split()[4]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
         this_record['truthphotonphi'] = float(metadata.split()[5]) #photon azimuthal angle
 
@@ -65,7 +65,7 @@ def parse_file(file_object,startNum,endNum):
         measuredcenterofmassenergy  = float(metadata.split()[6]) #true measured energy - should be noisy version of truthcenterofmassenergy
         this_record['measuredcenterofmassenergy'] = measuredcenterofmassenergy
         this_record['measuredsqrtshat'] = float(metadata.split()[7]) #energy available for making new particles (electron energy - photon)
-        this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum |p| in units of GeV
+        this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum pT in units of GeV
         this_record['measuredphotoneta'] = float(metadata.split()[9]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
         this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
         this_record['metadata'] = metadata.split()
@@ -79,7 +79,7 @@ def parse_file(file_object,startNum,endNum):
             jet = np.zeros(11)
             #order:
             # - index
-            # - magnitude of momentum |p| (units of GeV)
+            # - magnitude of momentum pT (units of GeV)
             # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
             # - azimuthal angle
             # - mass (units of GeV/c^2)
@@ -117,7 +117,7 @@ def parse_file(file_object,startNum,endNum):
             particle = np.zeros(5)
             #order:
             # - index
-            # - magnitude of momentum |p| (units of GeV)
+            # - magnitude of momentum pT (units of GeV)
             # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
             # - azimuthal angle
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
