@@ -18,20 +18,20 @@ import glob
 #from keras.layers import Dense 
 from eventHelper import *
 from datetime import datetime
-#from ROOT import *
+from ROOT import *
+import math
 
 #--------------------------- Parse text files
 def parse_file(file_object,startNum,endNum):
     all_records = []
     mymeasuredenergy = []
     ## Generate spherical sample
-    sphereSample = np.array([sphericalGen(i) for i in range(5)])
-    sphereEng = np.array([engFromVec(sphereSample[j]) for j in range(5)])
-    
+    #sphereSample = np.array([sphericalGen(i) for i in range(5)])
+    #sphereEng = np.array([engFromVec(sphereSample[j]) for j in range(5)])
     ## Choose sphere n points
-    sphInd = 2
-    spherePoints1 = sphereSample[sphInd]
-    sphereEng1 = sphereEng[sphInd]
+    #sphInd = 2
+    #spherePoints1 = sphereSample[sphInd]
+    #sphereEng1 = sphereEng[sphInd]
 
     count = 0
     for line in file_object:
@@ -54,10 +54,22 @@ def parse_file(file_object,startNum,endNum):
         njets = int(len(jets.split())/11) #number of "jets"
         nparticles  = int(len(particles.split())/5) #number of particles
 
+        #--- boosting 
+        photon4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
+        photon4Vec.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]),float(metadata.split()[10]), 0.0)
+        print('before boostingi, pt eta phi m: ', photon4Vec.Pt(),  photon4Vec.Eta(),  photon4Vec.Phi(),  photon4Vec.M())
+        print('before boosting: ', photon4Vec.Px(), photon4Vec.Py(), photon4Vec.Pz())
+        print('boost vecotr mag: ', photon4Vec.BoostVector().Mag())
+        if photon4Vec.BoostVector().Mag() >= 1.0: 
+          #print('greater than 1.')
+          continue
+        photon4Vec.Boost(-photon4Vec.BoostVector())
+        print('aftr boosting: ', photon4Vec.Px(), photon4Vec.Py(), photon4Vec.Pz())
+
         #True collision quantities
         this_record['truthcenterofmassenergy'] = float(metadata.split()[1]) #true total energy - should be delta function at 1000 GeV
         this_record['truthsqrtshat'] = float(metadata.split()[2]) #energy available for making new particles (electron energy - photon)
-        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum |p| in units of GeV
+        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum pT in units of GeV
         this_record['truthphotoneta'] = float(metadata.split()[4]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
         this_record['truthphotonphi'] = float(metadata.split()[5]) #photon azimuthal angle
 
@@ -65,10 +77,14 @@ def parse_file(file_object,startNum,endNum):
         measuredcenterofmassenergy  = float(metadata.split()[6]) #true measured energy - should be noisy version of truthcenterofmassenergy
         this_record['measuredcenterofmassenergy'] = measuredcenterofmassenergy
         this_record['measuredsqrtshat'] = float(metadata.split()[7]) #energy available for making new particles (electron energy - photon)
-        this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum |p| in units of GeV
-        this_record['measuredphotoneta'] = float(metadata.split()[9]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
+        #this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum pT in units of GeV
+        #this_record['measuredphotoneta'] = float(metadata.split()[9]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+        #this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
+        this_record['measuredphotonpT'] = float(photon4Vec.Pt()) #photon momentum pT in units of GeV
+        this_record['measuredphotoneta'] = float(photon4Vec.Eta()) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+        this_record['measuredphotonphi'] = float(photon4Vec.Phi()) #photon azimuthal angle
         this_record['metadata'] = metadata.split()
+
 
         mymeasuredenergy+=[measuredcenterofmassenergy]
 
@@ -79,7 +95,7 @@ def parse_file(file_object,startNum,endNum):
             jet = np.zeros(11)
             #order:
             # - index
-            # - magnitude of momentum |p| (units of GeV)
+            # - magnitude of momentum pT (units of GeV)
             # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
             # - azimuthal angle
             # - mass (units of GeV/c^2)
@@ -90,6 +106,16 @@ def parse_file(file_object,startNum,endNum):
             # - 3th angular moment of jet radiation
             # - 4th angular moment of jet radiation
             jet = jets[i*11:i*11+11]
+            # replace some comps with boost 
+            thisJet4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
+            thisJet4Vec.SetPtEtaPhiM(float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
+            thisJet4Vec.Boost(-photon4Vec.BoostVector())
+            #print('before: ' , float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
+            jet[1] = thisJet4Vec.Pt()
+            jet[2] = thisJet4Vec.Eta()
+            jet[3] = thisJet4Vec.Phi()
+            jet[4] = thisJet4Vec.M() 
+            #print('after: ' , float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
             jets_vec+=[jet]
 
         this_record['jets']=jets_vec
@@ -98,7 +124,7 @@ def parse_file(file_object,startNum,endNum):
         this_record['measuredXpT']= float(jets_vec[0][1]) + float(jets_vec[1][1]) if len(jets_vec)>1 else -1
 
         this_record['lny23'] = lny23(jets_vec)
-        this_record['total_jet_mass'] = total_jet_mass(jets_vec)
+        #this_record['total_jet_mass'] = total_jet_mass(jets_vec)
 
         #thrust_maj, thrust_min = thrust(jets_vec)
         #this_record['thrust_major'] = thrust_maj
@@ -113,27 +139,43 @@ def parse_file(file_object,startNum,endNum):
 
         particles = particles.split()
         particles_vec = []
+        print('NUmber of particle = ', nparticles)
         for i in range(nparticles):
             particle = np.zeros(5)
             #order:
             # - index
-            # - magnitude of momentum |p| (units of GeV)
+            # - magnitude of momentum pT (units of GeV)
             # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
             # - azimuthal angle
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
             particle = particles[i*5:i*5+5]
+            # replace some comps with boost 
+            thisPart4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
+            thisPart4Vec.SetPtEtaPhiM(float(particle[1]),float(particle[2]),float(particle[3]),0.0)
+            print('before part: ' , float(particle[1]),float(particle[2]),float(particle[3]))
+            thisPart4Vec.Boost(-photon4Vec.BoostVector())
+            particle[1] = thisPart4Vec.Pt()
+            particle[2] = thisPart4Vec.Eta()
+            particle[3] = thisPart4Vec.Phi()
+            print('before part: ' , float(particle[1]),float(particle[2]),float(particle[3]))
             particles_vec+=[particle]
             #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
         this_record['particles'] = particles_vec
         
         #this_record['lny23'] = lny23(particles_vec)
+        isNan = False
+        for ele in particles_vec:
+          for j in ele: 
+            if j!=j: 
+              isNan = True
+        if isNan: continue
         w,v = momentum_tensor(particles_vec,2)
         this_record['sphericity'] = sphericity(w,v)
         this_record['transverse_sphericity'] = transverse_sphericity(w,v)
         this_record['aplanarity'] = aplanarity(w,v)
 
         # Event isotropy 
-        this_record['evIsoSphere'] = evIsoSphere(particles_vec,spherePoints1,sphereEng1)
+        #this_record['evIsoSphere'] = evIsoSphere(particles_vec,spherePoints1,sphereEng1)
          
         
         all_records.append(this_record)
@@ -160,7 +202,8 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
+        #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
+        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -176,7 +219,8 @@ if __name__ == "__main__":
 
   records = []
   print('Running filename ', filename, ' from line ', startNum, ' to ', endNum)
-  file = open(filename)
+  #file = open('../'+str(filename))
+  file = open(str(filename))
   records += parse_file(file,startNum,endNum)
   X = make_evt_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])

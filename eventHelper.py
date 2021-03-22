@@ -13,30 +13,31 @@ from ROOT import *
 # IO: arXiv:1206.2135.pdf
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
-#d_npy={
-#'leadingjetpT':0,
-#'subleadingjetpT':1,
-#'measuredXpT':2,
-#'measuredphotonpT':3,
-#'njets':4,
-#'nparticles':5,
-#'lny23':6,
-#'aplanarity':7,
-#'transverse_sphericity':8,
-#'sphericity':9,
+d_npy={
+'leadingjetpT':0,
+'subleadingjetpT':1,
+'measuredXpT':2,
+'measuredphotonpT':3,
+'njets':4,
+'nparticles':5,
+'lny23':6,
+'aplanarity':7,
+'transverse_sphericity':8,
+'sphericity':9,
 #'total_jet_mass':10,
 #'evIsoSphere':11
-#}
-d_npy={
-'njets':0,
-'nparticles':1,
-'lny23':2,
-'aplanarity':3,
-'transverse_sphericity':4,
-'sphericity':5,
-'total_jet_mass':6,
-'evIsoSphere':7
 }
+#feb files
+#d_npy={
+#'njets':0,
+#'nparticles':1,
+#'lny23':2,
+#'aplanarity':3,
+#'transverse_sphericity':4,
+#'sphericity':5,
+#'total_jet_mass':6,
+#'evIsoSphere':7
+#}
 
 #--------------------------- Variable defs
 def getpt(jet):
@@ -247,7 +248,7 @@ def make_roc_plots(anomalyRatios,saveTag,Ylabel,rocs,aucs,sigs):
       else: plt.plot(rocs[i][0],rocs[i][1],label=str(r)+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
   if 'sqrt' in Ylabel: 
     plt.xlabel('tpr')
-    plt.ylim(0,6.0)
+    plt.ylim(0,12.0)
   else: plt.xlabel('fpr')
   plt.ylabel(Ylabel)
   plt.title('ROC curve: '+saveTag)
@@ -278,22 +279,32 @@ def make_var_plots(sig_records,bg_records,save):
   plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
   plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
   plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
-  plot_something(save,sig_records,bg_records,'evIsoSphere',np.linspace(0,2.0,100),1)
-  #plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,300,100),1)
-  #plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,300,100),1)
-  #plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,300,100),1)
+  #plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  #plot_something(save,sig_records,bg_records,'evIsoSphere',np.linspace(0,2.0,100),1)
+  plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,800,200),1)
+  plot_something(save,sig_records,bg_records,'subleadingjetpT',np.linspace(0,800,200),1)
+  plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,800,200),1)
+  plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,800,200),1)
+  #plot_something(save,sig_records,bg_records,'ljpT_Over_PhpT',np.linspace(0,20,100),1)
+  #plot_something(save,sig_records,bg_records,'xpT_Over_PhpT',np.linspace(0,20,100),1)
   #plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
   #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
 def plot_something(save,sig_records,bg_records,var,R,doLog):
     #plt.figure(figsize=(20,5))
-    if 'npy' in save: 
-      sig_arr = np.array([float(i[d_npy[var]]) for i in sig_records])
-      bkg_arr = np.array([float(i[d_npy[var]]) for i in bg_records])    
+    if 'ljpT' in var:
+      sig_arr = np.array([float(i[d_npy['leadingjetpT']]/i[d_npy['measuredphotonpT']]) for i in sig_records])
+      bkg_arr = np.array([float(i[d_npy['leadingjetpT']]/i[d_npy['measuredphotonpT']]) for i in bg_records])    
+    elif 'xpT' in var:
+      sig_arr = np.array([float(i[d_npy['measuredXpT']]/i[d_npy['measuredphotonpT']]) for i in sig_records])
+      bkg_arr = np.array([float(i[d_npy['measuredXpT']]/i[d_npy['measuredphotonpT']]) for i in bg_records])    
     else:
-      sig_arr = np.array([i[var] for i in sig_records[:79999]])
-      bkg_arr = np.array([i[var] for i in bg_records])    
+      if 'npy' in save: 
+        sig_arr = np.array([float(i[d_npy[var]]) for i in sig_records])
+        bkg_arr = np.array([float(i[d_npy[var]]) for i in bg_records])    
+      else:
+        sig_arr = np.array([i[var] for i in sig_records[:79999]])
+        bkg_arr = np.array([i[var] for i in bg_records])    
     plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background')
     plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal')
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
