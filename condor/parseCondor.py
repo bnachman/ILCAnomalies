@@ -20,6 +20,7 @@ from eventHelper import *
 from datetime import datetime
 from ROOT import *
 import math
+from pylorentz import Momentum4
 
 #--------------------------- Parse text files
 def parse_file(file_object,startNum,endNum):
@@ -55,16 +56,27 @@ def parse_file(file_object,startNum,endNum):
         nparticles  = int(len(particles.split())/5) #number of particles
 
         #--- boosting 
-        photon4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-        photon4Vec.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]),float(metadata.split()[10]), 0.0)
-        print('before boostingi, pt eta phi m: ', photon4Vec.Pt(),  photon4Vec.Eta(),  photon4Vec.Phi(),  photon4Vec.M())
-        print('before boosting: ', photon4Vec.Px(), photon4Vec.Py(), photon4Vec.Pz())
-        print('boost vecotr mag: ', photon4Vec.BoostVector().Mag())
-        if photon4Vec.BoostVector().Mag() >= 1.0: 
-          #print('greater than 1.')
-          continue
-        photon4Vec.Boost(-photon4Vec.BoostVector())
-        print('aftr boosting: ', photon4Vec.Px(), photon4Vec.Py(), photon4Vec.Pz())
+        # TLorentzVector
+        #photon4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
+        #photon4Vec.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]),float(metadata.split()[10]), 0.0)
+        #print('before boostingi, pt eta phi m: ', photon4Vec.Pt(),  photon4Vec.Eta(),  photon4Vec.Phi(),  photon4Vec.M())
+        #print('before boosting: ', photon4Vec.Px(), photon4Vec.Py(), photon4Vec.Pz())
+        #print('boost vecotr mag: ', photon4Vec.BoostVector().Mag())
+        #if photon4Vec.BoostVector().Mag() >= 1.0: 
+        #  #print('greater than 1.')
+        #  continue
+        #photon4Vec.Boost(-photon4Vec.BoostVector())
+        #print('aftr boosting: ', photon4Vec.Px(), photon4Vec.Py(), photon4Vec.Pz())
+  
+        #pyPI
+        print('photonInit : ', 0.0, float(metadata.split()[9]), float(metadata.split()[10]), float(metadata.split()[8]))
+        photonInit = Momentum4.m_eta_phi_pt(10E-08, float(metadata.split()[9]), float(metadata.split()[10]), float(metadata.split()[8]))
+        photonBoost = Momentum4.m_eta_phi_pt(10E-08, float(metadata.split()[9]), float(metadata.split()[10]), float(metadata.split()[8]))
+        print('photon Init: ', photonInit)
+        print('photonInit : ', photonInit.m, photonInit.eta, photonInit.phi, photonInit.p_t)
+        photon4Vec = photonBoost.boost_particle(-photonInit)
+        print('CoM photn: ', photon4Vec.p_t, photon4Vec.eta, photon4Vec.phi, photon4Vec.m)
+
 
         #True collision quantities
         this_record['truthcenterofmassenergy'] = float(metadata.split()[1]) #true total energy - should be delta function at 1000 GeV
@@ -80,9 +92,9 @@ def parse_file(file_object,startNum,endNum):
         #this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum pT in units of GeV
         #this_record['measuredphotoneta'] = float(metadata.split()[9]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
         #this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
-        this_record['measuredphotonpT'] = float(photon4Vec.Pt()) #photon momentum pT in units of GeV
-        this_record['measuredphotoneta'] = float(photon4Vec.Eta()) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        this_record['measuredphotonphi'] = float(photon4Vec.Phi()) #photon azimuthal angle
+        this_record['measuredphotonpT'] = photon4Vec.p_t #photon momentum pT in units of GeV
+        this_record['measuredphotoneta'] =photon4Vec.eta #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+        this_record['measuredphotonphi'] =photon4Vec.phi #photon azimuthal angle
         this_record['metadata'] = metadata.split()
 
 
@@ -106,16 +118,15 @@ def parse_file(file_object,startNum,endNum):
             # - 3th angular moment of jet radiation
             # - 4th angular moment of jet radiation
             jet = jets[i*11:i*11+11]
+            print('before: ' , float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
             # replace some comps with boost 
-            thisJet4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-            thisJet4Vec.SetPtEtaPhiM(float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
-            thisJet4Vec.Boost(-photon4Vec.BoostVector())
-            #print('before: ' , float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
-            jet[1] = thisJet4Vec.Pt()
-            jet[2] = thisJet4Vec.Eta()
-            jet[3] = thisJet4Vec.Phi()
-            jet[4] = thisJet4Vec.M() 
-            #print('after: ' , float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
+            jet4Mom = Momentum4.m_eta_phi_pt(float(jet[4]), float(jet[1]),float(jet[2]),float(jet[3]))
+            jetNew = jet4Mom.boost_particle(-photonInit)
+            jet[1] = jetNew.p_t
+            jet[2] = jetNew.eta
+            jet[3] = jetNew.phi
+            jet[4] = jetNew.m
+            print('after: ' , float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
             jets_vec+=[jet]
 
         this_record['jets']=jets_vec
@@ -150,14 +161,13 @@ def parse_file(file_object,startNum,endNum):
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
             particle = particles[i*5:i*5+5]
             # replace some comps with boost 
-            thisPart4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-            thisPart4Vec.SetPtEtaPhiM(float(particle[1]),float(particle[2]),float(particle[3]),0.0)
             print('before part: ' , float(particle[1]),float(particle[2]),float(particle[3]))
-            thisPart4Vec.Boost(-photon4Vec.BoostVector())
-            particle[1] = thisPart4Vec.Pt()
-            particle[2] = thisPart4Vec.Eta()
-            particle[3] = thisPart4Vec.Phi()
-            print('before part: ' , float(particle[1]),float(particle[2]),float(particle[3]))
+            part4Mom = Momentum4.m_eta_phi_pt(0.0, float(particle[1]),float(particle[2]),float(particle[3]))
+            partNew =  part4Mom.boost_particle(-photonInit)
+            particle[1] = partNew.p_t
+            particle[2] = partNew.eta
+            particle[3] = partNew.phi
+            print('after part: ' , float(particle[1]),float(particle[2]),float(particle[3]))
             particles_vec+=[particle]
             #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
         this_record['particles'] = particles_vec
