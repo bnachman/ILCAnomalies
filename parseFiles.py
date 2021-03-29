@@ -120,7 +120,7 @@ def parse_file(file_object):
             jet = jets[i*11:i*11+11]
             jets_vec+=[jet]
 
-        this_record['jets']=jets_vec
+        #this_record['jets']=jets_vec
 
         this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
@@ -136,20 +136,20 @@ def parse_file(file_object):
 
         this_record['nparticles'] = nparticles
 
-        particles = particles.split()
-        particles_vec = []
-        for i in range(nparticles):
-            particle = np.zeros(5)
-            #order:
-            # - index
-            # - magnitude of momentum |p| (units of GeV)
-            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-            # - azimuthal angle
-            # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
-            particle = particles[i*5:i*5+5]
-            particles_vec+=[particle]
-            #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
-        this_record['particles'] = particles_vec
+        #particles = particles.split()
+        #particles_vec = []
+        #for i in range(nparticles):
+        #    particle = np.zeros(5)
+        #    #order:
+        #    # - index
+        #    # - magnitude of momentum |p| (units of GeV)
+        #    # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+        #    # - azimuthal angle
+        #    # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
+        #    particle = particles[i*5:i*5+5]
+        #    particles_vec+=[particle]
+        #    #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
+        #this_record['particles'] = particles_vec
         
         #w,v = momentum_tensor(particles_vec,3)
         #this_record['sphericity'] = sphericity(w,v)
@@ -191,7 +191,7 @@ def make_evt_arrays(these_records):
 if __name__ == "__main__":
 
   #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger*.txt")
+  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger1.txt")
   signal_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*signal.txt")
 
   # ------------- Low stat
@@ -213,14 +213,13 @@ if __name__ == "__main__":
 
   # ------------- High stat
   for filename in bg_file_list:
-      if 'bigger1' in filename or 'bigger2' in filename: continue
       saveName = filename.split(".")[0].split("/")[-1].split("_")[-1]
       bg_records = []
       file = open(filename)
       print('Parsing '+filename)
       bg_records += parse_file(file)
       print('Parsed '+str(len(bg_records))+' background events into '+ saveName)
-      np.save("1202_bg_records_"+saveName+".npy",np.asarray(bg_records))
+      np.save("0208_bg_records_"+saveName+".npy",np.asarray(bg_records))
       file.close()
   
 
