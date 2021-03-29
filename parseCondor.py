@@ -8,23 +8,20 @@
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import glob
 import energyflow as ef
 from energyflow.archs import DNN
-#from energyflow.datasets import qg_jets
+from energyflow.datasets import qg_jets
 from energyflow.utils import data_split, remap_pids, to_categorical
 from keras.models import Sequential
 from keras.layers import Dense 
-import sklearn
-from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.utils import shuffle
 from eventHelper import *
 from datetime import datetime
-from ROOT import *
+#from ROOT import *
 
 #--------------------------- Parse text files
-def parse_file(file_object):
+def parse_file(file_object,startNum,endNum):
     all_records = []
     mymeasuredenergy = []
     ## Generate spherical sample
@@ -36,9 +33,12 @@ def parse_file(file_object):
     spherePoints1 = sphereSample[sphInd]
     sphereEng1 = sphereEng[sphInd]
 
-
     count = 0
     for line in file_object:
+        if count < int(startNum): 
+          count += 1
+          continue 
+        if count > int(endNum): break
         if count%100 == 0: print('Line '+str(count))
 
         metadata = line.split("J")[0]
@@ -57,7 +57,7 @@ def parse_file(file_object):
         #True collision quantities
         this_record['truthcenterofmassenergy'] = float(metadata.split()[1]) #true total energy - should be delta function at 1000 GeV
         this_record['truthsqrtshat'] = float(metadata.split()[2]) #energy available for making new particles (electron energy - photon)
-        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum |p| in units of GeV
+        this_record['truthphotonpT'] = float(metadata.split()[3]) #photon momentum pT in units of GeV
         this_record['truthphotoneta'] = float(metadata.split()[4]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
         this_record['truthphotonphi'] = float(metadata.split()[5]) #photon azimuthal angle
 
@@ -65,7 +65,7 @@ def parse_file(file_object):
         measuredcenterofmassenergy  = float(metadata.split()[6]) #true measured energy - should be noisy version of truthcenterofmassenergy
         this_record['measuredcenterofmassenergy'] = measuredcenterofmassenergy
         this_record['measuredsqrtshat'] = float(metadata.split()[7]) #energy available for making new particles (electron energy - photon)
-        this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum |p| in units of GeV
+        this_record['measuredphotonpT'] = float(metadata.split()[8]) #photon momentum pT in units of GeV
         this_record['measuredphotoneta'] = float(metadata.split()[9]) #photon pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
         this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
         this_record['metadata'] = metadata.split()
@@ -79,7 +79,7 @@ def parse_file(file_object):
             jet = np.zeros(11)
             #order:
             # - index
-            # - magnitude of momentum |p| (units of GeV)
+            # - magnitude of momentum pT (units of GeV)
             # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
             # - azimuthal angle
             # - mass (units of GeV/c^2)
@@ -93,8 +93,11 @@ def parse_file(file_object):
             jets_vec+=[jet]
 
         this_record['jets']=jets_vec
+        this_record['leadingjetpT']= float(jets_vec[0][1]) if len(jets_vec)>0 else -1
+        this_record['subleadingjetpT']= float(jets_vec[1][1]) if len(jets_vec)>1 else -1
+        this_record['measuredXpT']= float(jets_vec[0][1]) + float(jets_vec[1][1]) if len(jets_vec)>1 else -1
 
-        #this_record['lny23'] = lny23(jets_vec)
+        this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
 
         #thrust_maj, thrust_min = thrust(jets_vec)
@@ -114,7 +117,7 @@ def parse_file(file_object):
             particle = np.zeros(5)
             #order:
             # - index
-            # - magnitude of momentum |p| (units of GeV)
+            # - magnitude of momentum pT (units of GeV)
             # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
             # - azimuthal angle
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
@@ -123,7 +126,7 @@ def parse_file(file_object):
             #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
         this_record['particles'] = particles_vec
         
-        this_record['lny23'] = lny23(particles_vec)
+        #this_record['lny23'] = lny23(particles_vec)
         w,v = momentum_tensor(particles_vec,2)
         this_record['sphericity'] = sphericity(w,v)
         this_record['transverse_sphericity'] = transverse_sphericity(w,v)
@@ -157,7 +160,7 @@ def make_evt_arrays(these_records):
         #assert padded_jets.shape == (max_njets, 5)
         ## add to list
         #padded_jet_arrays.append(padded_jets)
-        evt_vars = [record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
+        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -167,40 +170,19 @@ if __name__ == "__main__":
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
   tag=sys.argv[1]
+  filename=sys.argv[2]
+  startNum=sys.argv[3]
+  endNum=sys.argv[4]
 
+  records = []
+  print('Running filename ', filename, ' from line ', startNum, ' to ', endNum)
+  file = open(filename)
+  records += parse_file(file,startNum,endNum)
+  X = make_evt_arrays(records)
+  y = np.array([i['truthsqrtshat'] for i in records])
+  np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
+  np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
 
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*1_background.txt")
-  #bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_background_randomseeds_bigger9.txt")
-  sig_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_signal.txt")
-  bg_file_list = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*_background.txt")
-
-  sig_records = []
-  bg_records = []  
-  for filename in sig_file_list:
-      if '01' in filename: continue
-      print('Running filename ', filename)
-      file = open(filename)
-      sig_records += parse_file(file)
-      X_sig = make_evt_arrays(sig_records)
-      y_sig = np.array([i['truthsqrtshat'] for i in sig_records])
-      np.save("training_data/"+tag+"_X_sig_"+filename.split('/')[-1].split('.')[0], X_sig)
-      np.save("training_data/"+tag+"_y_sig_"+filename.split('/')[-1].split('.')[0], y_sig)
-
-  for filename in bg_file_list:
-      if '01' in filename: continue
-      print('Running filename ', filename)
-      file = open(filename)
-      bg_records += parse_file(file)
-      X_bg = make_evt_arrays(bg_records)
-      y_bg = np.array([i['truthsqrtshat'] for i in bg_records])
-      np.save("training_data/"+tag+"_X_bg_"+filename.split('/')[-1].split('.')[0], X_bg)
-      np.save("training_data/"+tag+"_y_bg_"+filename.split('/')[-1].split('.')[0], y_bg)
-
-
-  # Make some plots 
-  make_var_plots(sig_records,bg_records,tag)
 
   
-   
   print('runtime: ',datetime.now() - startTime)
