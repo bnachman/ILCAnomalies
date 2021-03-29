@@ -33,7 +33,7 @@ def get_x_vec(jet1,jet2):
         return xVec
 
 #--------------------------- Parse text files
-def parse_file(file_object,startNum,endNum,filename):
+def parse_file(file_object,startNum,endNum,filename,doBoost):
     all_records = []
     mymeasuredenergy = []
     ## Generate spherical sample
@@ -109,16 +109,17 @@ def parse_file(file_object,startNum,endNum,filename):
 
 
         this_record['njets'] = njets
-        if njets < 2: continue
-        jets = jets.split()
         jets_vec = []
-        jet1 = jets[0*11:0*11+11]
-        jet2 = jets[1*11:1*11+11]
-        #--- boosting 
-        boostVec = get_x_vec(jet1,jet2)
-        #logging.info('leading jet pair boost: '+ str(boostVec.Px()) +" " +str(boostVec.Py())+" " +str(boostVec.Pz()))
-        #logging.info('unboosted X pt: '+ str(boostVec.Pt()))
-        jetPs.append(np.sqrt(boostVec.Px()**2 + boostVec.Py()**2 +boostVec.Pz()**2))
+        jets = jets.split()
+        if doBoost:
+          if njets < 2: continue
+          jet1 = jets[0*11:0*11+11]
+          jet2 = jets[1*11:1*11+11]
+          #--- boosting 
+          boostVec = get_x_vec(jet1,jet2)
+          logging.warning('leading jet pair boost: '+ str(boostVec.Px()) +" " +str(boostVec.Py())+" " +str(boostVec.Pz()))
+          logging.warning('unboosted X pt: '+ str(boostVec.Pt()))
+          jetPs.append(np.sqrt(boostVec.Px()**2 + boostVec.Py()**2 +boostVec.Pz()**2))
         
   
         for i in range(njets):
@@ -136,25 +137,28 @@ def parse_file(file_object,startNum,endNum,filename):
             # - 3th angular moment of jet radiation
             # - 4th angular moment of jet radiation
             jet = jets[i*11:i*11+11]
-            # replace some comps with boost 
-            thisJet4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-            thisJet4Vec.SetPtEtaPhiM(float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
-            thisJet4Vec.Boost(-boostVec.BoostVector())
-            #thisJet4Vec.Boost(-photon4Vec.BoostVector())
-            #thisJet4Vec = Momentum4.m_eta_phi_pt(float(jet[4]), float(jet[2]), float(jet[3]), float(jet[1]))
-            #thisJet4Vec.boost_particle(photon4Vec)
-            logging.info('before jet: ' +str(float(jet[1])) +" " +str(float(jet[2])) + " " +str(float(jet[3])) + " " +str(float(jet[4])))
-            jet[1] = thisJet4Vec.Pt()
-            jet[2] = thisJet4Vec.Eta()
-            jet[3] = thisJet4Vec.Phi()
-            jet[4] = thisJet4Vec.M() 
-            logging.info('after jet: ' +str(float(jet[1])) +" " +str(float(jet[2])) + " " +str(float(jet[3])) + " " +str(float(jet[4])))
+            if doBoost:
+              # replace some comps with boost 
+              thisJet4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
+              thisJet4Vec.SetPtEtaPhiM(float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
+              thisJet4Vec.Boost(-boostVec.BoostVector())
+              #thisJet4Vec.Boost(-photon4Vec.BoostVector())
+              #thisJet4Vec = Momentum4.m_eta_phi_pt(float(jet[4]), float(jet[2]), float(jet[3]), float(jet[1]))
+              #thisJet4Vec.boost_particle(photon4Vec)
+              logging.info('before jet: ' +str(float(jet[1])) +" " +str(float(jet[2])) + " " +str(float(jet[3])) + " " +str(float(jet[4])))
+              jet[1] = thisJet4Vec.Pt()
+              jet[2] = thisJet4Vec.Eta()
+              jet[3] = thisJet4Vec.Phi()
+              jet[4] = thisJet4Vec.M() 
+              logging.info('after jet: ' +str(float(jet[1])) +" " +str(float(jet[2])) + " " +str(float(jet[3])) + " " +str(float(jet[4])))
             jets_vec+=[jet]
 
-        logging.warning('measured X pt: '+ str(get_x_vec(jets_vec[0], jets_vec[1]).Pt()))
         this_record['jets']=jets_vec
+        if len(jets_vec)>1: logging.warning('measured X pt: '+ str(get_x_vec(jets_vec[0], jets_vec[1]).Pt()))
         this_record['leadingjetpT']= float(jets_vec[0][1]) if len(jets_vec)>0 else -1
         this_record['subleadingjetpT']= float(jets_vec[1][1]) if len(jets_vec)>1 else -1
+        this_record['leadingjetmass']= float(jets_vec[0][4]) if len(jets_vec)>0 else -1
+        this_record['subleadingjetmass']= float(jets_vec[1][4]) if len(jets_vec)>1 else -1
         this_record['measuredXpT']= get_x_vec(jets_vec[0], jets_vec[1]).Pt() if len(jets_vec)>1 else -1
 
         this_record['lny23'] = lny23(jets_vec)
@@ -182,18 +186,19 @@ def parse_file(file_object,startNum,endNum,filename):
             # - azimuthal angle
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
             particle = particles[i*5:i*5+5]
-            # replace some comps with boost 
-            particle4Mom = TLorentzVector(0.0,0.0,0.0,0.0)
-            particle4Mom.SetPtEtaPhiM(float(particle[1]), float(particle[2]),float(particle[3]),0.0)
-            particle4Mom.Boost(-boostVec.BoostVector())
-            #particle4Mom.Boost(-photon4Vec.BoostVector())
-            logging.info('before particle: ' + particle[1] +" " + particle[2] + " " + particle[3])
-            particle[1] = particle4Mom.Pt()
-            particle[2] = particle4Mom.Eta()
-            particle[3] = particle4Mom.Phi()
+            if doBoost:
+              # replace some comps with boost 
+              particle4Mom = TLorentzVector(0.0,0.0,0.0,0.0)
+              particle4Mom.SetPtEtaPhiM(float(particle[1]), float(particle[2]),float(particle[3]),0.0)
+              particle4Mom.Boost(-boostVec.BoostVector())
+              #particle4Mom.Boost(-photon4Vec.BoostVector())
+              logging.info('before particle: ' + particle[1] +" " + particle[2] + " " + particle[3])
+              particle[1] = particle4Mom.Pt()
+              particle[2] = particle4Mom.Eta()
+              particle[3] = particle4Mom.Phi()
+              logging.info('afterr particle: ' + str(particle[1]) +" " + str(particle[2]) + " " + str(particle[3]))
+              #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
             particles_vec+=[particle]
-            logging.info('afterr particle: ' + str(particle[1]) +" " + str(particle[2]) + " " + str(particle[3]))
-            #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
         this_record['particles'] = particles_vec
         
         #this_record['lny23'] = lny23(particles_vec)
@@ -244,7 +249,8 @@ def make_evt_arrays(these_records):
         ## add to list
         #padded_jet_arrays.append(padded_jets)
         #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
-        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass']]
+        #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass']]
+        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['leadingjetmass'], record['subleadingjetmass']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -257,13 +263,14 @@ if __name__ == "__main__":
   filename=sys.argv[2]
   startNum=sys.argv[3]
   endNum=sys.argv[4]
+  doBoost = False
   logging.basicConfig(level=logging.ERROR)
 
   records = []
   print('Running filename ', filename, ' from line ', startNum, ' to ', endNum)
   #file = open('../'+str(filename))
   file = open(str(filename))
-  records += parse_file(file,startNum,endNum,filename)
+  records += parse_file(file,startNum,endNum,filename,doBoost)
   X = make_evt_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
