@@ -23,13 +23,24 @@ from datetime import datetime
 from ROOT import *
 
 #-----------------------------------------------------------------------------------
+def get_ars(sizeeach):
+  sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
+  ars = []
+  for sigma in sigmas: 
+    sigNum = sigma*np.sqrt(sizeeach) 
+    if sigNum/sizeeach > 1.0: ars.append(1.0)
+    else: ars.append(sigNum/sizeeach)
+  print('determined ars: ', ars)
+  return ars
+
+#-----------------------------------------------------------------------------------
 def load_arrs(typee,savee):
-  print('getting files of form ', "training_data_eviso/"+savee+"*X*"+typee+"*.npy")
+  print('getting files of form ', "training_data/"+savee+"*X*"+typee+"*.npy")
   X_arr = []
   y_arr=[]
-  for s in glob.glob("training_data_eviso/"+savee+"*X*"+typee+"*.npy"):
+  for s in glob.glob("training_data/"+savee+"*X*"+typee+"*.npy"):
     X_arr.append(np.load(s))
-  for s in glob.glob("training_data_eviso/"+savee+"*y*"+typee+"*.npy"):
+  for s in glob.glob("training_data/"+savee+"*y*"+typee+"*.npy"):
     y_arr.append(np.load(s))
   return X_arr, y_arr
 
@@ -261,10 +272,13 @@ if __name__ == "__main__":
 
 
   # -- Get input files 
-  X_bg_arr, y_bg_arr = load_arrs("background","02")
-  X_sig_arr, y_sig_arr = load_arrs("signal","02")
+  #X_bg_arr, y_bg_arr = load_arrs("background","02")
+  #X_sig_arr, y_sig_arr = load_arrs("signal","02")
   #X_bg_arr, y_bg_arr = load_arrs("background","0303_condor")
   #X_sig_arr, y_sig_arr = load_arrs("signal","0303_condor")
+  X_bg_arr, y_bg_arr = load_arrs("bg",savename)
+  X_sig_arr, y_sig_arr = load_arrs("sig",savename)
+  
   X_bg = np.vstack(X_bg_arr)
   X_sig = np.vstack(X_sig_arr)
   y_bg = np.concatenate(y_bg_arr)
@@ -272,7 +286,7 @@ if __name__ == "__main__":
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
-  make_var_plots(X_sig,X_bg,saveTag+"_npy")
+  #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
   # --  Identify signal and side band 
   # 0126 harmonized Ines
@@ -315,8 +329,8 @@ if __name__ == "__main__":
   # network architecture parameters
   dense_sizes = (100, 100)
   # network training parameters
-  num_epoch = 100
-  batch_size = 200
+  num_epoch = 200
+  batch_size = 500
  
   aucs = []
   rocs = []
@@ -326,6 +340,9 @@ if __name__ == "__main__":
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
   #anomalyRatios =[0.0]
+  
+  anomalyRatios = get_ars(sizeeach)
+ 
   for r in anomalyRatios:
 
       anom_size = int(round(r* sizeeach)) #amount of sig contamination
@@ -338,6 +355,7 @@ if __name__ == "__main__":
       dnn = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       # try skinnier SR
       X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = 200)
       print('number of inputs :', len(X_sig[0]))
       print('training input shape: ', np.shape(X_train))
       
