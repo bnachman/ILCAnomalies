@@ -39,6 +39,7 @@ if __name__ == "__main__":
    #files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_signal.txt")
 
    increment = 500000
+
    for myFile in files:
      # SUBMIT HERE
 
