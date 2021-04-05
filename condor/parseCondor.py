@@ -115,6 +115,8 @@ def parse_file(file_object,startNum,endNum,filename):
         this_record['subleadingjetpT']= float(jets_vec[1][1]) if len(jets_vec)>1 else -1
         this_record['leadingjetmass']= float(jets_vec[0][4]) if len(jets_vec)>0 else -1
         this_record['subleadingjetmass']= float(jets_vec[1][4]) if len(jets_vec)>1 else -1
+        this_record['measuredXpT']= get_x_vec(jets_vec[0], jets_vec[1]).Pt() if len(jets_vec)>1 else -1
+        this_record['splitting']= np.divide(float(jets_vec[1][1]), float(jets_vec[0][1]) + float(jets_vec[1][1])) if len(jets_vec)>1 else -1
 
         this_record['measuredXpT']= get_x_vec(jets_vec[0], jets_vec[1]).Pt() if len(jets_vec)>1 else -1
         this_record['xpT_Over_PhpT'] = np.divide(get_x_vec(jets_vec[0], jets_vec[1]).Pt(), float(metadata.split()[8])) if len(jets_vec)>1 else -1
