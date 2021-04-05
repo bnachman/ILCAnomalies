@@ -35,8 +35,8 @@ if __name__ == "__main__":
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
 
-  X_bg_arr, y_bg_arr = load_arrs("background","0324")
-  X_sig_arr, y_sig_arr = load_arrs("signal","0324")
+  X_bg_arr, y_bg_arr = load_arrs("bg",saveTag)
+  X_sig_arr, y_sig_arr = load_arrs("sig",saveTag)
 
   X_bg = np.vstack(X_bg_arr)
   X_sig = np.vstack(X_sig_arr)

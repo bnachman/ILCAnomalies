@@ -21,7 +21,6 @@ from eventHelper import *
 from datetime import datetime
 from ROOT import *
 import math
-#from pylorentz import Momentum4
 
 #--------------------------- Parse text files
 def get_x_vec(jet1,jet2):
@@ -33,7 +32,7 @@ def get_x_vec(jet1,jet2):
         return xVec
 
 #--------------------------- Parse text files
-def parse_file(file_object,startNum,endNum,filename,doBoost):
+def parse_file(file_object,startNum,endNum,filename):
     all_records = []
     mymeasuredenergy = []
     ## Generate spherical sample
@@ -64,28 +63,9 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
         count += 1
         eventweight = float(metadata.split()[0])
         this_record['eventweight'] = eventweight #this is the event "weight".  Let's ignoreit for now (we will need it later).
-        njets = int(len(jets.split())/11) #number of "jets"
+        njets = int(len(jets.split())/11) #number of "jets" 
         nparticles  = int(len(particles.split())/5) #number of particles
-
-        #--- boosting 
-        #photon4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-        #photon4Vec.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]),float(metadata.split()[10]), 0.0)
-        #logging.info('photon boost: ' +str(photon4Vec.Px())+ " "+ str(photon4Vec.Py())+" "+ str(photon4Vec.Pz()))
-        #logging.info('boost vecotr mag: '+str(photon4Vec.BoostVector().Mag()))
-        #if photon4Vec.BoostVector().Mag() >= 1.0: 
-        #  #print('greater than 1.')
-        #  continue
-        #photon4Vec.Boost(-photon4Vec.BoostVector())
-        #logging.info('after boosting ' +str(photon4Vec.Px())+ " "+ str(photon4Vec.Py())+" "+ str(photon4Vec.Pz()))
-        #logging.info('size of photon boost: '+str(np.sqrt(photon4Vec.Px()**2 + photon4Vec.Py()**2 + photon4Vec.Pz()**2)))
-        #photonPs.append(np.sqrt(photon4Vec.Px()**2 + photon4Vec.Py()**2 + photon4Vec.Pz()**2))
-
-        #pylorentz
-        #photonVec = Momentum4.m_eta_phi_pt(0.0, float(metadata.split()[9]), float(metadata.split()[10]), float(metadata.split()[8]))
-        #logging.info('before boost: '+str(photonVec.p_t) +" " + str(photonVec.eta)+" " + str(photonVec.phi)+ " "+ str(photonVec.m))
-        #photon4Vec = photonVec.boost_particle(-photonVec)
-        #logging.info('after boost: '+str(photon4Vec.p_t) +" " + str(photon4Vec.eta)+" " + str(photon4Vec.phi)+ " "+ str(photon4Vec.m))
-
+        if njets>2: continue
 
 
         #True collision quantities
@@ -111,16 +91,6 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
         this_record['njets'] = njets
         jets_vec = []
         jets = jets.split()
-        if doBoost:
-          if njets < 2: continue
-          jet1 = jets[0*11:0*11+11]
-          jet2 = jets[1*11:1*11+11]
-          #--- boosting 
-          boostVec = get_x_vec(jet1,jet2)
-          logging.warning('leading jet pair boost: '+ str(boostVec.Px()) +" " +str(boostVec.Py())+" " +str(boostVec.Pz()))
-          logging.warning('unboosted X pt: '+ str(boostVec.Pt()))
-          jetPs.append(np.sqrt(boostVec.Px()**2 + boostVec.Py()**2 +boostVec.Pz()**2))
-        
   
         for i in range(njets):
             jet = np.zeros(11)
@@ -137,20 +107,6 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
             # - 3th angular moment of jet radiation
             # - 4th angular moment of jet radiation
             jet = jets[i*11:i*11+11]
-            if doBoost:
-              # replace some comps with boost 
-              thisJet4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-              thisJet4Vec.SetPtEtaPhiM(float(jet[1]),float(jet[2]),float(jet[3]),float(jet[4]))
-              thisJet4Vec.Boost(-boostVec.BoostVector())
-              #thisJet4Vec.Boost(-photon4Vec.BoostVector())
-              #thisJet4Vec = Momentum4.m_eta_phi_pt(float(jet[4]), float(jet[2]), float(jet[3]), float(jet[1]))
-              #thisJet4Vec.boost_particle(photon4Vec)
-              logging.info('before jet: ' +str(float(jet[1])) +" " +str(float(jet[2])) + " " +str(float(jet[3])) + " " +str(float(jet[4])))
-              jet[1] = thisJet4Vec.Pt()
-              jet[2] = thisJet4Vec.Eta()
-              jet[3] = thisJet4Vec.Phi()
-              jet[4] = thisJet4Vec.M() 
-              logging.info('after jet: ' +str(float(jet[1])) +" " +str(float(jet[2])) + " " +str(float(jet[3])) + " " +str(float(jet[4])))
             jets_vec+=[jet]
 
         this_record['jets']=jets_vec
@@ -159,19 +115,13 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
         this_record['subleadingjetpT']= float(jets_vec[1][1]) if len(jets_vec)>1 else -1
         this_record['leadingjetmass']= float(jets_vec[0][4]) if len(jets_vec)>0 else -1
         this_record['subleadingjetmass']= float(jets_vec[1][4]) if len(jets_vec)>1 else -1
-        this_record['measuredXpT']= get_x_vec(jets_vec[0], jets_vec[1]).Pt() if len(jets_vec)>1 else -1
 
+        this_record['measuredXpT']= get_x_vec(jets_vec[0], jets_vec[1]).Pt() if len(jets_vec)>1 else -1
+        this_record['xpT_Over_PhpT'] = np.divide(get_x_vec(jets_vec[0], jets_vec[1]).Pt(), float(metadata.split()[8])) if len(jets_vec)>1 else -1
+        this_record['ljpT_Over_PhpT'] = np.divide(float(jets_vec[0][1]), float(metadata.split()[8])) if len(jets_vec)>0 else -1
+        this_record['splitting']= np.divide(float(jets_vec[1][1]), float(jets_vec[0][1]) + float(jets_vec[1][1])) if len(jets_vec)>1 else -1
         this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
-
-        #thrust_maj, thrust_min = thrust(jets_vec)
-        #this_record['thrust_major'] = thrust_maj
-        #this_record['thrust_minor'] = thrust_min
-        #print("thrust major: ", thrust_maj, ", minor: ", thrust_min)
-        #w,v = momentum_tensor(jets_vec,2)
-        #this_record['sphericity'] = sphericity(w,v)
-        #this_record['transverse_sphericity'] = transverse_sphericity(w,v)
-        #this_record['aplanarity'] = aplanarity(w,v)
 
         this_record['nparticles'] = nparticles
 
@@ -186,22 +136,9 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
             # - azimuthal angle
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
             particle = particles[i*5:i*5+5]
-            if doBoost:
-              # replace some comps with boost 
-              particle4Mom = TLorentzVector(0.0,0.0,0.0,0.0)
-              particle4Mom.SetPtEtaPhiM(float(particle[1]), float(particle[2]),float(particle[3]),0.0)
-              particle4Mom.Boost(-boostVec.BoostVector())
-              #particle4Mom.Boost(-photon4Vec.BoostVector())
-              logging.info('before particle: ' + particle[1] +" " + particle[2] + " " + particle[3])
-              particle[1] = particle4Mom.Pt()
-              particle[2] = particle4Mom.Eta()
-              particle[3] = particle4Mom.Phi()
-              logging.info('afterr particle: ' + str(particle[1]) +" " + str(particle[2]) + " " + str(particle[3]))
-              #print(particles[i*5],particles[i*5+1],particles[i*5+2],particles[i*5+3],particles[i*5+4])
             particles_vec+=[particle]
         this_record['particles'] = particles_vec
         
-        #this_record['lny23'] = lny23(particles_vec)
         isNan = False
         for ele in particles_vec:
           for j in ele: 
@@ -219,38 +156,13 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
         
         all_records.append(this_record)
 
-    #plt.hist(photonPs,label='Photon boost momentum')
-    #plt.hist(jetPs,label='2 leading jet boost momentum')
-    #plt.xlabel('|p| [GeV]')
-    #plt.legend()
-    #if 'sig' in filename: plt.savefig('0323_boostComp_sig.pdf')
-    #else: plt.savefig('0323_boostComp_bkg.pdf')
     return all_records
 
 #-----------------------------------------------------------------------------------
 def make_evt_arrays(these_records):
     padded_evt_arrays =[]
     for i,record in enumerate(these_records):
-        #print(i, record)
-        # convert to np array
-        #these_jets = np.array(record['jets']).astype('float')
-        #if len(these_jets) == 0:
-        #    these_jets = np.zeros(11).reshape([1,11])
-        #these_jets = these_jets[:,6:11] # only want nsubjettiness
-
-        ## determine how many zero values to pad
-        #pad_length = max_njets - these_jets.shape[0]
-        ##pad_length = 2#max_njets - these_jets.shape[0]
-        ##pad
-        #padded_jets = np.pad(these_jets, ((0,pad_length),(0,0)))
-        ##print(i,pad_length, these_jets.shape[0], padded_jets.shape)
-        ## check padding
-        #assert padded_jets.shape == (max_njets, 5)
-        ## add to list
-        #padded_jet_arrays.append(padded_jets)
-        #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
-        #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass']]
-        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['leadingjetmass'], record['subleadingjetmass']]
+        evt_vars = [record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['splitting'],record['leadingjetmass'],record['subleadingjetmass']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -263,19 +175,17 @@ if __name__ == "__main__":
   filename=sys.argv[2]
   startNum=sys.argv[3]
   endNum=sys.argv[4]
-  doBoost = False
   logging.basicConfig(level=logging.ERROR)
 
   records = []
   print('Running filename ', filename, ' from line ', startNum, ' to ', endNum)
   #file = open('../'+str(filename))
   file = open(str(filename))
-  records += parse_file(file,startNum,endNum,filename,doBoost)
+  records += parse_file(file,startNum,endNum,filename)
   X = make_evt_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
   np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
-
 
   
   print('runtime: ',datetime.now() - startTime)

@@ -13,20 +13,50 @@ from ROOT import *
 # IO: arXiv:1206.2135.pdf
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
-d_npy={
-'leadingjetpT':0,
-'subleadingjetpT':1,
-'measuredXpT':2,
-'measuredphotonpT':3,
-'njets':4,
-'nparticles':5,
-'lny23':6,
-'aplanarity':7,
-'transverse_sphericity':8,
-'sphericity':9,
-'total_jet_mass':10,
-#'evIsoSphere':11
-}
+
+#--------------------------- Variable defs
+def get_npy_dict(save):
+  d_npy={
+  'leadingjetpT':0,
+  'subleadingjetpT':1,
+  'measuredXpT':2,
+  'measuredphotonpT':3,
+  'njets':4,
+  'nparticles':5,
+  'lny23':6,
+  'aplanarity':7,
+  'transverse_sphericity':8,
+  'sphericity':9,
+  }
+
+  if '0405' in save:
+        #evt_vars = [record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['splitting'],record['leadingjetmass'],record['subleadingjetmass']]
+    d_npy={
+    'xpT_Over_PhpT':0,
+    'ljpT_Over_PhpT':1,
+    'leadingjetpT':2,
+    'subleadingjetpT':3,
+    'measuredXpT':4,
+    'measuredphotonpT':5,
+    'njets':6,
+    'nparticles':7,
+    'lny23':8,
+    'aplanarity':9,
+    'transverse_sphericity':10,
+    'sphericity':11,
+    'total_jet_mass':12,
+    'splitting':13,
+    'leadingjetmass':14,
+    'subleadingjetmass':15
+    }
+
+  elif '0329' in save:
+    d_npy['total_jet_mass'] =10
+    d_npy['leadingjetmass'] =11
+    d_npy['subleadingjetmass'] =12
+
+  return d_npy
+
 #feb files
 #d_npy={
 #'njets':0,
@@ -273,24 +303,30 @@ def make_var_plots(sig_records,bg_records,save):
   print('Making plots with name ', save)
   #02 files: record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']
   #plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
+  plot_something(save,sig_records,bg_records,'leadingjetmass',np.linspace(0,300,150),1)
+  plot_something(save,sig_records,bg_records,'subleadingjetmass',np.linspace(0,300,150),1)
+  plot_something(save,sig_records,bg_records,'splitting',np.linspace(0,0.5,50),1)
   plot_something(save,sig_records,bg_records,'njets',np.linspace(0,30,30),1)
-  plot_something(save,sig_records,bg_records,'nparticles',np.linspace(0,200,200),1)
-  plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
-  plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
-  plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
+  #plot_something(save,sig_records,bg_records,'nparticles',np.linspace(0,200,200),1)
+  #plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
+  #plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
+  #plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
+  #plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
   #plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
-  #plot_something(save,sig_records,bg_records,'evIsoSphere',np.linspace(0,2.0,100),1)
-  plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'subleadingjetpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,800,200),1)
-  #plot_something(save,sig_records,bg_records,'ljpT_Over_PhpT',np.linspace(0,20,100),1)
-  #plot_something(save,sig_records,bg_records,'xpT_Over_PhpT',np.linspace(0,20,100),1)
+  ##plot_something(save,sig_records,bg_records,'evIsoSphere',np.linspace(0,2.0,100),1)
+  #plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,800,200),1)
+  #plot_something(save,sig_records,bg_records,'subleadingjetpT',np.linspace(0,800,200),1)
+  #plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,800,200),1)
+  #plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,800,200),1)
+  plot_something(save,sig_records,bg_records,'ljpT_Over_PhpT',np.linspace(0,20,100),1)
+  plot_something(save,sig_records,bg_records,'xpT_Over_PhpT',np.linspace(0,20,100),1)
   #plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
   #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
 def plot_something(save,sig_records,bg_records,var,R,doLog):
+  
+    d_npy = get_npy_dict(save) 
+ 
     #plt.figure(figsize=(20,5))
     if 'ljpT' in var:
       sig_arr = np.array([float(i[d_npy['leadingjetpT']]/i[d_npy['measuredphotonpT']]) for i in sig_records])
