@@ -23,8 +23,7 @@ from datetime import datetime
 from ROOT import *
 
 #-----------------------------------------------------------------------------------
-def get_ars(sizeeach):
-  sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
+def get_ars(sigmas,sizeeach):
   ars = []
   for sigma in sigmas: 
     sigNum = sigma*np.sqrt(sizeeach) 
@@ -272,19 +271,27 @@ if __name__ == "__main__":
 
 
   # -- Get input files 
-  #X_bg_arr, y_bg_arr = load_arrs("background","02")
-  #X_sig_arr, y_sig_arr = load_arrs("signal","02")
-  #X_bg_arr, y_bg_arr = load_arrs("background","0303_condor")
-  #X_sig_arr, y_sig_arr = load_arrs("signal","0303_condor")
   X_bg_arr, y_bg_arr = load_arrs("bg",savename)
   X_sig_arr, y_sig_arr = load_arrs("sig",savename)
-  
+
   X_bg = np.vstack(X_bg_arr)
   X_sig = np.vstack(X_sig_arr)
   y_bg = np.concatenate(y_bg_arr)
   y_sig = np.concatenate(y_sig_arr)
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
+  
+  #-- rmove nans 
+  for a,b in zip(X_bg_arr, y_bg_arr): #each file
+    for y in range(len(a)): # each event 
+      for z in a[y]: #each var 
+        if z!=z:
+          print('found one!')
+          print(a[y])
+          np.delete(a, y)
+          np.delete(b, y)
+  print('AFTER NANS: running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
+
 
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
@@ -329,7 +336,7 @@ if __name__ == "__main__":
   # network architecture parameters
   dense_sizes = (100, 100)
   # network training parameters
-  num_epoch = 200
+  num_epoch = 500
   batch_size = 500
  
   aucs = []
@@ -338,23 +345,23 @@ if __name__ == "__main__":
   anomalyRatios = [0.0,0.05,0.4,1.0]
   anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
+  sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
   #anomalyRatios =[0.0]
   
-  anomalyRatios = get_ars(sizeeach)
+  anomalyRatios = get_ars(sigmas,sizeeach)
  
-  for r in anomalyRatios:
-
-      anom_size = int(round(r* sizeeach)) #amount of sig contamination
+  for r in range(len(anomalyRatios)):
+      anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
       bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
       B = bgsig_size+sizeeach
       sigs.append(np.round(anom_size/np.sqrt(B),3))
       print('S :', anom_size, ", B: ", B, ", sig: ", anom_size/np.sqrt(B))
 
-      print('-------------- Anomaly Ratio = '+str(r))
+      print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
       dnn = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       # try skinnier SR
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=r, train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = 200)
       print('number of inputs :', len(X_sig[0]))
       print('training input shape: ', np.shape(X_train))
@@ -365,17 +372,18 @@ if __name__ == "__main__":
       validation_data=(X_val, Y_val),
       verbose=0)
  
-      plot_loss(h,r,saveTag) 
+      plot_loss(h,sigmas[r],saveTag) 
        
       # ROCs for SB vs. SR  
       Y_predict = dnn.predict(X_test)
       auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
       roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
+
       rocs.append(roc_curve)
       aucs.append(auc)
 
   print(aucs)
-  make_roc_plots(anomalyRatios,saveTag,'tpr',rocs,aucs,sigs)
-  make_roc_plots(anomalyRatios,saveTag,'tpr/sqrt(fpr)',rocs,aucs,sigs)
+  make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
+  make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
    
   print('runtime: ',datetime.now() - startTime)

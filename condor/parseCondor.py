@@ -66,19 +66,34 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
         this_record['eventweight'] = eventweight #this is the event "weight".  Let's ignoreit for now (we will need it later).
         njets = int(len(jets.split())/11) #number of "jets"
         nparticles  = int(len(particles.split())/5) #number of particles
+        this_record['njets'] = njets
+        if njets < 2: continue
+        jets_vec = []
+        jets = jets.split()
 
         #--- boosting 
-        #photon4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
-        #photon4Vec.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]),float(metadata.split()[10]), 0.0)
-        #logging.info('photon boost: ' +str(photon4Vec.Px())+ " "+ str(photon4Vec.Py())+" "+ str(photon4Vec.Pz()))
-        #logging.info('boost vecotr mag: '+str(photon4Vec.BoostVector().Mag()))
-        #if photon4Vec.BoostVector().Mag() >= 1.0: 
-        #  #print('greater than 1.')
-        #  continue
-        #photon4Vec.Boost(-photon4Vec.BoostVector())
-        #logging.info('after boosting ' +str(photon4Vec.Px())+ " "+ str(photon4Vec.Py())+" "+ str(photon4Vec.Pz()))
-        #logging.info('size of photon boost: '+str(np.sqrt(photon4Vec.Px()**2 + photon4Vec.Py()**2 + photon4Vec.Pz()**2)))
-        #photonPs.append(np.sqrt(photon4Vec.Px()**2 + photon4Vec.Py()**2 + photon4Vec.Pz()**2))
+        photon4Vec = TLorentzVector(0.0,0.0,0.0,0.0)
+        photon4Vec.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]),float(metadata.split()[10]), 0.0)
+        logging.info('photon px, py, pz: ' +str(photon4Vec.Px())+ " "+ str(photon4Vec.Py())+" "+ str(photon4Vec.Pz()))
+        logging.info('boost vector mag: '+str(photon4Vec.BoostVector().Mag()))
+
+
+        if doBoost:
+          if njets < 2: continue
+          jet1 = jets[0*11:0*11+11]
+          jet2 = jets[1*11:1*11+11]
+          #--- boosting 
+          boostVec = get_x_vec(jet1,jet2)
+          logging.warning('leading jet pair boost: '+ str(boostVec.Px()) +" " +str(boostVec.Py())+" " +str(boostVec.Pz()))
+          logging.warning('unboosted X pt: '+ str(boostVec.Pt()))
+          jetPs.append(np.sqrt(boostVec.Px()**2 + boostVec.Py()**2 +boostVec.Pz()**2))
+          logging.info("X energy: ", boostVec.E())
+          logging.info('MY boost vector: '+ str(np.divide(photon4Vec.Px(),boostVec.E()))+ " "+ str(np.divide(photon4Vec.Py(),boostVec.E()))+" "+ str(np.divide(photon4Vec.Pz(),boostVec.E())))
+
+        photon4Vec.Boost(-photon4Vec.BoostVector())
+        logging.info('after boosting ' +str(photon4Vec.Px())+ " "+ str(photon4Vec.Py())+" "+ str(photon4Vec.Pz()))
+        logging.info('size of photon boost: '+str(np.sqrt(photon4Vec.Px()**2 + photon4Vec.Py()**2 + photon4Vec.Pz()**2)))
+        photonPs.append(np.sqrt(photon4Vec.Px()**2 + photon4Vec.Py()**2 + photon4Vec.Pz()**2))
 
         #pylorentz
         #photonVec = Momentum4.m_eta_phi_pt(0.0, float(metadata.split()[9]), float(metadata.split()[10]), float(metadata.split()[8]))
@@ -107,19 +122,6 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
 
         mymeasuredenergy+=[measuredcenterofmassenergy]
 
-
-        this_record['njets'] = njets
-        jets_vec = []
-        jets = jets.split()
-        if doBoost:
-          if njets < 2: continue
-          jet1 = jets[0*11:0*11+11]
-          jet2 = jets[1*11:1*11+11]
-          #--- boosting 
-          boostVec = get_x_vec(jet1,jet2)
-          logging.warning('leading jet pair boost: '+ str(boostVec.Px()) +" " +str(boostVec.Py())+" " +str(boostVec.Pz()))
-          logging.warning('unboosted X pt: '+ str(boostVec.Pt()))
-          jetPs.append(np.sqrt(boostVec.Px()**2 + boostVec.Py()**2 +boostVec.Pz()**2))
         
   
         for i in range(njets):
@@ -157,9 +159,8 @@ def parse_file(file_object,startNum,endNum,filename,doBoost):
         if len(jets_vec)>1: logging.warning('measured X pt: '+ str(get_x_vec(jets_vec[0], jets_vec[1]).Pt()))
         this_record['leadingjetpT']= float(jets_vec[0][1]) if len(jets_vec)>0 else -1
         this_record['subleadingjetpT']= float(jets_vec[1][1]) if len(jets_vec)>1 else -1
-        this_record['leadingjetmass']= float(jets_vec[0][4]) if len(jets_vec)>0 else -1
-        this_record['subleadingjetmass']= float(jets_vec[1][4]) if len(jets_vec)>1 else -1
         this_record['measuredXpT']= get_x_vec(jets_vec[0], jets_vec[1]).Pt() if len(jets_vec)>1 else -1
+        this_record['splitting']= np.divide(float(jets_vec[1][1]), float(jets_vec[0][1]) + float(jets_vec[1][1])) if len(jets_vec)>1 else -1
 
         this_record['lny23'] = lny23(jets_vec)
         this_record['total_jet_mass'] = total_jet_mass(jets_vec)
@@ -250,7 +251,9 @@ def make_evt_arrays(these_records):
         #padded_jet_arrays.append(padded_jets)
         #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']]
         #evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass']]
-        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['leadingjetmass'], record['subleadingjetmass']]
+        evt_vars = [record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['splitting']]
+        for v in evt_vars: 
+          if v!=v: print('nan! ', evt_vars)
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -271,6 +274,11 @@ if __name__ == "__main__":
   #file = open('../'+str(filename))
   file = open(str(filename))
   records += parse_file(file,startNum,endNum,filename,doBoost)
+  plt.hist(np.array([i['njets'] for i in records]))
+  plt.savefig('0405_njets.pdf')
+  plt.hist(np.array([i['splitting'] for i in records]))
+  plt.savefig('0405_splitting.pdf')
+
   X = make_evt_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)

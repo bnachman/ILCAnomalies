@@ -65,7 +65,9 @@ def total_jet_mass(jets):
       pt = float(jet[1])
       vec.SetPtEtaPhiM(float(pt),float(jet[2]),float(jet[3]),float(jet[4]))
       sumVec = sumVec+vec
-    tjm = np.divide(np.power(sumVec.M(),2),np.power(sumP,2))
+    if sumP>0.0: tjm = np.divide(np.power(sumVec.M(),2),np.power(sumP,2))
+    else: tjm = -1
+
     return tjm
 
 def lny23(jets):
