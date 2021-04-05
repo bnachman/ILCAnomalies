@@ -241,17 +241,18 @@ def thrust(jets):
 
 
 #---------------------------  Plotting help
-def make_roc_plots(anomalyRatios,saveTag,Ylabel,rocs,aucs,sigs):
+def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   for i,r in enumerate(anomalyRatios):
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i]))
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(r)+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
-      else: plt.plot(rocs[i][0],rocs[i][1],label=str(r)+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(np.round(r,3))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
+      else: plt.plot(rocs[i][0],rocs[i][1],label=str(np.round(r,3))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
   if 'sqrt' in Ylabel: 
     plt.xlabel('tpr')
     plt.ylim(0,12.0)
   else: plt.xlabel('fpr')
   plt.ylabel(Ylabel)
-  plt.title('ROC curve: '+saveTag)
+  plt.title('ROC: '+saveTag)
+  plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
   plt.legend()
   plt.savefig('plots/'+saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
   plt.clf()
@@ -260,11 +261,11 @@ def make_roc_plots(anomalyRatios,saveTag,Ylabel,rocs,aucs,sigs):
 def plot_loss(h,r,save):
       plt.plot(h.history['loss'])
       plt.plot(h.history['val_loss'])
-      plt.title('model loss, ar='+str(r))
+      plt.title('model loss, sigma='+str(r))
       plt.ylabel('loss')
       plt.xlabel('epoch')
       plt.legend(['train', 'val'], loc='upper left')
-      plt.savefig('plots/'+save+'_lossVsEpoch_anomalyRatio'+str(r)+'.pdf')
+      plt.savefig('plots/'+save+'_lossVsEpoch_sigma'+str(r)+'.pdf')
       plt.clf()
 
 #
