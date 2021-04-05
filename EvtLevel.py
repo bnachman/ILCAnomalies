@@ -273,6 +273,7 @@ if __name__ == "__main__":
   # -- Get input files 
   X_bg_arr, y_bg_arr = load_arrs("bg",savename)
   X_sig_arr, y_sig_arr = load_arrs("sig",savename)
+
   X_bg = np.vstack(X_bg_arr)
   X_sig = np.vstack(X_sig_arr)
   y_bg = np.concatenate(y_bg_arr)
@@ -290,6 +291,7 @@ if __name__ == "__main__":
           np.delete(a, y)
           np.delete(b, y)
   print('AFTER NANS: running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
+
 
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
@@ -350,7 +352,6 @@ if __name__ == "__main__":
   anomalyRatios = get_ars(sigmas,sizeeach)
  
   for r in range(len(anomalyRatios)):
-
       anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
       bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
       B = bgsig_size+sizeeach
