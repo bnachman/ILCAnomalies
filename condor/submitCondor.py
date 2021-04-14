@@ -38,7 +38,7 @@ if __name__ == "__main__":
    #files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*.txt")
    #files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_signal.txt")
 
-   increment = 500000
+   increment = 50000
 
    for myFile in files:
      # SUBMIT HERE
@@ -53,8 +53,8 @@ if __name__ == "__main__":
      #for i in range(0,1,increment): # number of events in largest file
        print("SUBMITTING: "+shortName+" from  "+str(i)+" to "+str(i+increment))
        args = open("args.txt","w")
-       if 'lhe' not in myFile: os.system("echo '0329_condor_leadingjetmasses_noboost "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
-       else: os.system("echo '0329_condor_leadingjetmasses_noboost "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       if 'lhe' not in myFile: os.system("echo '0406_measuredsqrtshat "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       else: os.system("echo '0406_measuredsqrtshat "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
        args.close()
        open("submit.sub","w")
 

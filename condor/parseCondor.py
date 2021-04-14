@@ -65,7 +65,7 @@ def parse_file(file_object,startNum,endNum,filename):
         this_record['eventweight'] = eventweight #this is the event "weight".  Let's ignoreit for now (we will need it later).
         njets = int(len(jets.split())/11) #number of "jets" 
         nparticles  = int(len(particles.split())/5) #number of particles
-        if njets>2: continue
+        if njets<2: continue
 
 
         #True collision quantities
@@ -185,7 +185,8 @@ if __name__ == "__main__":
   file = open(str(filename))
   records += parse_file(file,startNum,endNum,filename)
   X = make_evt_arrays(records)
-  y = np.array([i['truthsqrtshat'] for i in records])
+  #y = np.array([i['truthsqrtshat'] for i in records])
+  y = np.array([i['measuredsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
   np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
 

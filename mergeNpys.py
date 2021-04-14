@@ -7,11 +7,9 @@
 #python -m ipykernel install --user --name fullenv --display-name "fullenv"
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import numpy as np
-import matplotlib.pyplot as plt
 import glob
 from eventHelper import *
 from datetime import datetime
-from ROOT import *
 
 #-----------------------------------------------------------------------------------
 def load_arrs(typee,savee):

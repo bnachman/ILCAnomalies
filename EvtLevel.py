@@ -26,10 +26,11 @@ from ROOT import *
 def get_ars(sigmas,sizeeach):
   ars = []
   for sigma in sigmas: 
-    sigNum = sigma*np.sqrt(sizeeach) 
-    if sigNum/sizeeach > 1.0: ars.append(1.0)
-    else: ars.append(sigNum/sizeeach)
-  print('determined ars: ', ars)
+    sigNum1 = 0.5*(-sigma**2 - np.sqrt(sigma**4 + 4*sigma**2*sizeeach) )
+    sigNum2 = 0.5*(np.sqrt(sigma**4 + 4*sigma**2*sizeeach) - sigma**2 )
+    if sigNum2/sizeeach > 1.0: ars.append(1.0)
+    else: ars.append(sigNum2/sizeeach)
+  if 1.0 not in ars: ars.append(1.0)
   return ars
 
 #-----------------------------------------------------------------------------------
@@ -271,26 +272,28 @@ if __name__ == "__main__":
 
 
   # -- Get input files 
-  X_bg_arr, y_bg_arr = load_arrs("bg",savename)
-  X_sig_arr, y_sig_arr = load_arrs("sig",savename)
+  X_bg_arr, y_bg_arr = load_arrs("bg",savename.split("_")[0])
+  X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
 
-  X_bg = np.vstack(X_bg_arr)
-  X_sig = np.vstack(X_sig_arr)
+  X_bg = np.vstack(X_bg_arr)#[:,0:14]
+  X_sig = np.vstack(X_sig_arr)#[:,0:14] 
   y_bg = np.concatenate(y_bg_arr)
   y_sig = np.concatenate(y_sig_arr)
+  print(np.shape(X_bg))
+  print(np.shape(X_sig))
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
   
   #-- rmove nans 
-  for a,b in zip(X_bg_arr, y_bg_arr): #each file
-    for y in range(len(a)): # each event 
-      for z in a[y]: #each var 
-        if z!=z:
-          print('found one!')
-          print(a[y])
-          np.delete(a, y)
-          np.delete(b, y)
-  print('AFTER NANS: running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
+  #for a,b in zip(X_bg_arr, y_bg_arr): #each file
+  #  for y in range(len(a)): # each event 
+  #    for z in a[y]: #each var 
+  #      if z!=z:
+  #        print('found one!')
+  #        print(a[y])
+  #        np.delete(a, y)
+  #        np.delete(b, y)
+  #print('AFTER NANS: running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
 
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
@@ -350,13 +353,13 @@ if __name__ == "__main__":
   #anomalyRatios =[0.0]
   
   anomalyRatios = get_ars(sigmas,sizeeach)
+  sigmas.append('inf')
  
   for r in range(len(anomalyRatios)):
       anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
       bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
-      B = bgsig_size+sizeeach
-      sigs.append(np.round(anom_size/np.sqrt(B),3))
-      print('S :', anom_size, ", B: ", B, ", sig: ", anom_size/np.sqrt(B))
+      sigs.append(np.round(anom_size/np.sqrt(bgsig_size),3))
+      print('S labelled 1s:', anom_size, ", B labelled 1s: ", bgsig_size, ", sig: ", anom_size/np.sqrt(bgsig_size))
 
       print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
       dnn = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)

@@ -48,5 +48,6 @@ if __name__ == "__main__":
 
   #make_npy_plots(X_sig,X_bg,'total_jet_mass',np.linspace(0,2.0,100),saveTag)
   make_var_plots(X_sig,X_bg,saveTag+"npy")
+  make_sqrts_plot(y_sig,y_bg,saveTag+"npy")
    
   print('runtime: ',datetime.now() - startTime)
