@@ -45,9 +45,9 @@ if __name__ == "__main__":
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
-  np.save("training_data/"+mergeTag+"_all_X_bg.npy", X_bg)
-  np.save("training_data/"+mergeTag+"_all_X_sig.npy", X_sig)
-  np.save("training_data/"+mergeTag+"_all_y_bg.npy", y_bg)
-  np.save("training_data/"+mergeTag+"_all_y_sig.npy", y_sig)
+  np.save("training_pfn_data/"+mergeTag+"_all_X_bg.npy", X_bg)
+  np.save("training_pfn_data/"+mergeTag+"_all_X_sig.npy", X_sig)
+  np.save("training_pfn_data/"+mergeTag+"_all_y_bg.npy", y_bg)
+  np.save("training_pfn_data/"+mergeTag+"_all_y_sig.npy", y_sig)
    
   print('runtime: ',datetime.now() - startTime)
