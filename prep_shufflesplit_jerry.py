@@ -125,16 +125,19 @@ def prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig, anomaly_rati
     # Centre and normalize all the Xs
     for x in X_train:
         mask = x[:,0] > 0
+        if len(x[mask,0]) < 1: continue 
         yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
         x[mask,1:3] -= yphi_avg
         x[mask,0] /= x[:,0].sum()
     for x in X_val:
         mask = x[:,0] > 0
+        if len(x[mask,0]) < 1: continue 
         yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
         x[mask,1:3] -= yphi_avg
         x[mask,0] /= x[:,0].sum()
     for x in X_test:
         mask = x[:,0] > 0
+        if len(x[mask,0]) < 1: continue 
         yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
         x[mask,1:3] -= yphi_avg
         x[mask,0] /= x[:,0].sum()

@@ -258,7 +258,7 @@ if __name__ == "__main__":
   savename = args.savename[0]
   testset = args.testset[0]
   trainset = args.trainset[0]
-  saveTag = savename+"_"+testset+"_"+trainset
+  saveTag = savename+"_"+testset+"_"+trainset+"_juliaNoNorm"
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
@@ -291,15 +291,10 @@ if __name__ == "__main__":
 
   # --  Identify signal and side band 
   # 0126 harmonized Ines
-  #sb_left = 275
-  #sb_right = 425
-  #sr_left = 325
-  #sr_right = 375
-  # 0416 jerry
-  sb_left = 200
-  sb_right = 500
-  sr_left = 300
-  sr_right = 400
+  sb_left = 275
+  sb_right = 425
+  sr_left = 325
+  sr_right = 375
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -359,8 +354,8 @@ if __name__ == "__main__":
       print('S labelled 1s:', anom_size, ", B labelled 1s: ", bgsig_size, ", sig: ", anom_size/np.sqrt(bgsig_size))
 
       print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig,anomaly_ratio=anomalyRatios[r],size_each = sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test = 0.1)
-      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1)
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig,anomaly_ratio=anomalyRatios[r],size_each = sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test = 0.1)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1)
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
       print('number of inputs :', X_train.shape[-1])
       print('training input shape: ', np.shape(X_train))

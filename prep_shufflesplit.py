@@ -24,6 +24,8 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     #how much bg and signal data to take?
     anom_size = int(round(anomaly_ratio * size_each)) #amount of sig contamination
     bgsig_size = int(size_each - anom_size) #remaining background to get to 100%
+    test_size_each = int(size_each * test)   
+    print('test_size_each: ', test_size_each)
 
 
     # select sideband datapoints
@@ -84,7 +86,6 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     Get the test set  """ 
     #---  test = truth S vs truth B in SR only 
     #test_size_each = test*size_each
-    test_size_each = int(bgsig_size * test)   
 
     if train_set=='CWoLa' and test_set == 'SvsB':
       this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
@@ -128,21 +129,24 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
 
     # --------------> PFN 
     # Centre and normalize all the Xs
-    for x in X_train:
-        mask = x[:,0] > 0
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
-    for x in X_val:
-        mask = x[:,0] > 0
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
-    for x in X_test:
-        mask = x[:,0] > 0
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
+    #for x in X_train:
+    #    mask = x[:,0] > 0
+    #    if len(x[mask,0]) < 1: continue
+    #    yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+    #    x[mask,1:3] -= yphi_avg
+    #    x[mask,0] /= x[:,0].sum()
+    #for x in X_val:
+    #    mask = x[:,0] > 0
+    #    if len(x[mask,0]) < 1: continue
+    #    yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+    #    x[mask,1:3] -= yphi_avg
+    #    x[mask,0] /= x[:,0].sum()
+    #for x in X_test:
+    #    mask = x[:,0] > 0
+    #    if len(x[mask,0]) < 1: continue
+    #    yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+    #    x[mask,1:3] -= yphi_avg
+    #    x[mask,0] /= x[:,0].sum()
     # Centre and normalize all the Xs
     #for x in X_train:
     #    #print(x)
