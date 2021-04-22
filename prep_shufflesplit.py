@@ -126,6 +126,15 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     #X_train = preprocessing.scale(X_train)
     #X_val = preprocessing.scale(X_val)
     #X_test = preprocessing.scale(X_test)
+    #from sklearn.preprocessing import StandardScaler
+    #scaler = StandardScaler()
+    #scaler.fit(X_train)
+    ##transform training dataset
+    #X_train = scaler.transform(X_train)
+    ## transform test dataset
+    #X_test = scaler.transform(X_test)
+    ## transform val dataset
+    #X_val = scaler.transform(X_val)
 
     # --------------> PFN 
     # Centre and normalize all the Xs
