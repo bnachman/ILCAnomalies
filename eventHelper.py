@@ -278,7 +278,8 @@ def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs
       else: plt.plot(rocs[i][0],rocs[i][1],label=str(np.round(r,3))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
   if 'sqrt' in Ylabel: 
     plt.xlabel('tpr')
-    plt.ylim(0,12.0)
+    plt.ylim(0.01,80.0)
+    plt.yscale('log')
   else: plt.xlabel('fpr')
   plt.ylabel(Ylabel)
   plt.title('ROC: '+saveTag)

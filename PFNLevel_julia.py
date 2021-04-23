@@ -258,7 +258,7 @@ if __name__ == "__main__":
   savename = args.savename[0]
   testset = args.testset[0]
   trainset = args.trainset[0]
-  saveTag = savename+"_"+testset+"_"+trainset+"_julia_dnn"
+  saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
@@ -295,6 +295,12 @@ if __name__ == "__main__":
   sb_right = 425
   sr_left = 325
   sr_right = 375
+  # 0422 jerry
+  #sb_left = 200
+  #sb_right = 500
+  #sr_left = 300
+  #sr_right = 400
+  # 0422 sig700
   #sb_left = 625
   #sb_right = 775
   #sr_left = 675
@@ -364,9 +370,9 @@ if __name__ == "__main__":
       print('number of inputs :', X_train.shape[-1])
       print('training input shape: ', np.shape(X_train))
       
-      model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+      #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
-      #model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
+      model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
       h = model.fit(X_train, Y_train,
       epochs=num_epoch,
       batch_size=batch_size,
