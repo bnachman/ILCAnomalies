@@ -274,8 +274,8 @@ def thrust(jets):
 def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   for i,r in enumerate(anomalyRatios):
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i]))
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(np.round(r,3))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
-      else: plt.plot(rocs[i][0],rocs[i][1],label=str(np.round(r,3))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],2)))
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3)))
+      else: plt.plot(rocs[i][0],rocs[i][1],label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3)))
   if 'sqrt' in Ylabel: 
     plt.xlabel('tpr')
     plt.ylim(0.01,80.0)

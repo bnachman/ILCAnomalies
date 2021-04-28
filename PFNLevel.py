@@ -33,7 +33,7 @@ def get_ars(sigmas,sizeeach):
     sigNum2 = 0.5*(np.sqrt(sigma**4 + 4*sigma**2*sizeeach) - sigma**2 )
     if sigNum2/sizeeach > 1.0: ars.append(1.0)
     else: ars.append(sigNum2/sizeeach)
-  if 1.0 not in ars: ars.append(1.0)
+  #if 1.0 not in ars: ars.append(1.0)
   return ars
 
 #-----------------------------------------------------------------------------------
@@ -268,6 +268,7 @@ if __name__ == "__main__":
   # -- Get input files 
   X_bg_arr, y_bg_arr = load_arrs("background",savename.split("_")[0])
   X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
+  #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
 
   X_bg = np.vstack(X_bg_arr)#[:,0:14]
   X_sig = np.vstack(X_sig_arr)#[:,0:14] 
@@ -291,15 +292,20 @@ if __name__ == "__main__":
 
   # --  Identify signal and side band 
   # 0126 harmonized Ines
-  #sb_left = 275
-  #sb_right = 425
-  #sr_left = 325
-  #sr_right = 375
-  # 0416 jerry
-  sb_left = 200
-  sb_right = 500
-  sr_left = 300
-  sr_right = 400
+  sb_left = 275
+  sb_right = 425
+  sr_left = 325
+  sr_right = 375
+  # 0422 jerry
+  #sb_left = 200
+  #sb_right = 500
+  #sr_left = 300
+  #sr_right = 400
+  # 0422 sig700
+  #sb_left = 625
+  #sb_right = 775
+  #sr_left = 675
+  #sr_right = 725
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -336,8 +342,9 @@ if __name__ == "__main__":
   dense_sizes = (100, 100)
   Phi_sizes, F_sizes = (20, 20, 20), (20,20,20)
   # network training parameters
-  num_epoch = 10
+  num_epoch = 20
   batch_size = 100
+  saveTag += 'ep'+str(num_epoch)
  
   aucs = []
   rocs = []
@@ -346,6 +353,9 @@ if __name__ == "__main__":
   anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
+  sigmas = [5.0]
+  #sigmas = [4.8,4.9,4.95,4.975,5.0,5.025,5.05,5.1,5.2]
+  #sigmas = [1.0,2.0,5.0,15.0]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
   #anomalyRatios =[0.0]
   
@@ -359,12 +369,14 @@ if __name__ == "__main__":
       print('S labelled 1s:', anom_size, ", B labelled 1s: ", bgsig_size, ", sig: ", anom_size/np.sqrt(bgsig_size))
 
       print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig,anomaly_ratio=anomalyRatios[r],size_each = sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test = 0.1)
-      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1)
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig,anomaly_ratio=anomalyRatios[r],size_each = sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test = 0.1)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1)
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
       print('number of inputs :', X_train.shape[-1])
       print('training input shape: ', np.shape(X_train))
       
+      #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+      #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
       h = model.fit(X_train, Y_train,
       epochs=num_epoch,
