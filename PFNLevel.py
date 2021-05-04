@@ -33,7 +33,7 @@ def get_ars(sigmas,sizeeach):
     sigNum2 = 0.5*(np.sqrt(sigma**4 + 4*sigma**2*sizeeach) - sigma**2 )
     if sigNum2/sizeeach > 1.0: ars.append(1.0)
     else: ars.append(sigNum2/sizeeach)
-  #if 1.0 not in ars: ars.append(1.0)
+  if 1.0 not in ars: ars.append(1.0)
   return ars
 
 #-----------------------------------------------------------------------------------
@@ -79,7 +79,32 @@ def binary_side_band(y_thing):
       else:
           return -1
 
+#-----------------------------------------------------------------------------------
+def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size):
+      #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+      #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+      model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
+      h = model.fit(X_train, Y_train,
+      epochs=num_epoch,
+      batch_size=batch_size,
+      validation_data=(X_val, Y_val),
+      verbose=0)
+      return model, h
 
+
+#---  make an ensemble prediction for multi-class classification
+def ensemble_predictions(members, testX):
+    # make predictions
+    Y_predicts = [model.predict(testX) for model in members]
+    print('ALL Y_predict!!!!', np.shape(Y_predicts))
+    Y_predicts = np.array(Y_predicts)
+    result = np.average(Y_predicts,axis=0)
+    # sum across ensemble members
+    #summed = np.sum(Y_predicts, axis=0)
+    # argmax across classes
+    #result = np.argmax(summed, axis=1)
+    print('Avg Y_predict!!!!', np.shape(result))
+    return result
 
 
 #-----------------------------------------------------------------------------------
@@ -247,22 +272,25 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument("-n", "--savename", default = '', type=str, nargs='+',
                      help="savename")
-  parser.add_argument("-s", "--sizeeach", default = 15000, type=int, nargs='+',
+  parser.add_argument("-s", "--sizeeach", default = 75000, type=int, nargs='+',
                      help="sizeeach")
   parser.add_argument("-te", "--testset", default = '', type=str, nargs='+',
                      help="testset")
   parser.add_argument("-tr", "--trainset", default = '', type=str, nargs='+',
                      help="trainset")
+  parser.add_argument("-e", "--doEnsemble", default = 1, type=int,
+                     help="do ensembling")
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
   testset = args.testset[0]
   trainset = args.trainset[0]
+  doEnsemb = args.doEnsemble
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
-  print('arguments: sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset)
+  print('arguments: sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset, ", doing ensembling ?", doEnsemb)
 
 
   # -- Get input files 
@@ -344,7 +372,8 @@ if __name__ == "__main__":
   # network training parameters
   num_epoch = 20
   batch_size = 100
-  saveTag += 'ep'+str(num_epoch)
+  n_models=10
+  saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
   aucs = []
   rocs = []
@@ -353,14 +382,13 @@ if __name__ == "__main__":
   anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
-  sigmas = [5.0]
   #sigmas = [4.8,4.9,4.95,4.975,5.0,5.025,5.05,5.1,5.2]
   #sigmas = [1.0,2.0,5.0,15.0]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
   #anomalyRatios =[0.0]
   
   anomalyRatios = get_ars(sigmas,sizeeach)
-  #sigmas.append('inf')
+  sigmas.append('inf')
  
   for r in range(len(anomalyRatios)):
       anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
@@ -374,27 +402,36 @@ if __name__ == "__main__":
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
       print('number of inputs :', X_train.shape[-1])
       print('training input shape: ', np.shape(X_train))
-      
-      #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
-      #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
-      model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
-      h = model.fit(X_train, Y_train,
-      epochs=num_epoch,
-      batch_size=batch_size,
-      validation_data=(X_val, Y_val),
-      verbose=0)
- 
-      plot_loss(h,sigmas[r],saveTag) 
+     
+      # ---- ensembling ! 
+      if not doEnsemb: 
+          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
+          plot_loss(h,sigmas[r],saveTag) 
+      else: 
+        print('~~~~~~~~~~~~~~~~~~~~~~ ENSEMBLING ~~~~~~~~~~~~~~~~~~~~~~~~~')
+        ensembModels = []
+        thisAucs = []
+        for i in range(n_models):
+          print('~~~~~~~~~~ MODEL '+str(i))
+          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size)
+          ensembModels.append(model)
+          plot_loss(h,sigmas[r],saveTag+str(i)) 
+          thisYPredict = model.predict(X_test)
+          thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
+        print('~~~~~~~~~~ AUCs ', thisAucs)
        
-      # ROCs for SB vs. SR  
-      Y_predict = model.predict(X_test)
+      # ROCs 
+      if not doEnsemb: 
+        Y_predict = model.predict(X_test)
+        print('Y_predict!!!!!!!!!!!!', np.shape(Y_predict))
+      else: Y_predict = ensemble_predictions(ensembModels, X_test)
       auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
       roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
-
       rocs.append(roc_curve)
       aucs.append(auc)
 
-  print(aucs)
+
+  print('FINAL AUCs: ', aucs)
   make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
   make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
    
