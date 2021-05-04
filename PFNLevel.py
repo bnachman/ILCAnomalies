@@ -360,7 +360,7 @@ if __name__ == "__main__":
   #anomalyRatios =[0.0]
   
   anomalyRatios = get_ars(sigmas,sizeeach)
-  sigmas.append('inf')
+  #sigmas.append('inf')
  
   for r in range(len(anomalyRatios)):
       anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
