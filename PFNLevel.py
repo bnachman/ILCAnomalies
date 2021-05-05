@@ -20,9 +20,9 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
 from eventHelper import *
 from datetime import datetime
-from ROOT import *
+#from ROOT import *
 import math
-from prep_shufflesplit_jerry import *
+#from prep_shufflesplit_jerry import *
 from prep_shufflesplit import *
 
 #-----------------------------------------------------------------------------------
@@ -399,30 +399,26 @@ if __name__ == "__main__":
       bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
       sigs.append(np.round(anom_size/np.sqrt(bgsig_size),3))
       print('S labelled 1s:', anom_size, ", B labelled 1s: ", bgsig_size, ", sig: ", anom_size/np.sqrt(bgsig_size))
-
       print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
-      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig,anomaly_ratio=anomalyRatios[r],size_each = sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test = 0.1)
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random)
-      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
-      print('number of inputs :', X_train.shape[-1])
-      print('training input shape: ', np.shape(X_train))
-     
+      
       # ---- ensembling ! 
-      if not doEnsemb: 
-          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
-          plot_loss(h,sigmas[r],saveTag) 
-      else: 
+      if doEnsemb: 
         print('~~~~~~~~~~~~~~~~~~~~~~ ENSEMBLING ~~~~~~~~~~~~~~~~~~~~~~~~~')
+        if random: print('***** WITH RANDOMIZING *******')
         ensembModels = []
         thisAucs = []
         for i in range(n_models):
           print('~~~~~~~~~~ MODEL '+str(i))
+          X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size)
           ensembModels.append(model)
           plot_loss(h,sigmas[r],saveTag+str(i)) 
           thisYPredict = model.predict(X_test)
           thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
         print('~~~~~~~~~~ AUCs ', thisAucs)
+      else: 
+          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
+          plot_loss(h,sigmas[r],saveTag) 
        
       # ROCs 
       if not doEnsemb: 

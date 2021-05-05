@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 import glob
-from ROOT import *
+#from ROOT import *
 #from eventIsotropy.spherGen import sphericalGen, engFromVec
 #from eventIsotropy.emdVar import _cdist_cos, emd_Calc
 

@@ -12,7 +12,6 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
 from eventHelper import *
 from datetime import datetime
-from ROOT import *
 import math
 import random
 
@@ -42,7 +41,7 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       # select anomaly datapoints
       if doRandom: 
         if anom_size == 0: this_X_sig = np.zeros((0, 15, 10))
-        else: this_X_sig = np.array(random.sample(X_sig, anom_size))
+        else: this_X_sig = np.array(random.sample(list(X_sig), anom_size))
       else: this_X_sig = X_sig[:anom_size]
       print('************ X_Sig shape: ', np.shape(this_X_sig))
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
@@ -57,7 +56,7 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       # select anomaly datapoints
       if doRandom: #this_X_sig = random.sample(X_sig, anom_size)
         if anom_size == 0: this_X_sig = np.zeros((0, 15, 10))
-        else: this_X_sig = np.array(random.sample(X_sig, anom_size))
+        else: this_X_sig = np.array(random.sample(list(X_sig), anom_size))
       else: this_X_sig = X_sig[:anom_size]
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
    
@@ -95,7 +94,7 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     Get the test set  """ 
     #---  test = truth S vs truth B in SR only 
     if train_set=='CWoLa' and test_set == 'SvsB':
-      if doRandom: this_X_test_P = random.sample(X_sig, test_size_each)
+      if doRandom: this_X_test_P = random.sample(list(X_sig), test_size_each)
       else: this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
       this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
     #---  test = mixed sig + bkg in sr vs. bkg sb
@@ -107,7 +106,7 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = truth S vs truth B in SR only, benchmark training
     elif train_set=='benchmark' and test_set == 'SvsB':
-      if doRandom: this_X_test_P = random.sample(X_sig, test_size_each)
+      if doRandom: this_X_test_P = random.sample(list(X_sig), test_size_each)
       else: this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
       this_X_test_N = X_selected[size_each+bgsig_size:size_each+bgsig_size+test_size_each] #truth bkg in SR
 
@@ -182,22 +181,23 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     #    x /= x.sum()
 
 
-     #remap PIDs for all the Xs
-    remap_pids(X_train, pid_i=3)
-    remap_pids(X_val, pid_i=3)
-    remap_pids(X_test, pid_i=3)
+    #remap PIDs for all the Xs
+    #remap_pids(np.array(X_train), pid_i=3)
+    #remap_pids(np.array(X_val), pid_i=3)
+    #remap_pids(np.array(X_test), pid_i=3)
     
     # change Y to categorical Matrix
     Y_train = to_categorical(y_train, num_classes=2)
     Y_val = to_categorical(y_val, num_classes=2)
     Y_test = to_categorical(y_test, num_classes=2)
     
+    print('number of inputs :', X_train.shape[-1])
     print('Training set size, distribution:',X_train.shape)
     #print(np.unique(y_train,return_counts = True))
     print('Validations set size, distribution:',X_val.shape)
     #print(np.unique(y_val,return_counts = True))
     print('Test set size, distribution:',X_test.shape)
     #print(np.unique(y_test,return_counts = True))
-    
+
     return X_train, X_val, X_test, Y_train,Y_val,Y_test
 
