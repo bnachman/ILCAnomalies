@@ -96,14 +96,14 @@ def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size):
 def ensemble_predictions(members, testX):
     # make predictions
     Y_predicts = [model.predict(testX) for model in members]
-    print('ALL Y_predict!!!!', np.shape(Y_predicts))
+    #print('ALL Y_predict!!!!', np.shape(Y_predicts))
     Y_predicts = np.array(Y_predicts)
     result = np.average(Y_predicts,axis=0)
     # sum across ensemble members
     #summed = np.sum(Y_predicts, axis=0)
     # argmax across classes
     #result = np.argmax(summed, axis=1)
-    print('Avg Y_predict!!!!', np.shape(result))
+    #print('Avg Y_predict!!!!', np.shape(result))
     return result
 
 
@@ -374,22 +374,17 @@ if __name__ == "__main__":
   Phi_sizes, F_sizes = (20, 20, 20), (20,20,20)
   # network training parameters
   num_epoch = 20
-  batch_size = 100
-  if doEnsemb: n_models=10
+  batch_size = 200
+  if doEnsemb: n_models=7
   else: n_models=1
   saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
   aucs = []
   rocs = []
   sigs=[]
-  anomalyRatios = [0.0,0.05,0.4,1.0]
-  anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
-  sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
-  #sigmas = [4.8,4.9,4.95,4.975,5.0,5.025,5.05,5.1,5.2]
-  #sigmas = [1.0,2.0,5.0,15.0]
-  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
-  #anomalyRatios =[0.0]
+  #sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7]
+  sigmas = [0.0, 2.0, 5.0]
   
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
@@ -416,6 +411,7 @@ if __name__ == "__main__":
           thisYPredict = model.predict(X_test)
           thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
         print('~~~~~~~~~~ AUCs ', thisAucs)
+        print('~~~~~~~~~~ mean & std: ', np.mean(thisAucs), np.std(thisAucs))
       else: 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
           plot_loss(h,sigmas[r],saveTag) 
@@ -423,7 +419,6 @@ if __name__ == "__main__":
       # ROCs 
       if not doEnsemb: 
         Y_predict = model.predict(X_test)
-        print('Y_predict!!!!!!!!!!!!', np.shape(Y_predict))
       else: Y_predict = ensemble_predictions(ensembModels, X_test)
       auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
       roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]

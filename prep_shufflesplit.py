@@ -182,6 +182,9 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
 
 
     #remap PIDs for all the Xs
+    #print('julia the shape of X_train is: ', np.array(X_train).shape)
+    #print('julia ndims: ', np.array(X_train).ndim)
+    #print('julia here is what we think the 3rd column/pdgid is: ', np.array(X_train)[:,:,3])
     #remap_pids(np.array(X_train), pid_i=3)
     #remap_pids(np.array(X_val), pid_i=3)
     #remap_pids(np.array(X_test), pid_i=3)
