@@ -14,13 +14,15 @@ from eventHelper import *
 from datetime import datetime
 from ROOT import *
 import math
+import random
 
 #-----------------------------------------------------------------------------------
 #def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
 #                               train = 0.8, val = 0.2, test_size_each = 5000):
 def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
-                               train = 0.8, val = 0.2, test = 0.1):
-    
+                               train = 0.8, val = 0.2, test = 0.1,doRandom=False):
+   
+    if doRandom: print('--------------------> IMPORTANT: RANDOM = TRUE !') 
     #how much bg and signal data to take?
     anom_size = int(round(anomaly_ratio * size_each)) #amount of sig contamination
     bgsig_size = int(size_each - anom_size) #remaining background to get to 100%
@@ -38,7 +40,11 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
       
       # select anomaly datapoints
-      this_X_sig = X_sig[:anom_size]
+      if doRandom: 
+        if anom_size == 0: this_X_sig = np.zeros((0, 15, 10))
+        else: this_X_sig = np.array(random.sample(X_sig, anom_size))
+      else: this_X_sig = X_sig[:anom_size]
+      print('************ X_Sig shape: ', np.shape(this_X_sig))
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
   
     # 0128 benchmark
@@ -49,7 +55,10 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       this_y_sb = np.zeros(size_each) # 0 for bg in SR
       
       # select anomaly datapoints
-      this_X_sig = X_sig[:anom_size]
+      if doRandom: #this_X_sig = random.sample(X_sig, anom_size)
+        if anom_size == 0: this_X_sig = np.zeros((0, 15, 10))
+        else: this_X_sig = np.array(random.sample(X_sig, anom_size))
+      else: this_X_sig = X_sig[:anom_size]
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
    
       # select bg in SR datapoints
@@ -86,7 +95,8 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     Get the test set  """ 
     #---  test = truth S vs truth B in SR only 
     if train_set=='CWoLa' and test_set == 'SvsB':
-      this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
+      if doRandom: this_X_test_P = random.sample(X_sig, test_size_each)
+      else: this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
       this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
     #---  test = mixed sig + bkg in sr vs. bkg sb
     #this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
@@ -97,7 +107,8 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = truth S vs truth B in SR only, benchmark training
     elif train_set=='benchmark' and test_set == 'SvsB':
-      this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
+      if doRandom: this_X_test_P = random.sample(X_sig, test_size_each)
+      else: this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
       this_X_test_N = X_selected[size_each+bgsig_size:size_each+bgsig_size+test_size_each] #truth bkg in SR
 
     #labels

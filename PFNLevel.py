@@ -280,12 +280,15 @@ if __name__ == "__main__":
                      help="trainset")
   parser.add_argument("-e", "--doEnsemble", default = 1, type=int,
                      help="do ensembling")
+  parser.add_argument("-r", "--doRandom", default = 0, type=int,
+                     help="do random signal init")
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
   testset = args.testset[0]
   trainset = args.trainset[0]
   doEnsemb = args.doEnsemble
+  random = args.doRandom
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
@@ -372,7 +375,8 @@ if __name__ == "__main__":
   # network training parameters
   num_epoch = 20
   batch_size = 100
-  n_models=10
+  if doEnsemb: n_models=10
+  else: n_models=1
   saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
   aucs = []
@@ -398,7 +402,7 @@ if __name__ == "__main__":
 
       print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data_jerry(X_selected, X_sideband, X_sig,anomaly_ratio=anomalyRatios[r],size_each = sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test = 0.1)
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1)
+      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random)
       #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.5, val = 0.5, test_size_each = int(np.divide(sizeeach,2)))
       print('number of inputs :', X_train.shape[-1])
       print('training input shape: ', np.shape(X_train))
