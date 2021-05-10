@@ -271,6 +271,35 @@ def thrust(jets):
 
 
 #---------------------------  Plotting help
+def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
+          # draw this nets s vs. b hist 
+          train_s =  model.predict(X_train[Y_train[:,0] >0])[:,0] #select signal from train
+          train_b =  model.predict(X_train[Y_train[:,0] <1])[:,0] 
+          test_s =  model.predict(X_test[Y_test[:,0] >0])[:,0] #select signal from test
+          test_b =  model.predict(X_test[Y_test[:,0] <1])[:,0] 
+
+          bins = np.arange(0,1,0.01)
+          plt.title('Score Hist: '+saveTag)
+          plt.hist(train_b,bins,density=True,label="Train: background",alpha=0.6)
+          plt.hist(train_s,bins,density=True,label="Train: signal",alpha=0.6)
+          plt.hist(test_b, bins,histtype='step',density=True,label="Test: background",color="b")
+          plt.hist(test_s, bins,histtype='step',density=True,label="Test: signal",color="r")
+          plt.legend()
+          plt.xlabel('NN Score')  
+          plt.savefig('plots/'+saveTag+"_hist.pdf")
+          plt.clf()
+
+def make_single_roc(r,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
+  plt.plot(rocs[0],rocs[1],label=str(np.round(r,4))+", $\sigma$="+str(sigs)+": AUC="+str(np.round(aucs,3)))
+  plt.xlabel('fpr')
+  plt.ylabel(Ylabel)
+  plt.title('ROC: '+saveTag)
+  plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
+  plt.legend()
+  plt.savefig('plots/'+saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
+  plt.clf()
+  #plt.show()
+
 def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   for i,r in enumerate(anomalyRatios):
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i]))
@@ -296,7 +325,7 @@ def plot_loss(h,r,save):
       plt.ylabel('loss')
       plt.xlabel('epoch')
       plt.legend(['train', 'val'], loc='upper left')
-      plt.savefig('plots/'+save+'_lossVsEpoch_sigma'+str(r)+'.pdf')
+      plt.savefig('plots/'+save+'_lossVsEpoch.pdf')
       plt.clf()
 
 #

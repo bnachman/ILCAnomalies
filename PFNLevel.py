@@ -374,8 +374,8 @@ if __name__ == "__main__":
   Phi_sizes, F_sizes = (20, 20, 20), (20,20,20)
   # network training parameters
   num_epoch = 20
-  batch_size = 200
-  if doEnsemb: n_models=7
+  batch_size = 100
+  if doEnsemb: n_models=25
   else: n_models=1
   saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
@@ -384,7 +384,7 @@ if __name__ == "__main__":
   sigs=[]
   anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   #sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7]
-  sigmas = [0.0, 2.0, 5.0]
+  sigmas = [2.0, 5.0]
   
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
@@ -402,18 +402,26 @@ if __name__ == "__main__":
         if random: print('***** WITH RANDOMIZING *******')
         ensembModels = []
         thisAucs = []
+        thisRocs = []
         for i in range(n_models):
           print('~~~~~~~~~~ MODEL '+str(i))
           X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size)
           ensembModels.append(model)
-          plot_loss(h,sigmas[r],saveTag+str(i)) 
+          # do some plotting
+          draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+str(i)+"_sigma"+str(sigmas[r]))
+          plot_loss(h,sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r])) 
           thisYPredict = model.predict(X_test)
           thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
+          thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
+          make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
+
         print('~~~~~~~~~~ AUCs ', thisAucs)
         print('~~~~~~~~~~ mean & std: ', np.mean(thisAucs), np.std(thisAucs))
       else: 
+          X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
+          draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+"_sigma"+str(sigmas[r]))
           plot_loss(h,sigmas[r],saveTag) 
        
       # ROCs 
@@ -427,7 +435,7 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
-  make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
+  make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
+  make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
    
   print('runtime: ',datetime.now() - startTime)
