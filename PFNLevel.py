@@ -15,6 +15,7 @@ from energyflow.archs import DNN, PFN
 from energyflow.utils import data_split, remap_pids, to_categorical
 from keras.models import Sequential
 from keras.layers import Dense 
+from tensorflow.keras import optimizers
 import sklearn
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
@@ -83,6 +84,9 @@ def binary_side_band(y_thing):
 def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size):
       #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
+      #opt = adam(lr=0.005) #default 0.01, momentum=0.0
+      opt = optimizers.Adam()
+      #model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes,optimizer=opt)
       model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
       h = model.fit(X_train, Y_train,
       epochs=num_epoch,

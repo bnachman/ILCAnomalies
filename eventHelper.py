@@ -278,7 +278,7 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           test_s =  model.predict(X_test[Y_test[:,0] >0])[:,0] #select signal from test
           test_b =  model.predict(X_test[Y_test[:,0] <1])[:,0] 
 
-          bins = np.arange(0,1,0.01)
+          bins = np.arange(0,1,0.02)
           plt.title('Score Hist: '+saveTag)
           plt.hist(train_b,bins,density=True,label="Train: background",alpha=0.6)
           plt.hist(train_s,bins,density=True,label="Train: signal",alpha=0.6)
