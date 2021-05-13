@@ -53,8 +53,8 @@ if __name__ == "__main__":
      #for i in range(0,1,increment): # number of events in largest file
        print("SUBMITTING: "+shortName+" from  "+str(i)+" to "+str(i+increment))
        args = open("args.txt","w")
-       if 'lhe' not in myFile: os.system("echo '0406_measuredsqrtshat "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
-       else: os.system("echo '0406_measuredsqrtshat "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       if 'lhe' not in myFile: os.system("echo '0416_allPFN "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       else: os.system("echo '0416_allPFN "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
        args.close()
        open("submit.sub","w")
 
@@ -77,8 +77,8 @@ if __name__ == "__main__":
        #os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, "+myFile+" ' >> submit.sub")
        #if 'lhe' in myFile: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(initialdir)/eventiso_condor.tar.gz, "+myFile+"' >> submit.sub")  
        #else: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(initialdir)/eventiso_condor.tar.gz' >> submit.sub")  
-       if 'lhe' in myFile: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parseCondor.py, $(initialdir)/eventHelper.py, "+myFile+"' >> submit.sub")  
-       else: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parseCondor.py, $(initialdir)/eventHelper.py' >> submit.sub")  
+       if 'lhe' in myFile: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parsePFN.py, $(initialdir)/eventHelper.py, "+myFile+"' >> submit.sub")  
+       else: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parsePFN.py, $(initialdir)/eventHelper.py' >> submit.sub")  
        os.system("echo 'queue arguments from args.txt' >> submit.sub")
 
        os.system("condor_submit submit.sub")

@@ -21,7 +21,7 @@ import math
 def parse_file(file_object,startNum,endNum,filename):
     all_records = []
     mymeasuredenergy = []
-    max_n_jets = 10
+    max_n_jets = 15
 
     count = 0
     for line in file_object:
@@ -116,7 +116,7 @@ def make_pfn_arrays(these_records):
     padded_jet_arrays = []
     for i,record in enumerate(these_records):
         padded_jet_arrays.append(record['jets'])
-    print('jets shape:', np.shape(padded_jet_arrays))
+    #print('jets shape:', np.shape(padded_jet_arrays))
     return np.array(padded_jet_arrays)
 
 #-------------------------------------------------------------------------
