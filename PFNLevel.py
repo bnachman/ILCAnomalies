@@ -19,12 +19,14 @@ from tensorflow.keras import optimizers
 import sklearn
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
+from sklearn.preprocessing import quantile_transform
 from eventHelper import *
 from datetime import datetime
 #from ROOT import *
 import math
 #from prep_shufflesplit_jerry import *
 from prep_shufflesplit import *
+from stacking import *
 
 #-----------------------------------------------------------------------------------
 def get_ars(sigmas,sizeeach):
@@ -81,7 +83,7 @@ def binary_side_band(y_thing):
           return -1
 
 #-----------------------------------------------------------------------------------
-def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size):
+def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i):
       #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       #opt = adam(lr=0.005) #default 0.01, momentum=0.0
@@ -93,14 +95,18 @@ def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size):
       batch_size=batch_size,
       validation_data=(X_val, Y_val),
       verbose=0)
+      # save model
+      filename = 'models/'+saveTag+'_model' + str(i) + '.h5'
+      model.save(filename)
+      print('>Saved %s' % filename)
       return model, h
 
 
 #---  make an ensemble prediction for multi-class classification
 def ensemble_predictions(members, testX):
     # make predictions
-    Y_predicts = [model.predict(testX) for model in members]
-    #print('ALL Y_predict!!!!', np.shape(Y_predicts))
+    #Y_predicts = [model.predict(testX) for model in members]
+    Y_predicts = [quantile_transform(model.predict(testX)) for model in members]
     Y_predicts = np.array(Y_predicts)
     result = np.average(Y_predicts,axis=0)
     # sum across ensemble members
@@ -111,162 +117,6 @@ def ensemble_predictions(members, testX):
     return result
 
 
-#-----------------------------------------------------------------------------------
-#def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
-#                               train = 0.8, val = 0.2, test_size_each = 5000):
-#    
-#    """
-#    Pre-Data Selection"""
-#    #how much bg and signal data to take?
-#    anom_size = int(round(anomaly_ratio * size_each)) #amount of sig contamination
-#    bgsig_size = int(size_each - anom_size) #remaining background to get to 100%
-#
-#    # make sure we have enough data.
-#    print('Anom size: ', anom_size, ', bgsig size: ', bgsig_size,', size each: ',size_each,', test size each: ', test_size_each) 
-#    print('Bg in sideband: ', X_sideband.shape) #amount of bkg in SB
-#    print('Bg in SR: ',X_selected.shape) #amount of bkg in SR
-#    print('Total sig: ',X_sig.shape) #total signal events
-#
-#    assert (size_each <= X_sideband.shape[0]) # size each = total data to train in SB
-#    assert (anom_size + test_size_each <= X_sig.shape[0]) #test_size each = data to train in SR 
-#    assert (bgsig_size + test_size_each <= X_selected.shape[0]) #test_size each = data to train in SR  
-#   
-#
-# 
-#    """
-#    Data Selection"""
-#    # training to separate SB from SR: 0 for all SB events, 1 for all SR events 
-#    # select sideband datapoints
-#    if train_set=='CWoLa':
-#      this_X_sb = X_sideband[:size_each]
-#      this_y_sb = np.zeros(size_each) # 0 for bg in SB
-#      
-#      # select bg in SR datapoints
-#      this_X_bgsig = X_selected[:bgsig_size]
-#      this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
-#      
-#      # select anomaly datapoints
-#      this_X_sig = X_sig[:anom_size]
-#      this_y_sig = np.ones(anom_size) # 1 for signal in SR
-#  
-#    # 0128 benchmark
-#    # select bg in SR datapoints
-#    elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
-#      #print('# inputs of X: ', len(X_selected[0]))
-#      this_X_sb= X_selected[:size_each]
-#      this_y_sb = np.zeros(size_each) # 0 for bg in SR
-#      
-#      # select anomaly datapoints
-#      this_X_sig = X_sig[:anom_size]
-#      this_y_sig = np.ones(anom_size) # 1 for signal in SR
-#   
-#      # select bg in SR datapoints
-#      this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
-#      this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
-#   
-#    #import ipdb
-#    #ipdb.set_trace()
-#
-# 
-#    """
-#    Shuffle + Train-Val-Test Split (not test set) """
-#    # Combine all 3 data sets
-#    this_X = np.concatenate([this_X_sb, this_X_bgsig, this_X_sig])
-#    this_y = np.concatenate([this_y_sb, this_y_bgsig, this_y_sig])
-#    
-#    # Shuffle before we split
-#    this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
-#    
-#    (this_X_tr, this_X_v, _,this_y_tr, this_y_v, _) = data_split(this_X, this_y, val=val, test=0)
-#  
-#    if 'benchmark' in train_set:      
-#      print('Size of bkg #1 in SR (0s):',this_X_sb.shape)
-#      print('Size of bkg #2 in SR (1s):',this_X_bgsig.shape)
-#      print('Size of sig in SR (1s):',this_X_sig.shape)
-#    elif 'CWoLa' in train_set:      
-#      print('Size of bg in SB (0s):',this_X_sb.shape)
-#      print('Size of bg in SR (1s):',this_X_bgsig.shape)
-#      print('Size of sig in SR (1s):',this_X_sig.shape)
-#    
-#    
-#      
-#    """
-#    Get the test set  """ 
-#    #---  test = truth S vs truth B in SR only 
-#    if train_set=='CWoLa' and test_set == 'SvsB':
-#      this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
-#      this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
-#    #---  test = mixed sig + bkg in sr vs. bkg sb
-#    #this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
-#    #this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
-#    #---  test = bkg sr vs. bkg sb
-#    elif test_set == 'BvsB':
-#      this_X_test_P = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
-#      this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
-#    #---  test = truth S vs truth B in SR only, benchmark training
-#    elif train_set=='benchmark' and test_set == 'SvsB':
-#      this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
-#      this_X_test_N = X_selected[size_each+bgsig_size:size_each+bgsig_size+test_size_each] #truth bkg in SR
-#
-#    #labels
-#    this_y_test_P = np.ones(test_size_each)
-#    this_y_test_N = np.zeros(test_size_each)
-#        
-#    # Shuffle the combination    
-#    this_X_te = np.concatenate([this_X_test_P, this_X_test_N])
-#    this_y_te = np.concatenate([this_y_test_P, this_y_test_N])
-#   
-#    #ipdb.set_trace() 
-#    this_X_te, this_y_te = shuffle(this_X_te, this_y_te, random_state = shuffle_seed)
-#    print('Size of test set:',this_X_te.shape)
-#    print('Test set distribution:',np.unique(this_y_te,return_counts = True))
-#       
-#    X_train, X_val, X_test, y_train, y_val, y_test \
-#    = this_X_tr, this_X_v, this_X_te, this_y_tr, this_y_v, this_y_te
-#    
-#
-#
-#    """
-#    Data processing """
-#    #from sklearn import preprocessing
-#    #X_train = preprocessing.scale(X_train)
-#    #X_val = preprocessing.scale(X_val)
-#    #X_test = preprocessing.scale(X_test)
-#
-#    # --------------> PFN 
-#    # Centre and normalize all the Xs
-#    for x in X_train:
-#        #print(x)
-#        #mask = x[:,0] > 0
-#        yphi_avg = np.average(x, axis=0)
-#        x -= yphi_avg
-#        x /= x.sum()
-#    for x in X_val:
-#        yphi_avg = np.average(x, axis=0)
-#        x -= yphi_avg
-#        x /= x.sum()
-#    for x in X_test:
-#        yphi_avg = np.average(x, axis=0)
-#        x -= yphi_avg
-#        x /= x.sum()
-#     #remap PIDs for all the Xs
-#    remap_pids(X_train, pid_i=3)
-#    remap_pids(X_val, pid_i=3)
-#    remap_pids(X_test, pid_i=3)
-#    
-#    # change Y to categorical Matrix
-#    Y_train = to_categorical(y_train, num_classes=2)
-#    Y_val = to_categorical(y_val, num_classes=2)
-#    Y_test = to_categorical(y_test, num_classes=2)
-#    
-#    print('Training set size, distribution:',X_train.shape)
-#    #print(np.unique(y_train,return_counts = True))
-#    print('Validations set size, distribution:',X_val.shape)
-#    #print(np.unique(y_val,return_counts = True))
-#    print('Test set size, distribution:',X_test.shape)
-#    #print(np.unique(y_test,return_counts = True))
-#    
-#    return X_train, X_val, X_test, Y_train,Y_val,Y_test
 
 
 
@@ -313,15 +163,6 @@ if __name__ == "__main__":
   print(np.shape(X_sig))
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
-  #-- rmove nans
-  #for a,b in zip(X_bg, y_bg): #each file
-  #  for y in range(len(a)): # each event
-  #      if z!=z:
-  #        print('found one!')
-  #        print(a[y])
-  #        np.delete(a, y)
-  #        np.delete(b, y)
-  #print('AFTER NANS: running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
@@ -331,11 +172,6 @@ if __name__ == "__main__":
   sb_right = 425
   sr_left = 325
   sr_right = 375
-  # 0422 jerry
-  #sb_left = 200
-  #sb_right = 500
-  #sr_left = 300
-  #sr_right = 400
   # 0422 sig700
   #sb_left = 625
   #sb_right = 775
@@ -379,7 +215,7 @@ if __name__ == "__main__":
   # network training parameters
   num_epoch = 20
   batch_size = 100
-  if doEnsemb: n_models=25
+  if doEnsemb: n_models=3
   else: n_models=1
   saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
@@ -410,7 +246,7 @@ if __name__ == "__main__":
         for i in range(n_models):
           print('~~~~~~~~~~ MODEL '+str(i))
           X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
-          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size)
+          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i)
           ensembModels.append(model)
           # do some plotting
           draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+str(i)+"_sigma"+str(sigmas[r]))
@@ -422,11 +258,13 @@ if __name__ == "__main__":
 
         print('~~~~~~~~~~ AUCs ', thisAucs)
         print('~~~~~~~~~~ mean & std: ', np.mean(thisAucs), np.std(thisAucs))
+
       else: 
           X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
           draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+"_sigma"+str(sigmas[r]))
           plot_loss(h,sigmas[r],saveTag) 
+
        
       # ROCs 
       if not doEnsemb: 
