@@ -86,10 +86,8 @@ def binary_side_band(y_thing):
 def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i):
       #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
-      #opt = adam(lr=0.005) #default 0.01, momentum=0.0
-      opt = optimizers.Adam()
-      #model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes,optimizer=opt)
-      model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes)
+      opt = optimizers.Adam(learning_rate=0.0001)
+      model = PFN(input_dim=X_train.shape[-1], Phi_sizes=Phi_sizes, F_sizes=F_sizes,optimizer=opt)
       h = model.fit(X_train, Y_train,
       epochs=num_epoch,
       batch_size=batch_size,
@@ -106,9 +104,9 @@ def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i):
 def ensemble_predictions(members, testX):
     # make predictions
     #Y_predicts = [model.predict(testX) for model in members]
-    Y_predicts = [quantile_transform(model.predict(testX)) for model in members]
-    Y_predicts = np.array(Y_predicts)
-    result = np.average(Y_predicts,axis=0)
+    Y_predicts_scaled = [quantile_transform(model.predict(testX)) for model in members]
+    Y_predicts_scaled = np.array(Y_predicts_scaled)
+    result = np.average(Y_predicts_scaled,axis=0)
     # sum across ensemble members
     #summed = np.sum(Y_predicts, axis=0)
     # argmax across classes
@@ -136,6 +134,8 @@ if __name__ == "__main__":
                      help="do ensembling")
   parser.add_argument("-r", "--doRandom", default = 0, type=int,
                      help="do random signal init")
+  parser.add_argument("-sig", "--signal", default = '350', type=str,
+                     help="type of signal run")
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
@@ -143,16 +143,18 @@ if __name__ == "__main__":
   trainset = args.trainset[0]
   doEnsemb = args.doEnsemble
   random = args.doRandom
+  signal = args.signal
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
-  print('arguments: sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset, ", doing ensembling ?", doEnsemb)
+  print('arguments: signal = ', signal, ', sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset, ", doing ensembling ?", doEnsemb)
 
 
   # -- Get input files 
   X_bg_arr, y_bg_arr = load_arrs("background",savename.split("_")[0])
-  X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
+  if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
+  elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
 
   X_bg = np.vstack(X_bg_arr)#[:,0:14]
@@ -167,16 +169,18 @@ if __name__ == "__main__":
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
   # --  Identify signal and side band 
-  # 0126 harmonized Ines
-  sb_left = 275
-  sb_right = 425
-  sr_left = 325
-  sr_right = 375
-  # 0422 sig700
-  #sb_left = 625
-  #sb_right = 775
-  #sr_left = 675
-  #sr_right = 725
+  if '350' in signal: 
+    sb_left = 275
+    sb_right = 425
+    sr_left = 325
+    sr_right = 375
+    print('350::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
+  elif '700' in signal:
+    sb_left = 625
+    sb_right = 775
+    sr_left = 675
+    sr_right = 725
+    print('700::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -213,19 +217,17 @@ if __name__ == "__main__":
   dense_sizes = (100, 100)
   Phi_sizes, F_sizes = (20, 20, 20), (20,20,20)
   # network training parameters
-  num_epoch = 20
+  num_epoch = 30
   batch_size = 100
-  if doEnsemb: n_models=3
+  if doEnsemb: n_models=50
   else: n_models=1
   saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
   aucs = []
   rocs = []
   sigs=[]
-  anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
-  #sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7]
-  sigmas = [2.0, 5.0]
-  
+  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
+  sigmas = [0.0, 1.0, 2.0, 3.0, 5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -252,12 +254,25 @@ if __name__ == "__main__":
           draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+str(i)+"_sigma"+str(sigmas[r]))
           plot_loss(h,sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r])) 
           thisYPredict = model.predict(X_test)
+          print(' & & & & range of this model prediction on full bkg signal test set!' , np.amax(thisYPredict[:,1])- np.amin(thisYPredict[:,1]))
+          if (np.amax(thisYPredict[:,1]) - np.amin(thisYPredict[:,1])) <= 0.04: #2 bins wide at 0.02 bins width
+            print('&&&&&&&&&&&&&&&&&&&&&&&&&& A BAD MODEL!')
+            plt.hist(thisYPredict[:,1])
+            plt.savefig("plots/BROKEN_"+saveTag+"_"+str(sigmas[r])+"_hist.pdf")
+            plt.clf()
+            i = i-1
+            continue
           thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
           thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
           make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
 
         print('~~~~~~~~~~ AUCs ', thisAucs)
         print('~~~~~~~~~~ mean & std: ', np.mean(thisAucs), np.std(thisAucs))
+        plt.hist(thisAucs, np.linspace(0,1.0,50), label=saveTag+': AUCs s='+str(sigmas[r]))
+        plt.xlabel("AUCs")
+        plt.legend()
+        plt.savefig("plots/"+saveTag+"_"+str(sigmas[r])+"_histAUCs.pdf")
+        plt.clf()
 
       else: 
           X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
