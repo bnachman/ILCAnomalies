@@ -365,11 +365,13 @@ def make_var_plots(sig_records,bg_records,save):
   #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
 
-def make_sqrts_plot(sig_arr,bkg_arr,save):
-    if '0406' in save: var = 'measuredsqrtshat'
+def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
+    if '0406' in save or '0513' in save: var = 'measuredsqrtshat'
+    elif '0521' in save: var = 'hadronsqrtshat'
     else: var = 'truthsqrtshat'
     plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background ('+str(len(bkg_arr))+')')
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal ('+str(len(sig_arr))+')')
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal 350 GeV ('+str(len(sig_arr))+')')
+    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal 700 GeV ('+str(len(sig_arr700))+')')
     plt.xlabel(var)
     plt.yscale('log')
     plt.ylabel("Number of Events / bin")
