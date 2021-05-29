@@ -61,6 +61,8 @@ def parse_file(file_object,startNum,endNum,filename):
         this_record['measuredphotonphi'] = float(metadata.split()[10]) #photon azimuthal angle
         this_record['metadata'] = metadata.split()
 
+        outgoingPhoton = TLorentzVector(0.0,0.0,0.0,0.0)
+        outgoingPhoton.SetPtEtaPhiM(float(metadata.split()[8]), float(metadata.split()[9]), float(metadata.split()[10]), 0.0)
 
         mymeasuredenergy+=[measuredcenterofmassenergy]
 
@@ -92,20 +94,27 @@ def parse_file(file_object,startNum,endNum,filename):
         this_record['jets']=padded_jets
 
 
-        #this_record['nparticles'] = nparticles
-        #particles_vec = []
-        #particles = particles.split()
-        #for i in range(nparticles):
-        #    particle = np.zeros(5)
-        #    #order:
-        #    # - index
-        #    # - magnitude of momentum pT (units of GeV)
-        #    # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        #    # - azimuthal angle
-        #    # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
-        #    particle = particles[i*5:i*5+5]
-        #    particles_vec+=[particle]
+        this_record['nparticles'] = nparticles
+        particles_vec = []
+        particles = particles.split()
+        hadronSqrtSHat = TLorentzVector(0.0,0.0,0.0,0.0)
+        for i in range(nparticles):
+            particle = np.zeros(5)
+            pVec = TLorentzVector(0.0,0.0,0.0,0.0)
+            #order:
+            # - index
+            # - magnitude of momentum pT (units of GeV)
+            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+            # - azimuthal angle
+            # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
+            particle = particles[i*5:i*5+5]
+            #print('this particle: ', particle)
+            pVec.SetPtEtaPhiM(float(particles[i*5+1]), float(particles[i*5+2]), float(particles[i*5+3]), 0.0)
+            hadronSqrtSHat = hadronSqrtSHat + pVec
+            particles_vec+=[particle]
         #this_record['particles'] = particles_vec
+        this_record['hadronsqrtshat'] = (hadronSqrtSHat-outgoingPhoton).M() #energy available for making new particles (sum of final state hadrons, i.e. lost photon)
+        #print('truth: ', this_record['truthsqrtshat'], ', measured with photon: ', this_record['measuredsqrtshat'] ,', hadronsqrtshat: ', hadronSqrtSHat.M(), ', corrected minus photon: ', (hadronSqrtSHat-outgoingPhoton).M())
  
         all_records.append(this_record)
 
@@ -136,8 +145,9 @@ if __name__ == "__main__":
   file = open(str(filename))
   records += parse_file(file,startNum,endNum,filename)
   X = make_pfn_arrays(records)
-  y = np.array([i['truthsqrtshat'] for i in records])
+  #y = np.array([i['truthsqrtshat'] for i in records])
   #y = np.array([i['measuredsqrtshat'] for i in records])
+  y = np.array([i['hadronsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
   np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
 
