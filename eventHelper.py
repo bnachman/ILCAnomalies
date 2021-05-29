@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 import glob
+from sklearn.preprocessing import quantile_transform
 #from ROOT import *
 #from eventIsotropy.spherGen import sphericalGen, engFromVec
 #from eventIsotropy.emdVar import _cdist_cos, emd_Calc
@@ -277,18 +278,27 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           train_b =  model.predict(X_train[Y_train[:,0] <1])[:,0] 
           test_s =  model.predict(X_test[Y_test[:,0] >0])[:,0] #select signal from test
           test_b =  model.predict(X_test[Y_test[:,0] <1])[:,0] 
+          #BUGGY 
+          #test_s_scaled =  quantile_transform(model.predict(X_test[Y_test[:,0] >0]))[:,0] #select signal from test
+          #test_b_scaled =  quantile_transform(model.predict(X_test[Y_test[:,0] <1]))[:,0] 
+          test_s_scaled =  quantile_transform(model.predict(X_test))[Y_test[:,0] >0][:,0] #select signal from test
+          test_b_scaled =  quantile_transform(model.predict(X_test))[Y_test[:,0] <1][:,0] 
 
-          bins = np.arange(0,1,0.02)
+          bins = np.arange(0,1,0.01)
           plt.title('Score Hist: '+saveTag)
           plt.hist(train_b,bins,density=True,label="Train: background",alpha=0.6)
           plt.hist(train_s,bins,density=True,label="Train: signal",alpha=0.6)
           plt.hist(test_b, bins,histtype='step',density=True,label="Test: background",color="b")
           plt.hist(test_s, bins,histtype='step',density=True,label="Test: signal",color="r")
+          plt.hist(test_s_scaled, bins,histtype='step',density=True,label="Scaled test: signal",color="r", linestyle="dashed")
+          plt.hist(test_b_scaled, bins,histtype='step',density=True,label="Scaled test: background",color="b", linestyle="dashed")
           plt.legend()
           plt.xlabel('NN Score')  
+          #plt.show()
           plt.savefig('plots/'+saveTag+"_hist.pdf")
           plt.clf()
 
+  
 def make_single_roc(r,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   plt.plot(rocs[0],rocs[1],label=str(np.round(r,4))+", $\sigma$="+str(sigs)+": AUC="+str(np.round(aucs,3)))
   plt.xlabel('fpr')
@@ -354,11 +364,14 @@ def make_var_plots(sig_records,bg_records,save):
   #plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
   #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
-def make_sqrts_plot(sig_arr,bkg_arr,save):
-    if '0406' in save: var = 'measuredsqrtshat'
+
+def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
+    if '0406' in save or '0513' in save: var = 'measuredsqrtshat'
+    elif '0521' in save: var = 'hadronsqrtshat'
     else: var = 'truthsqrtshat'
     plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background ('+str(len(bkg_arr))+')')
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal ('+str(len(sig_arr))+')')
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal 350 GeV ('+str(len(sig_arr))+')')
+    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal 700 GeV ('+str(len(sig_arr700))+')')
     plt.xlabel(var)
     plt.yscale('log')
     plt.ylabel("Number of Events / bin")
