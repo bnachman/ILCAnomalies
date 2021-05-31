@@ -8,7 +8,7 @@
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import sys
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import glob
 import logging
 from eventHelper import *
@@ -18,18 +18,21 @@ import math
 
 
 #--------------------------- Parse text files
-def parse_file(file_object,startNum,endNum,filename):
+def parse_file(file_object,startNum,endNum,filename,tag):
     all_records = []
     mymeasuredenergy = []
     max_n_jets = 15
 
     count = 0
+    pdgIds = []
+    chargedPts=  []
+    neutronPts = []
     for line in file_object:
         if count < int(startNum): 
           count += 1
           continue 
         if count > int(endNum): break
-        if count%100 == 0: print('Line '+str(count))
+        if count%1000 == 0: print('Line '+str(count))
 
         metadata = line.split("J")[0]
         eventinfo = line.split("J")[1]
@@ -101,6 +104,10 @@ def parse_file(file_object,startNum,endNum,filename):
         for i in range(nparticles):
             particle = np.zeros(5)
             pVec = TLorentzVector(0.0,0.0,0.0,0.0)
+            pdgId = particles[i*5+4]
+            pdgIds.append(pdgId)
+            if '2112' in pdgId: neutronPts.append(float(particles[i*5+1]))
+            elif '211' in pdgId: chargedPts.append(float(particles[i*5+1]))
             #order:
             # - index
             # - magnitude of momentum pT (units of GeV)
@@ -108,15 +115,45 @@ def parse_file(file_object,startNum,endNum,filename):
             # - azimuthal angle
             # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
             particle = particles[i*5:i*5+5]
-            #print('this particle: ', particle)
             pVec.SetPtEtaPhiM(float(particles[i*5+1]), float(particles[i*5+2]), float(particles[i*5+3]), 0.0)
             hadronSqrtSHat = hadronSqrtSHat + pVec
             particles_vec+=[particle]
         #this_record['particles'] = particles_vec
         this_record['hadronsqrtshat'] = (hadronSqrtSHat-outgoingPhoton).M() #energy available for making new particles (sum of final state hadrons, i.e. lost photon)
+
+        #---------- debug hadron calc
         #print('truth: ', this_record['truthsqrtshat'], ', measured with photon: ', this_record['measuredsqrtshat'] ,', hadronsqrtshat: ', hadronSqrtSHat.M(), ', corrected minus photon: ', (hadronSqrtSHat-outgoingPhoton).M())
- 
+        sqrtSDiff = this_record['measuredsqrtshat'] - this_record['hadronsqrtshat']
+        #print('diff: ', sqrtSDiff)
+        # visibleenergy = hadronSqrtSHat 
+        #print("BEN DEBUG: ", visibleenergy.M(),  " ", (visibleenergy-highestpTphoton).M(), " ", (incomingelectron+incomingpositron-highestpTphoton).M())
+        #print("BEN DEBUG: visible energy:", hadronSqrtSHat.M(),  ", visible energy-photon: ", (hadronSqrtSHat-outgoingPhoton).M(), ", measured CoM (e+e- - ph):", float(metadata.split()[7]))
+        newMeasured = float(metadata.split()[1]) - float(metadata.split()[8]) # truthCoM - reco photon
+        print(hadronSqrtSHat.M(),  " ", (hadronSqrtSHat-outgoingPhoton).M(), " ", newMeasured)
+
         all_records.append(this_record)
+
+    print('unique pdgids: ', np.unique(np.array(pdgIds)))
+    bins=np.linspace(0.0,2.0,400) 
+    plt.hist(chargedPts,bins=bins,label='charged pions',color='green')
+    plt.hist(neutronPts,bins=bins,label='neutrons',color='purple')
+    ticks=np.linspace(0.0,2.0,20)
+    plt.xticks(ticks,rotation ='vertical',fontsize=5)
+    plt.legend()
+    if 'sig' in filename: plt.title('Signal 350 GeV')
+    else: plt.title('Background')
+    plt.xlabel('pT [GeV?]')
+    plt.savefig(tag+"_particlePts_"+filename.split('/')[-1].split('.')[0]+'.pdf')
+    plt.clf()
+
+    bins2=np.linspace(-1.0,1.0,500) 
+    plt.hist(sqrtSDiff,bins=bins2)
+    plt.xlabel('Measured - hadron sqrtshat [GeV]')
+    if 'sig' in filename: plt.title('Signal 350 GeV')
+    else: plt.title('Background')
+    plt.savefig(tag+"_sqrtSDiff_"+filename.split('/')[-1].split('.')[0]+'.pdf')
+    plt.clf()
+    
 
     return all_records
 
@@ -143,7 +180,7 @@ if __name__ == "__main__":
   print('Running filename ', filename, ' from line ', startNum, ' to ', endNum)
   #file = open('../'+str(filename))
   file = open(str(filename))
-  records += parse_file(file,startNum,endNum,filename)
+  records += parse_file(file,startNum,endNum,filename,tag)
   X = make_pfn_arrays(records)
   #y = np.array([i['truthsqrtshat'] for i in records])
   #y = np.array([i['measuredsqrtshat'] for i in records])
