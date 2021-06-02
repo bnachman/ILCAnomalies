@@ -83,7 +83,7 @@ def binary_side_band(y_thing):
           return -1
 
 #-----------------------------------------------------------------------------------
-def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i):
+def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag=''):
       #model = DNN(input_dim=15, dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       #model = DNN(input_dim=int(len(X_sig[0])), dropouts=0.2, dense_sizes=dense_sizes, summary=True)
       opt = optimizers.Adam(learning_rate=0.0001)
@@ -94,7 +94,7 @@ def fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i):
       validation_data=(X_val, Y_val),
       verbose=0)
       # save model
-      filename = 'models/'+saveTag+'_model' + str(i) + '.h5'
+      filename = 'models/'+saveTag+'.h5'
       model.save(filename)
       print('>Saved %s' % filename)
       return model, h
@@ -227,7 +227,7 @@ if __name__ == "__main__":
   rocs = []
   sigs=[]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
-  sigmas = [0.0, 1.0, 2.0, 3.0, 5.0]
+  sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -246,19 +246,20 @@ if __name__ == "__main__":
         thisAucs = []
         thisRocs = []
         for i in range(n_models):
-          print('~~~~~~~~~~ MODEL '+str(i))
+          perSaveTag = saveTag+str(i)+"_sigma"+str(sigmas[r])
+          print('~~~~~~~~~~ MODEL '+str(i)+', perSaveTag='+str(perSaveTag))
           X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
-          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i)
+          model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,perSaveTag)
           ensembModels.append(model)
           # do some plotting
-          draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+str(i)+"_sigma"+str(sigmas[r]))
-          plot_loss(h,sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r])) 
+          draw_hist(model,X_train,Y_train,X_test,Y_test,perSaveTag)
+          plot_loss(h,sigmas[r],perSaveTag) 
           thisYPredict = model.predict(X_test)
           print(' & & & & range of this model prediction on full bkg signal test set!' , np.amax(thisYPredict[:,1])- np.amin(thisYPredict[:,1]))
           if (np.amax(thisYPredict[:,1]) - np.amin(thisYPredict[:,1])) <= 0.04: #2 bins wide at 0.02 bins width
             print('&&&&&&&&&&&&&&&&&&&&&&&&&& A BAD MODEL!')
             plt.hist(thisYPredict[:,1])
-            plt.savefig("plots/BROKEN_"+saveTag+"_"+str(sigmas[r])+"_hist.pdf")
+            plt.savefig("plots/BROKEN_"+perSaveTag+"_hist.pdf")
             plt.clf()
             i = i-1
             continue
@@ -292,7 +293,7 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
+  make_roc_plots(anomalyRatios,'fpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
   make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
    
   print('runtime: ',datetime.now() - startTime)

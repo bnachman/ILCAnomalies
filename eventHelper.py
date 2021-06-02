@@ -311,15 +311,21 @@ def make_single_roc(r,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   #plt.show()
 
 def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
+  print('the sigsI have: ', sigs)
+  print('the rocs I have: ', rocs)
+  print('the aucs I have: ', aucs)
+ 
+  print('the anomaly ratios I have:')
   for i,r in enumerate(anomalyRatios):
-      #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i]))
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3)))
-      else: plt.plot(rocs[i][0],rocs[i][1],label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3)))
+      print('i: ', i)
+      print('i: ', r)
+      #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i])) 
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
+      else: plt.plot(rocs[i][1],rocs[i][0],label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3)))
+  plt.xlabel('tpr')
   if 'sqrt' in Ylabel: 
-    plt.xlabel('tpr')
     plt.ylim(0.01,80.0)
     plt.yscale('log')
-  else: plt.xlabel('fpr')
   plt.ylabel(Ylabel)
   plt.title('ROC: '+saveTag)
   plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
@@ -329,6 +335,7 @@ def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs
   #plt.show()
 
 def plot_loss(h,r,save):
+      print(h.history)
       plt.plot(h.history['loss'])
       plt.plot(h.history['val_loss'])
       plt.title('model loss, sigma='+str(r))
@@ -366,17 +373,25 @@ def make_var_plots(sig_records,bg_records,save):
 
 
 def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
-    if '0406' in save or '0513' in save: var = 'measuredsqrtshat'
-    elif '0521' in save: var = 'hadronsqrtshat'
-    else: var = 'truthsqrtshat'
-    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background ('+str(len(bkg_arr))+')')
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal 350 GeV ('+str(len(sig_arr))+')')
-    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal 700 GeV ('+str(len(sig_arr700))+')')
+    if '0406' in save or '0513' in save:  
+      saveName = 'measuredsqrtshat'
+      var = 'Measured $\sqrt{\^{s}}$ (all final state hadrons) [GeV]'
+    #elif '0521' in save: var = 'hadronsqrtshat'
+    elif '0531' in save: 
+      saveName = 'measuredsqrtshatwphoton'
+      var = 'Measured $\sqrt{\^{s}}$ (outgoing photon) [GeV]'
+    else: 
+      saveName = 'truthsqrtshat'
+      var = 'Truth $\sqrt{\^{s}}$ [GeV]'
+    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background')
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV')
+    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV')
     plt.xlabel(var)
     plt.yscale('log')
+    plt.ylim(0.5,10000000)
     plt.ylabel("Number of Events / bin")
     plt.legend()
-    plt.savefig("plots/"+save+"_"+var+".pdf")
+    plt.savefig("plots_FINAL/"+saveName+".pdf")
     plt.clf()
   
 
