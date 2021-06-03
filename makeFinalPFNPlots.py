@@ -124,7 +124,7 @@ if __name__ == "__main__":
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
   sigmas=[5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
-  sigmas.append('inf')
+  #sigmas.append('inf')
  
   for r in range(len(sigmas)):
     anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
@@ -135,10 +135,15 @@ if __name__ == "__main__":
     #--------------------------------------------
     # -- Get pre-saved models 
     #--------------------------------------------
-    if '350' in signal: modelList = glob.glob('models/*'+savename.split("_")[1]+'_*sigma'+str(sigmas[r])+"*")
-    else: modelList = glob.glob('models/*'+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*")
-    n_models = len(modelList)
-    print('Making plot with ', n_models, ', models: ','models/*'+savename.split("_")[1]+'_*sigma'+str(sigmas[r])+"*",': ', modelList)
+    if '350' in signal: 
+      modelList = glob.glob('models/*'+savename.split("_")[1]+'_SvsB*sigma'+str(sigmas[r])+"*")
+      n_models = len(modelList)
+      print('Making plot with ', n_models, ', models: ','models/*'+savename.split("_")[1]+'_SvsB*sigma'+str(sigmas[r])+"*",': ', modelList)
+    else: 
+      modelList = glob.glob('models/*'+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*")
+      n_models = len(modelList)
+      print('Making plot with ', n_models, ', models: ','models/*'+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*",': ', modelList)
+    n_models = 2
 
     thisAucs = []
     thisRocs = []
@@ -154,8 +159,10 @@ if __name__ == "__main__":
       # do some plotting
       draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+str(i)+"_sigma"+str(sigmas[r]))
       thisYPredict = model.predict(X_test)
-      thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
-      thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
+      #thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
+      #thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
+      thisAucs.append(roc_auc_score(Y_test[:,0], thisYPredict[:,0]))
+      thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,0], thisYPredict[:,0]))
       make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
 
     print('~~~~~~~~~~ AUCs ', thisAucs)
@@ -167,12 +174,14 @@ if __name__ == "__main__":
     plt.clf()
 
        
-  # ROCs 
-  Y_predict = ensemble_predictions(ensembModels, X_test)
-  auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
-  roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
-  rocs.append(roc_curve)
-  aucs.append(auc)
+    # ROCs 
+    Y_predict = ensemble_predictions(ensembModels, X_test)
+    #auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
+    #roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
+    auc = roc_auc_score(Y_test[:,0], Y_predict[:,0]) #Y_test = true labels, Y_predict = net determined positive rate
+    roc_curve = sklearn.metrics.roc_curve(Y_test[:,0], Y_predict[:,0]) #[fpr,tpr]
+    rocs.append(roc_curve)
+    aucs.append(auc)
 
 
   print('FINAL AUCs: ', aucs)

@@ -383,13 +383,14 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     else: 
       saveName = 'truthsqrtshat'
       var = 'Truth $\sqrt{\^{s}}$ [GeV]'
-    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background')
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV')
-    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV')
+    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
+    #plt.xticks( np.arange(10) )
     plt.yscale('log')
-    plt.ylim(0.5,10000000)
-    plt.ylabel("Number of Events / bin")
+    plt.ylim(0.000001,50.0)
+    plt.ylabel("Number of events [A.U.]")
     plt.legend()
     plt.savefig("plots_FINAL/"+saveName+".pdf")
     plt.clf()
