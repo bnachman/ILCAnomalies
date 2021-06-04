@@ -8,6 +8,7 @@
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import glob
 import energyflow as ef
 from energyflow.archs import DNN, PFN

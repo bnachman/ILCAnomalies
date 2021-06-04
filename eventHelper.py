@@ -3,6 +3,7 @@
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import glob
 from sklearn.preprocessing import quantile_transform
 #from ROOT import *
@@ -285,7 +286,6 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           test_b_scaled =  quantile_transform(model.predict(X_test))[Y_test[:,0] <1][:,0] 
 
           bins = np.arange(0,1,0.01)
-          plt.title('Score Hist: '+saveTag)
           plt.hist(train_b,bins,density=True,label="Train: background",alpha=0.6)
           plt.hist(train_s,bins,density=True,label="Train: signal",alpha=0.6)
           plt.hist(test_b, bins,histtype='step',density=True,label="Test: background",color="b")
@@ -293,6 +293,7 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           plt.hist(test_s_scaled, bins,histtype='step',density=True,label="Scaled test: signal",color="r", linestyle="dashed")
           plt.hist(test_b_scaled, bins,histtype='step',density=True,label="Scaled test: background",color="b", linestyle="dashed")
           plt.legend()
+          plt.title('Score Hist: '+saveTag)
           plt.xlabel('NN Score')  
           #plt.show()
           plt.savefig('plots/'+saveTag+"_hist.pdf")
@@ -311,24 +312,25 @@ def make_single_roc(r,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   #plt.show()
 
 def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
-  print('the sigsI have: ', sigs)
-  print('the rocs I have: ', rocs)
-  print('the aucs I have: ', aucs)
+  #print('the sigsI have: ', sigs)
+  #print('the rocs I have: ', rocs)
+  #print('the aucs I have: ', aucs)
  
-  print('the anomaly ratios I have:')
+  #print('the anomaly ratios I have:')
   for i,r in enumerate(anomalyRatios):
-      print('i: ', i)
-      print('i: ', r)
+      #print('ar: ', r)
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i])) 
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
-      else: plt.plot(rocs[i][1],rocs[i][0],label=str(np.round(r,4))+", $\sigma$="+str(sigs[i])+": AUC="+str(np.round(aucs[i],3)))
-  plt.xlabel('tpr')
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label='Anomaly fraction= '+str(np.round(r,4))+" ($\sigma$="+str(sigs[i])+"): AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
+      else: plt.plot(rocs[i][0],rocs[i][1],label='Anomaly fraction= '+str(np.round(r,4))+" ($\sigma$="+str(sigs[i])+"): AUC="+str(np.round(aucs[i],3)))
   if 'sqrt' in Ylabel: 
     plt.ylim(0.01,80.0)
     plt.yscale('log')
+    plt.xlabel('TPR')
+  else:
+    plt.xlabel('FPR')
   plt.ylabel(Ylabel)
   plt.title('ROC: '+saveTag)
-  plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
+  #plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
   plt.legend()
   plt.savefig('plots/'+saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
   plt.clf()
