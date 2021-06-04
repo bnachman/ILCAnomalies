@@ -253,8 +253,8 @@ if __name__ == "__main__":
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,perSaveTag)
           ensembModels.append(model)
           # do some plotting
-          draw_hist(model,X_train,Y_train,X_test,Y_test,perSaveTag)
-          plot_loss(h,sigmas[r],perSaveTag) 
+          draw_hist(model,X_train,Y_train,X_test,Y_test,"plots/"+perSaveTag)
+          plot_loss(h,sigmas[r],"plots/"+perSaveTag) 
           thisYPredict = model.predict(X_test)
           print(' & & & & range of this model prediction on full bkg signal test set!' , np.amax(thisYPredict[:,1])- np.amin(thisYPredict[:,1]))
           if (np.amax(thisYPredict[:,1]) - np.amin(thisYPredict[:,1])) <= 0.04: #2 bins wide at 0.02 bins width
@@ -266,7 +266,7 @@ if __name__ == "__main__":
             continue
           thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
           thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
-          make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
+          make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],"plots/"+saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
 
         print('~~~~~~~~~~ AUCs ', thisAucs)
         print('~~~~~~~~~~ mean & std: ', np.mean(thisAucs), np.std(thisAucs))
@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  make_roc_plots(anomalyRatios,'fpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
-  make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig_sr[0]))
+  make_roc_plots(anomalyRatios,'fpr',rocs,aucs,sigs,"plots/"+saveTag)
+  make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,"plots/"+saveTag)
    
   print('runtime: ',datetime.now() - startTime)

@@ -292,36 +292,47 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           plt.hist(test_s, bins,histtype='step',density=True,label="Test: signal",color="r")
           plt.hist(test_s_scaled, bins,histtype='step',density=True,label="Scaled test: signal",color="r", linestyle="dashed")
           plt.hist(test_b_scaled, bins,histtype='step',density=True,label="Scaled test: background",color="b", linestyle="dashed")
+          np.save(saveTag+"_hist_train_b",train_b)
+          np.save(saveTag+"_hist_train_s",train_s)
+          np.save(saveTag+"_hist_test_b",test_b)
+          np.save(saveTag+"_hist_test_s",test_s)
+          np.save(saveTag+"_hist_test_b_scaled",test_b_scaled)
+          np.save(saveTag+"_hist_test_s_scaled",test_s_scaled)
           plt.legend()
           plt.title('Score Hist: '+saveTag)
           plt.xlabel('NN Score')  
           #plt.show()
-          plt.savefig('plots/'+saveTag+"_hist.pdf")
+          plt.savefig(saveTag+"_hist.pdf")
           plt.clf()
 
   
 def make_single_roc(r,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
   plt.plot(rocs[0],rocs[1],label=str(np.round(r,4))+", $\sigma$="+str(sigs)+": AUC="+str(np.round(aucs,3)))
+  np.save(saveTag+"_singleRoc_roc0",rocs[0])
+  np.save(saveTag+"_singleRoc_roc1",rocs[1])
+  np.save(saveTag+"_singleRoc_aucs",aucs)
   plt.xlabel('fpr')
   plt.ylabel(Ylabel)
   plt.title('ROC: '+saveTag)
   plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
   plt.legend()
-  plt.savefig('plots/'+saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
+  plt.savefig(saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
   plt.clf()
   #plt.show()
 
-def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs):
+def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,finalSaveTag=''):
+  if finalSaveTag== '': finalSaveTag = saveTag
   #print('the sigsI have: ', sigs)
   #print('the rocs I have: ', rocs)
   #print('the aucs I have: ', aucs)
- 
+
+  realSigs = ['0.0', '0.5', '1.0', '2.0', '3.0', '5.0','$\infty$'] 
   #print('the anomaly ratios I have:')
   for i,r in enumerate(anomalyRatios):
       #print('ar: ', r)
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i])) 
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label='Anomaly fraction= '+str(np.round(r,4))+" ($\sigma$="+str(sigs[i])+"): AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
-      else: plt.plot(rocs[i][0],rocs[i][1],label='Anomaly fraction= '+str(np.round(r,4))+" ($\sigma$="+str(sigs[i])+"): AUC="+str(np.round(aucs[i],3)))
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% anomaly ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
+      else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% anomaly ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3)))
   if 'sqrt' in Ylabel: 
     plt.ylim(0.01,80.0)
     plt.yscale('log')
@@ -329,10 +340,10 @@ def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,sizeeach, nInputs
   else:
     plt.xlabel('FPR')
   plt.ylabel(Ylabel)
-  plt.title('ROC: '+saveTag)
+  plt.title('ROC: '+finalSaveTag)
   #plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
   plt.legend()
-  plt.savefig('plots/'+saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
+  plt.savefig(saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
   plt.clf()
   #plt.show()
 
@@ -340,11 +351,13 @@ def plot_loss(h,r,save):
       print(h.history)
       plt.plot(h.history['loss'])
       plt.plot(h.history['val_loss'])
+      np.save(save+"_loss",h.history['loss'])
+      np.save(save+"_valloss",h.history['val_loss'])
       plt.title('model loss, sigma='+str(r))
       plt.ylabel('loss')
       plt.xlabel('epoch')
       plt.legend(['train', 'val'], loc='upper left')
-      plt.savefig('plots/'+save+'_lossVsEpoch.pdf')
+      plt.savefig(save+'_lossVsEpoch.pdf')
       plt.clf()
 
 #

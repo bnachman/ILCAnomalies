@@ -22,8 +22,8 @@ def get_sqrts_type(saveTag):
   iden = saveTag.split("_")[0]
   print(iden)
   if '041' in iden: return 'truth $\sqrt{\hat{s}}$'
-  if '513' in iden: return 'measued $\sqrt{\hat{s}} (all hadrons)$'
-  if '531' in iden: return 'measued $\sqrt{\hat{s}} (outgoing photon)$'
+  if '513' in iden: return 'measued $\sqrt{\hat{s}}$ (all hadrons)'
+  if '531' in iden: return 'measued $\sqrt{\hat{s}}$ (outgoing photon)'
 
 #-----------------------------------------------------------------------------------
 def binary_side_band(y_thing):
@@ -42,7 +42,7 @@ def get_ars(sigmas,sizeeach):
     sigNum2 = 0.5*(np.sqrt(sigma**4 + 4*sigma**2*sizeeach) - sigma**2 )
     if sigNum2/sizeeach > 1.0: ars.append(1.0)
     else: ars.append(sigNum2/sizeeach)
-  #if 1.0 not in ars: ars.append(1.0)
+  if 1.0 not in ars: ars.append(1.0)
   return ars
 
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
-  saveTag = savename.split("_")[2]
+  #saveTag = savename.split("_")[2]
 
   # -- Get input files 
   X_bg_arr, y_bg_arr = load_arrs("background",savename.split("_")[0])
@@ -142,7 +142,7 @@ if __name__ == "__main__":
   sigs=[]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
-  #sigmas.append('inf')
+  sigmas.append('inf')
  
   for r in range(len(sigmas)):
     anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
@@ -167,7 +167,8 @@ if __name__ == "__main__":
     thisRocs = []
     ensembModels=[]
     for i in range(n_models):
-      print('~~~~~~~~~~ MODEL '+str(i))
+      perSaveTag = saveTag+str(i)+"_sigma"+str(sigmas[r])
+      print('~~~~~~~~~~ MODEL '+str(i)+', perSaveTag='+str(perSaveTag))
       X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
 
       #model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i)
@@ -175,20 +176,19 @@ if __name__ == "__main__":
       ensembModels.append(model)
 
       # do some plotting
-      draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+str(i)+"_sigma"+str(sigmas[r]))
+      draw_hist(model,X_train,Y_train,X_test,Y_test,"plots_FINAL/"+perSaveTag)
+      #plot_loss(h,sigmas[r],"plots_FINAL/"+perSaveTag) 
       thisYPredict = model.predict(X_test)
-      #thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
-      #thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
       thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
       thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
-      make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
+      make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],"plots_FINAL/"+perSaveTag,sizeeach,len(X_sig_sr[0]))
 
     print('~~~~~~~~~~ AUCs ', thisAucs)
     print('~~~~~~~~~~ mean & std: ', np.mean(thisAucs), np.std(thisAucs))
     plt.hist(thisAucs, np.linspace(0,1.0,50), label=saveTag+': AUCs s='+str(sigmas[r]))
     plt.xlabel("AUCs")
     plt.legend()
-    plt.savefig("plots/"+saveTag+"_"+str(sigmas[r])+"_histAUCs.pdf")
+    plt.savefig("plots_FINAL/"+saveTag+"_"+str(sigmas[r])+"_histAUCs.pdf")
     plt.clf()
 
        
@@ -201,9 +201,9 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, '+get_sqrts_type(savename)
-  else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, '+get_sqrts_type(savename)
-  make_roc_plots(anomalyRatios,'TPR',rocs,aucs,sigs,finalSaveTag,sizeeach,len(X_sig_sr[0]))
-  make_roc_plots(anomalyRatios,'TPR/$\sqrt{(FPR)}$',rocs,aucs,sigs,finalSaveTag,sizeeach,len(X_sig_sr[0]))
+  if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
+  else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
+  make_roc_plots(anomalyRatios,'TPR',rocs,aucs,sigs,"plots_FINAL/"+saveTag,finalSaveTag)
+  make_roc_plots(anomalyRatios,'TPR/$\sqrt{(FPR)}$',rocs,aucs,sigs,"plots_FINAL/"+saveTag,finalSaveTag)
    
   print('runtime: ',datetime.now() - startTime)
