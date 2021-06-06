@@ -164,7 +164,8 @@ def parse_file(file_object,startNum,endNum,filename):
 def make_evt_arrays(these_records):
     padded_evt_arrays =[]
     for i,record in enumerate(these_records):
-        evt_vars = [record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['splitting'],record['leadingjetmass'],record['subleadingjetmass']]
+        #evt_vars = [record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredXpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['splitting'],record['leadingjetmass'],record['subleadingjetmass']]
+        evt_vars = [record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['measuredXpT'],record['measuredphotonpT'],record['leadingjetpT'], record['subleadingjetpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['leadingjetmass'],record['subleadingjetmass']]
         padded_evt_arrays.append(np.array(evt_vars).real)
     return np.array(padded_evt_arrays)
 
@@ -185,8 +186,8 @@ if __name__ == "__main__":
   file = open(str(filename))
   records += parse_file(file,startNum,endNum,filename)
   X = make_evt_arrays(records)
-  #y = np.array([i['truthsqrtshat'] for i in records])
-  y = np.array([i['measuredsqrtshat'] for i in records])
+  y = np.array([i['truthsqrtshat'] for i in records])
+  #y = np.array([i['measuredsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
   np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
 
