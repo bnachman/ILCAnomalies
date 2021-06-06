@@ -23,6 +23,14 @@ from datetime import datetime
 from ROOT import *
 
 #-----------------------------------------------------------------------------------
+def get_sqrts_type(saveTag):
+  iden = saveTag.split("_")[0]
+  print(iden)
+  if '041' in iden or 'tru' in iden: return 'truth $\sqrt{\hat{s}}$'
+  if '513' in iden: return 'measued $\sqrt{\hat{s}}$ (all hadrons)'
+  if '531' in iden: return 'measued $\sqrt{\hat{s}}$ (outgoing photon)'
+
+#-----------------------------------------------------------------------------------
 def get_ars(sigmas,sizeeach):
   ars = []
   for sigma in sigmas: 
@@ -259,21 +267,29 @@ if __name__ == "__main__":
                      help="testset")
   parser.add_argument("-tr", "--trainset", default = '', type=str, nargs='+',
                      help="trainset")
+  parser.add_argument("-sig", "--signal", default = '350', type=str,
+                     help="type of signal run")
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
   testset = args.testset[0]
   trainset = args.trainset[0]
+  signal = args.signal
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
-  print('arguments: sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset)
+  print('arguments: signal: ', signal, ', sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset)
 
 
   # -- Get input files 
+  #X_bg_arr, y_bg_arr = load_arrs("bg",savename.split("_")[0])
+  #X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
+  # -- Get input files
   X_bg_arr, y_bg_arr = load_arrs("bg",savename.split("_")[0])
-  X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
+  if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal",savename.split("_")[0])
+  elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
+  #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
 
   X_bg = np.vstack(X_bg_arr)#[:,0:14]
   X_sig = np.vstack(X_sig_arr)#[:,0:14] 
@@ -300,10 +316,23 @@ if __name__ == "__main__":
 
   # --  Identify signal and side band 
   # 0126 harmonized Ines
-  sb_left = 275
-  sb_right = 425
-  sr_left = 325
-  sr_right = 375
+  #sb_left = 275
+  #sb_right = 425
+  #sr_left = 325
+  #sr_right = 375
+  # --  Identify signal and side band
+  if '350' in signal:
+    sb_left = 275
+    sb_right = 425
+    sr_left = 325
+    sr_right = 375
+    print('350::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
+  elif '700' in signal:
+    sb_left = 625
+    sb_right = 775
+    sr_left = 675
+    sr_right = 725
+    print('700::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -345,13 +374,7 @@ if __name__ == "__main__":
   aucs = []
   rocs = []
   sigs=[]
-  anomalyRatios = [0.0,0.05,0.4,1.0]
-  anomalyRatios = [0.0,0.04,0.12,0.2,0.34,0.44,1.0] #sigma 0.5, 1.0, 2.0, 3.0
-  anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
-  sigmas = [0.0, 0.5, 1.0, 2.0, 5.0, 14.7, 122.5]
-  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.02, 0.04,0.08, 0.12,0.22, 1.0]
-  #anomalyRatios =[0.0]
-  
+  sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -374,6 +397,9 @@ if __name__ == "__main__":
       batch_size=batch_size,
       validation_data=(X_val, Y_val),
       verbose=0)
+      filename = 'evt_models/'+saveTag+'_'+str(sigmas[r])+'_model.h5'
+      dnn.save(filename)
+      print('>Saved %s' % filename)
  
       plot_loss(h,sigmas[r],saveTag) 
        
@@ -381,12 +407,17 @@ if __name__ == "__main__":
       Y_predict = dnn.predict(X_test)
       auc = roc_auc_score(Y_test[:,1], Y_predict[:,1]) #Y_test = true labels, Y_predict = net determined positive rate
       roc_curve = sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]) #[fpr,tpr]
+      make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], Y_predict[:,1]), roc_auc_score(Y_test[:,1], Y_predict[:,1]),sigmas[r],"plots/"+saveTag+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
 
       rocs.append(roc_curve)
       aucs.append(auc)
 
   print(aucs)
-  make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
-  make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,saveTag,sizeeach,len(X_sig[0]))
+  if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
+  else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
+  make_roc_plots(anomalyRatios,'TPR',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
+  make_roc_plots(anomalyRatios,'TPR/$\sqrt{(FPR)}$',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
+  #make_roc_plots(anomalyRatios,'tpr',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
+  #make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
    
   print('runtime: ',datetime.now() - startTime)

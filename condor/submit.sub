@@ -4,12 +4,10 @@ output                = logs.$(ClusterId).$(ProcId).out
 error                 = logs.$(ClusterId).$(ProcId).err
 log                   = logs.$(ClusterId).log
 universe         = vanilla
-getenv           = True
-Rank            = Mips
 
+Requirements = (machine == "xenia20.nevis.columbia.edu")
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/
-workdir = /data/users/jgonski/Snowmass/LHE_txt_fils/
-transfer_input_files = $(initialdir)/condor/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(workdir)/processed_lhe001_background.txt 
+initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/condor
+transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parsePFN.py, $(initialdir)/eventHelper.py
 queue arguments from args.txt
