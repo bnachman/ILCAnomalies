@@ -53,8 +53,8 @@ if __name__ == "__main__":
      #for i in range(0,1,increment): # number of events in largest file
        print("SUBMITTING: "+shortName+" from  "+str(i)+" to "+str(i+increment))
        args = open("args.txt","w")
-       if 'lhe' not in myFile: os.system("echo '0521_hadronsqrtshat "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
-       else: os.system("echo '0521_hadronsqrtshat "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       if 'lhe' not in myFile: os.system("echo '0531_measuredsqrtshatwphoton "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       else: os.system("echo '0531_measuredsqrtshatwphoton "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
        args.close()
        open("submit.sub","w")
 

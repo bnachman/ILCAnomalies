@@ -331,8 +331,8 @@ def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,finalSaveTag=''):
   for i,r in enumerate(anomalyRatios):
       #print('ar: ', r)
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i])) 
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% anomaly ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
-      else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% anomaly ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3)))
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
+      else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3)))
   if 'sqrt' in Ylabel: 
     plt.ylim(0.01,80.0)
     plt.yscale('log')

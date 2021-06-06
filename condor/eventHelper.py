@@ -232,6 +232,27 @@ def thrust(jets):
 
 
 #---------------------------  Plotting help
+def make_debug_sqrts_plots(chargedPts,neutronPts,sqrtSDiff,tag,filename):
+    bins=np.linspace(0.0,2.0,400) 
+    plt.hist(chargedPts,bins=bins,label='charged pions',color='green')
+    plt.hist(neutronPts,bins=bins,label='neutrons',color='purple')
+    ticks=np.linspace(0.0,2.0,20)
+    plt.xticks(ticks,rotation ='vertical',fontsize=5)
+    plt.legend()
+    if 'sig' in filename: plt.title('Signal 350 GeV')
+    else: plt.title('Background')
+    plt.xlabel('pT [GeV?]')
+    plt.savefig(tag+"_particlePts_"+filename.split('/')[-1].split('.')[0]+'.pdf')
+    plt.clf()
+
+    bins2=np.linspace(-50.0,50.0,500) 
+    plt.hist(sqrtSDiff,bins=bins2)
+    plt.xlabel('Measured - hadron sqrtshat [GeV]')
+    if 'sig' in filename: plt.title('Signal 350 GeV')
+    else: plt.title('Background')
+    plt.savefig(tag+"_sqrtSDiff_"+filename.split('/')[-1].split('.')[0]+'.pdf')
+    plt.clf()
+    
 #def make_roc_plots(anomalyRatios,saveTag,Ylabel,rocs,aucs,sigs):
 #  for i,r in enumerate(anomalyRatios):
 #      #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i]))
