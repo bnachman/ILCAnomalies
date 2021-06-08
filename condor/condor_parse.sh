@@ -17,6 +17,6 @@ printenv | grep xenia
 #eventiso_condor/bin/python parseCondor.py $1 $2 $3 $4
 #mv *npy ../
 #rm -rf event_isotropy
-#python parseCondor.py $1 $2 $3 $4
-python parsePFN.py $1 $2 $3 $4
+python parseCondor.py $1 $2 $3 $4
+#python parsePFN.py $1 $2 $3 $4
 

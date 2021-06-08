@@ -15,6 +15,26 @@ from sklearn.preprocessing import quantile_transform
 # IO: arXiv:1206.2135.pdf
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
+#--------------------------- Variable defs
+#pretty labels
+get_pretty_label={
+    'measuredXpT':'p$_T$(X)',
+    'xpT_Over_PhpT':'p$_T$(X) / p$_T$($\gamma$)',
+    'ljpT_Over_PhpT':'p$_T$($j_1$) / p$_T$($\gamma$)',
+    'leadingjetpT':'Leading jet p$_T$ [GeV]',
+    'subleadingjetpT':'Subleading jet p$_T$ [GeV]',
+    'measuredphotonpT':'Outgoing photon p$_T$ [GeV]',
+    'njets':'Number of jets',
+    'nparticles':'Number of particles',
+    'lny23':'ln(y$_{23}$)',
+    'aplanarity':'Aplanarity',
+    'transverse_sphericity':'Transverse sphericity',
+    'sphericity':'Sphericity',
+    'leadingjetmass':'Leading jet mass [GeV]',
+    'subleadingjetmass':'Subleading jet mass [GeV]',
+    'total_jet_mass':'Total jet mass'
+} 
+
 
 #--------------------------- Variable defs
 def get_npy_dict(save):
@@ -51,7 +71,25 @@ def get_npy_dict(save):
     'leadingjetmass':14,
     'subleadingjetmass':15
     }
-
+  elif '060' in save: 
+  #evt_vars = [record['measuredXpT'],record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['leadingjetmass'],record['subleadingjetmass'],record['total_jet_mass']]
+    d_npy={
+    'measuredXpT':0,
+    'xpT_Over_PhpT':1,
+    'ljpT_Over_PhpT':2,
+    'leadingjetpT':3,
+    'subleadingjetpT':4,
+    'measuredphotonpT':5,
+    'njets':6,
+    'nparticles':7,
+    'lny23':8,
+    'aplanarity':9,
+    'transverse_sphericity':10,
+    'sphericity':11,
+    'leadingjetmass':12,
+    'subleadingjetmass':13,
+    'total_jet_mass':14
+    }
   elif '0329' in save:
     d_npy['total_jet_mass'] =10
     d_npy['leadingjetmass'] =11
@@ -362,27 +400,28 @@ def plot_loss(h,r,save):
 
 #
 
-def make_var_plots(sig_records,bg_records,save):
+def make_var_plots(sig_records,s700,bg_records,save):
   print('Making plots with name ', save)
   #02 files: record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']
   #plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
-  plot_something(save,sig_records,bg_records,'leadingjetmass',np.linspace(0,300,150),1)
-  plot_something(save,sig_records,bg_records,'subleadingjetmass',np.linspace(0,300,150),1)
-  plot_something(save,sig_records,bg_records,'splitting',np.linspace(0,0.5,50),1)
-  plot_something(save,sig_records,bg_records,'njets',np.linspace(0,30,30),1)
-  plot_something(save,sig_records,bg_records,'nparticles',np.linspace(0,200,200),1)
-  plot_something(save,sig_records,bg_records,'lny23',np.linspace(-10,-0.00001,10),1)
-  plot_something(save,sig_records,bg_records,'aplanarity',np.linspace(0,0.3,15),1)
-  plot_something(save,sig_records,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,bg_records,'sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  #evt_vars = [record['measuredXpT'],record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['leadingjetmass'],record['subleadingjetmass'],record['total_jet_mass']]
+  plot_something(save,sig_records,s700,bg_records,'leadingjetmass',np.linspace(0,300,150),1)
+  plot_something(save,sig_records,s700,bg_records,'subleadingjetmass',np.linspace(0,300,150),1)
+  plot_something(save,sig_records,s700,bg_records,'njets',np.linspace(0,20,20),1)
+  plot_something(save,sig_records,s700,bg_records,'nparticles',np.linspace(0,200,200),1)
+  plot_something(save,sig_records,s700,bg_records,'lny23',np.linspace(-10,-0.0001,20),1)
+  plot_something(save,sig_records,s700,bg_records,'aplanarity',np.linspace(0,0.5,20),1)
+  plot_something(save,sig_records,s700,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
+  plot_something(save,sig_records,s700,bg_records,'sphericity',np.linspace(0,1,50),1)
+  plot_something(save,sig_records,s700,bg_records,'leadingjetpT',np.linspace(0,600,200),1)
+  plot_something(save,sig_records,s700,bg_records,'subleadingjetpT',np.linspace(0,600,200),1)
+  plot_something(save,sig_records,s700,bg_records,'measuredphotonpT',np.linspace(0,600,200),1)
+  plot_something(save,sig_records,s700,bg_records,'measuredXpT',np.linspace(0,600,200),1)
+  plot_something(save,sig_records,s700,bg_records,'ljpT_Over_PhpT',np.linspace(0,40,100),1)
+  plot_something(save,sig_records,s700,bg_records,'xpT_Over_PhpT',np.linspace(0,20,100),1)
+  plot_something(save,sig_records,s700,bg_records,'total_jet_mass',np.linspace(0,2.0,100),1)
+  #plot_something(save,sig_records,s700,bg_records,'splitting',np.linspace(0,0.5,50),1)
   ##plot_something(save,sig_records,bg_records,'evIsoSphere',np.linspace(0,2.0,100),1)
-  plot_something(save,sig_records,bg_records,'leadingjetpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'subleadingjetpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'measuredphotonpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'measuredXpT',np.linspace(0,800,200),1)
-  plot_something(save,sig_records,bg_records,'ljpT_Over_PhpT',np.linspace(0,20,100),1)
-  plot_something(save,sig_records,bg_records,'xpT_Over_PhpT',np.linspace(0,20,100),1)
   #plot_something(save,sig_records,bg_records,'thrust_major',np.linspace(0,500,50),1)
   #plot_something(save,sig_records,bg_records,'thrust_minor',np.linspace(0,500,50),1)
 
@@ -412,34 +451,42 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
   
 
 
-def plot_something(save,sig_records,bg_records,var,R,doLog):
+def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
   
     d_npy = get_npy_dict(save) 
- 
     #plt.figure(figsize=(20,5))
     if 'ljpT' in var:
       sig_arr = np.array([float(i[d_npy['leadingjetpT']]/i[d_npy['measuredphotonpT']]) for i in sig_records])
+      sig700_arr = np.array([float(i[d_npy['leadingjetpT']]/i[d_npy['measuredphotonpT']]) for i in s700])
       bkg_arr = np.array([float(i[d_npy['leadingjetpT']]/i[d_npy['measuredphotonpT']]) for i in bg_records])    
     elif 'xpT' in var:
       sig_arr = np.array([float(i[d_npy['measuredXpT']]/i[d_npy['measuredphotonpT']]) for i in sig_records])
+      sig700_arr = np.array([float(i[d_npy['measuredXpT']]/i[d_npy['measuredphotonpT']]) for i in s700])
       bkg_arr = np.array([float(i[d_npy['measuredXpT']]/i[d_npy['measuredphotonpT']]) for i in bg_records])    
     else:
       if 'npy' in save: 
         sig_arr = np.array([float(i[d_npy[var]]) for i in sig_records])
+        sig700_arr = np.array([float(i[d_npy[var]]) for i in s700])
         bkg_arr = np.array([float(i[d_npy[var]]) for i in bg_records])    
       else:
-        sig_arr = np.array([i[var] for i in sig_records[:79999]])
+        sig_arr = np.array([i[var] for i in sig_records])
+        sig700_arr = np.array([i[var] for i in s700])
         bkg_arr = np.array([i[var] for i in bg_records])    
-    plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background ('+str(len(bkg_arr))+')')
-    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal ('+str(len(sig_arr))+')')
+
+    plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(sig700_arr, R, color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
     #plt.xscale('log')
     #plt.xticks(R)
-    plt.xlabel(var)
+
+    plt.xlabel(get_pretty_label[var])
     if doLog == True: plt.yscale('log')
-    plt.ylabel("Number of Events / bin")
+    plt.ylabel("Number of events [A.U.]")
+    plt.ylim(0.000001,1.0)
+    #plt.ylabel("Number of Events / bin")
     plt.legend()
-    plt.savefig("plots/"+save+"_"+var+".pdf")
+    plt.savefig("plots_FINAL/"+save+"_"+var+".pdf")
     plt.clf()
 
 def plot_jets(index,R,doLog):

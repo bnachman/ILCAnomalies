@@ -1,1 +1,1 @@
-0216_condor_test processed_lhe001_background.txt
+0606_final /data0/atlas/dq2/rucio/user/jgonski/f8/cb/processed_background_randomseeds_bigger9_noZ.txt 1700000 1750000
