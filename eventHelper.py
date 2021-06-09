@@ -487,7 +487,9 @@ def plot_jetthing(save,sig_records,s700,bg_records,jet,var):
     #plt.xscale('log')
     #plt.xticks(R)
 
-    plt.xlabel('Jet '+prettyLabel)
+    if jet ==0: plt.xlabel('Leading jet '+prettyLabel)
+    elif jet== 1: plt.xlabel('Subleading jet '+prettyLabel)
+    else: plt.xlabel('Jet '+prettyLabel)
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of events [A.U.]")
     plt.ylim(0.000001,1.0)
