@@ -17,6 +17,18 @@ from sklearn.preprocessing import quantile_transform
 
 #--------------------------- Variable defs
 #pretty labels
+jet_dict=[
+    ['p$_T$ [GeV]',np.linspace(0,300,150)],
+    ['$\eta$',np.linspace(-3.0,3.0,30)],
+    ['$\phi$',np.linspace(-3.0,3.0,30)],
+    ['mass [GeV]',np.linspace(0,300,150)],
+    ['flavor',np.linspace(0,10,10)],
+    ['angular momment 1',np.linspace(0,1.0,50)],
+    ['angular momment 2',np.linspace(0,1.0,50)],
+    ['angular momment 3',np.linspace(0,1.0,50)],
+    ['angular momment 4',np.linspace(0,1.0,50)],
+    ['angular momment 5',np.linspace(0,1.0,50)],
+]
 get_pretty_label={
     'measuredXpT':'p$_T$(X)',
     'xpT_Over_PhpT':'p$_T$(X) / p$_T$($\gamma$)',
@@ -400,6 +412,13 @@ def plot_loss(h,r,save):
 
 #
 
+def make_pfn_plots(sig_records,s700,bg_records,save):
+  print('Making plots with name ', save)
+  for i in range(2): 
+      for j in range(10): # vars per jet to plot
+        plot_jetthing(save,sig_records,s700,bg_records,i,j)
+
+
 def make_var_plots(sig_records,s700,bg_records,save):
   print('Making plots with name ', save)
   #02 files: record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']
@@ -450,6 +469,32 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     plt.clf()
   
 
+
+def plot_jetthing(save,sig_records,s700,bg_records,jet,var):
+  
+    d_npy = get_npy_dict('jet') 
+    sig_arr = np.array([float(i[jet][d_npy[var]]) for i in sig_records])
+    #sig700_arr = np.array([float(i[d_npy[var]]) for i in s700])
+    #bkg_arr = np.array([float(i[d_npy[var]]) for i in bg_records])    
+
+    prettyLabel = jet_dict[var][0]
+    R = jet_dict[var][1]
+    
+    #plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    #plt.hist(sig700_arr, R, color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
+    #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
+    #plt.xscale('log')
+    #plt.xticks(R)
+
+    plt.xlabel('Jet '+prettyLabel)
+    if doLog == True: plt.yscale('log')
+    plt.ylabel("Number of events [A.U.]")
+    plt.ylim(0.000001,1.0)
+    #plt.ylabel("Number of Events / bin")
+    plt.legend()
+    plt.savefig("plots_FINAL/"+save+"_"+var+".pdf")
+    plt.clf()
 
 def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
   

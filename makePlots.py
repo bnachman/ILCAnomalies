@@ -17,9 +17,10 @@ from ROOT import *
 def load_arrs(typee,savee):
   X_arr = []
   y_arr=[]
-  for s in glob.glob("training_data/"+savee+"*X*"+typee+"*.npy"):
+  print('Getting arrays of type: ', "training_pfn_data/"+savee+"*X*"+typee+"*.npy")
+  for s in glob.glob("training_pfn_data/"+savee+"*X*"+typee+"*.npy"):
     X_arr.append(np.load(s))
-  for s in glob.glob("training_data/"+savee+"*y*"+typee+"*.npy"):
+  for s in glob.glob("training_pfn_data/"+savee+"*y*"+typee+"*.npy"):
     y_arr.append(np.load(s))
   return X_arr, y_arr
 
@@ -35,7 +36,7 @@ if __name__ == "__main__":
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
 
-  X_bg_arr, y_bg_arr = load_arrs("background",saveTag)
+  X_bg_arr, y_bg_arr = load_arrs("bg",saveTag)
   X_sig_arr, y_sig_arr = load_arrs("sig",saveTag)
   X_sig_arr700, y_sig_arr700 = load_arrs("s700",saveTag)
   #X_bg_arr, y_bg_arr = load_arrs("bg",'0405')
@@ -52,7 +53,9 @@ if __name__ == "__main__":
 
 
   #make_npy_plots(X_sig,X_bg,'total_jet_mass',np.linspace(0,2.0,100),saveTag)
-  make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  #make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+
   make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
    
   print('runtime: ',datetime.now() - startTime)
