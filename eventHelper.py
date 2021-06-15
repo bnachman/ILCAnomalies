@@ -320,6 +320,13 @@ def thrust(jets):
 #def planarity(w,v):
 #    return
 
+#-----------------------------------------------------------------------------------
+def get_sqrts_type(saveTag):
+  iden = saveTag.split("_")[0]
+  print(iden)
+  if '041' in iden or 'tru' in iden or '06' in iden: return 'truth $\sqrt{\hat{s}}$'
+  if '513' in iden: return 'measured $\sqrt{\hat{s}}$ (all hadrons)'
+  if '531' in iden: return 'measured $\sqrt{\hat{s}}$ (outgoing photon)'
 
 
 #---------------------------  Plotting help
@@ -456,9 +463,9 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     else: 
       saveName = 'truthsqrtshat'
       var = 'Truth $\sqrt{\^{s}}$ [GeV]'
-    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue", histtype='step', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
-    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
+    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",hatch='/', histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='-', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step',hatch='.', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
     #plt.xticks( np.arange(10) )
     plt.yscale('log')

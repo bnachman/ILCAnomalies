@@ -18,14 +18,6 @@ from PFNLevel import *
 from keras import models
 
 #-----------------------------------------------------------------------------------
-def get_sqrts_type(saveTag):
-  iden = saveTag.split("_")[0]
-  print(iden)
-  if '041' in iden: return 'truth $\sqrt{\hat{s}}$'
-  if '513' in iden: return 'measued $\sqrt{\hat{s}}$ (all hadrons)'
-  if '531' in iden: return 'measued $\sqrt{\hat{s}}$ (outgoing photon)'
-
-#-----------------------------------------------------------------------------------
 def binary_side_band(y_thing):
       if y_thing >= sr_left and y_thing < sr_right:
           return 1

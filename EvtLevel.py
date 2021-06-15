@@ -22,13 +22,6 @@ from eventHelper import *
 from datetime import datetime
 from ROOT import *
 
-#-----------------------------------------------------------------------------------
-def get_sqrts_type(saveTag):
-  iden = saveTag.split("_")[0]
-  print(iden)
-  if '041' in iden or 'tru' in iden: return 'truth $\sqrt{\hat{s}}$'
-  if '513' in iden: return 'measued $\sqrt{\hat{s}}$ (all hadrons)'
-  if '531' in iden: return 'measued $\sqrt{\hat{s}}$ (outgoing photon)'
 
 #-----------------------------------------------------------------------------------
 def get_ars(sigmas,sizeeach):
@@ -286,7 +279,7 @@ if __name__ == "__main__":
   #X_bg_arr, y_bg_arr = load_arrs("bg",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
   # -- Get input files
-  X_bg_arr, y_bg_arr = load_arrs("bg",savename.split("_")[0])
+  X_bg_arr, y_bg_arr = load_arrs("background",savename.split("_")[0])
   if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal",savename.split("_")[0])
   elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
