@@ -15,6 +15,10 @@ from sklearn.preprocessing import quantile_transform
 # IO: arXiv:1206.2135.pdf
 # JG: https://arxiv.org/pdf/1811.00588.pdf (total jet mass)
 
+nice_colors_rtob_vib = ['#EE6677','#CCBB44','#228833','#66CCEE','#4477AA','#AA3377']
+nice_colors_rtob_mut = ['#882255','#CC6677','#999933','#117733','#88CCEE','#332288','#AA4499']
+prettySigmas = ['0.0', '0.5', '1.0', '2.0', '3.0', '5.0','$\infty$'] 
+
 #--------------------------- Variable defs
 #pretty labels
 jet_dict=[
@@ -29,23 +33,23 @@ jet_dict=[
     ['angular momment 4',np.linspace(0,1.0,50)],
     ['angular momment 5',np.linspace(0,1.0,50)],
 ]
-get_pretty_label={
-    'measuredXpT':'p$_T$(X)',
-    'xpT_Over_PhpT':'p$_T$(X) / p$_T$($\gamma$)',
-    'ljpT_Over_PhpT':'p$_T$($j_1$) / p$_T$($\gamma$)',
-    'leadingjetpT':'Leading jet p$_T$ [GeV]',
-    'subleadingjetpT':'Subleading jet p$_T$ [GeV]',
-    'measuredphotonpT':'Outgoing photon p$_T$ [GeV]',
-    'njets':'Number of jets',
-    'nparticles':'Number of particles',
-    'lny23':'ln(y$_{23}$)',
-    'aplanarity':'Aplanarity',
-    'transverse_sphericity':'Transverse sphericity',
-    'sphericity':'Sphericity',
-    'leadingjetmass':'Leading jet mass [GeV]',
-    'subleadingjetmass':'Subleading jet mass [GeV]',
-    'total_jet_mass':'Total jet mass'
+get_pretty={
+    'measuredXpT':['p$_T$(X)',0.000001,10]
+    'xpT_Over_PhpT':['p$_T$(X) / p$_T$($\gamma$)',0.00001, 10]
+    'ljpT_Over_PhpT':['p$_T$($j_1$) / p$_T$($\gamma$)',0.0001,100]
+    'measuredphotonpT':['Outgoing photon p$_T$ [GeV]',0.000001,10]
+    'njets':['Number of jets',0.000001,10]
+    'nparticles':['Number of particles',0.000001,10]
+    'lny23':['ln(y$_{23}$)',0.00001,50]
+    'aplanarity':['Aplanarity',0.00001,100]
+    'transverse_sphericity':['Transverse sphericity',0.0001,500]
+    'sphericity':['Sphericity',0.001, 1000]
+    'total_jet_mass':['Total jet mass',0.0001,1000]
 } 
+    #'leadingjetpT':'Leading jet p$_T$ [GeV]',
+    #'subleadingjetpT':'Subleading jet p$_T$ [GeV]',
+    #'leadingjetmass':'Leading jet mass [GeV]',
+    #'subleadingjetmass':'Subleading jet mass [GeV]',
 
 
 #--------------------------- Variable defs
@@ -383,20 +387,22 @@ def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,finalSaveTag=''):
   #print('the rocs I have: ', rocs)
   #print('the aucs I have: ', aucs)
 
-  realSigs = ['0.0', '0.5', '1.0', '2.0', '3.0', '5.0','$\infty$'] 
   #print('the anomaly ratios I have:')
   for i,r in enumerate(anomalyRatios):
       #print('ar: ', r)
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i])) 
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3))) #tpr, tpr/sqrt(fpr)
-      else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% ($\sigma$="+str(realSigs[i])+"): AUC="+str(np.round(aucs[i],3)))
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],3)),color=nice_colors_rtob_mut[i]) #tpr, tpr/sqrt(fpr)
+      #else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],3))),color=nice_colors_rtob_mut[i]
+      else: plt.plot(rocs[i][1],1-rocs[i][0],label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],3)),color=nice_colors_rtob_mut[i])
+  plt.xlabel('Signal efficiency (TPR)')
   if 'sqrt' in Ylabel: 
     plt.ylim(0.01,80.0)
     plt.yscale('log')
-    plt.xlabel('TPR')
+    plt.ylabel('Signal sensitivity ('+Ylabel+')')
+    plt.plot([0,1],[1,1], '--',color='tab:gray')
   else:
-    plt.xlabel('FPR')
-  plt.ylabel(Ylabel)
+    plt.ylabel('Background rejection (1-FPR)')
+    plt.plot([0,1],[1,0], '--',color='tab:gray')
   plt.title('ROC: '+finalSaveTag)
   #plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
   plt.legend()
@@ -431,16 +437,16 @@ def make_var_plots(sig_records,s700,bg_records,save):
   #02 files: record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['total_jet_mass'],record['evIsoSphere']
   #plot_something(save,sig_records,bg_records,'truthsqrtshat',range(0,1000,20),1)
   #evt_vars = [record['measuredXpT'],record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['leadingjetmass'],record['subleadingjetmass'],record['total_jet_mass']]
-  plot_something(save,sig_records,s700,bg_records,'leadingjetmass',np.linspace(0,300,150),1)
-  plot_something(save,sig_records,s700,bg_records,'subleadingjetmass',np.linspace(0,300,150),1)
+  #plot_something(save,sig_records,s700,bg_records,'leadingjetmass',np.linspace(0,300,150),1)
+  #plot_something(save,sig_records,s700,bg_records,'subleadingjetmass',np.linspace(0,300,150),1)
   plot_something(save,sig_records,s700,bg_records,'njets',np.linspace(0,20,20),1)
   plot_something(save,sig_records,s700,bg_records,'nparticles',np.linspace(0,200,200),1)
   plot_something(save,sig_records,s700,bg_records,'lny23',np.linspace(-10,-0.0001,20),1)
   plot_something(save,sig_records,s700,bg_records,'aplanarity',np.linspace(0,0.5,20),1)
   plot_something(save,sig_records,s700,bg_records,'transverse_sphericity',np.linspace(0,1,50),1)
   plot_something(save,sig_records,s700,bg_records,'sphericity',np.linspace(0,1,50),1)
-  plot_something(save,sig_records,s700,bg_records,'leadingjetpT',np.linspace(0,600,200),1)
-  plot_something(save,sig_records,s700,bg_records,'subleadingjetpT',np.linspace(0,600,200),1)
+  #plot_something(save,sig_records,s700,bg_records,'leadingjetpT',np.linspace(0,600,200),1)
+  #plot_something(save,sig_records,s700,bg_records,'subleadingjetpT',np.linspace(0,600,200),1)
   plot_something(save,sig_records,s700,bg_records,'measuredphotonpT',np.linspace(0,600,200),1)
   plot_something(save,sig_records,s700,bg_records,'measuredXpT',np.linspace(0,600,200),1)
   plot_something(save,sig_records,s700,bg_records,'ljpT_Over_PhpT',np.linspace(0,40,100),1)
@@ -463,13 +469,14 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     else: 
       saveName = 'truthsqrtshat'
       var = 'Truth $\sqrt{\^{s}}$ [GeV]'
-    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",hatch='/', histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",hatch='|', histtype='step', linewidth=2,label='Background',density=True)
     plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='-', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step',hatch='.', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
+    plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     #plt.xticks( np.arange(10) )
     plt.yscale('log')
-    plt.ylim(0.000001,50.0)
+    plt.ylim(0.000001,30.0)
     plt.ylabel("Number of events [A.U.]")
     plt.legend()
     plt.savefig("plots_FINAL/"+saveName+".pdf")
@@ -477,19 +484,18 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
   
 
 
-def plot_jetthing(save,sig_records,s700,bg_records,jet,var):
-  
-    d_npy = get_npy_dict('jet') 
-    sig_arr = np.array([float(i[jet][d_npy[var]]) for i in sig_records])
-    #sig700_arr = np.array([float(i[d_npy[var]]) for i in s700])
-    #bkg_arr = np.array([float(i[d_npy[var]]) for i in bg_records])    
+def plot_jetthing(save,sig_records,s700,bg_records,jet,var,doLog=True):
+
+    sig_arr = np.array([float(i[jet][var]) for i in sig_records])
+    sig700_arr = np.array([float(i[jet][var]) for i in s700])
+    bkg_arr = np.array([float(i[jet][var]) for i in bg_records])
 
     prettyLabel = jet_dict[var][0]
     R = jet_dict[var][1]
     
-    #plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
-    #plt.hist(sig700_arr, R, color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
+    plt.hist(bkg_arr, R, color="steelblue",hatch='|',histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, R, color="tomato",hatch='-', histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(sig700_arr, R, color="g",hatch='.', histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
     #plt.xscale('log')
     #plt.xticks(R)
@@ -499,10 +505,11 @@ def plot_jetthing(save,sig_records,s700,bg_records,jet,var):
     else: plt.xlabel('Jet '+prettyLabel)
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of events [A.U.]")
-    plt.ylim(0.000001,1.0)
+    #plt.ylim(0.000001,1.0)
     #plt.ylabel("Number of Events / bin")
+    plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     plt.legend()
-    plt.savefig("plots_FINAL/"+save+"_"+var+".pdf")
+    plt.savefig("plots_FINAL/"+str(save)+"_jet"+str(jet)+"_var"+str(var)+".pdf")
     plt.clf()
 
 def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
@@ -527,18 +534,19 @@ def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
         sig700_arr = np.array([i[var] for i in s700])
         bkg_arr = np.array([i[var] for i in bg_records])    
 
-    plt.hist(bkg_arr, R, color="steelblue", histtype='step', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, R, color="tomato", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
-    plt.hist(sig700_arr, R, color="g", histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
+    plt.hist(bkg_arr, R, color="steelblue", hatch='|',histtype='step', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, R, color="tomato", hatch='-',histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(sig700_arr, R, color="g", hatch='.',histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
     #plt.xscale('log')
     #plt.xticks(R)
 
-    plt.xlabel(get_pretty_label[var])
+    plt.xlabel(get_pretty[var][0])
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of events [A.U.]")
-    plt.ylim(0.000001,1.0)
+    plt.ylim(get_pretty[var][1],get_pretty[var][2])
     #plt.ylabel("Number of Events / bin")
+    plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     plt.legend()
     plt.savefig("plots_FINAL/"+save+"_"+var+".pdf")
     plt.clf()

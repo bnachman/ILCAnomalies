@@ -36,7 +36,7 @@ if __name__ == "__main__":
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
 
-  X_bg_arr, y_bg_arr = load_arrs("bg",saveTag)
+  X_bg_arr, y_bg_arr = load_arrs("background",saveTag)
   X_sig_arr, y_sig_arr = load_arrs("sig",saveTag)
   X_sig_arr700, y_sig_arr700 = load_arrs("s700",saveTag)
   #X_bg_arr, y_bg_arr = load_arrs("bg",'0405')
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
   #make_npy_plots(X_sig,X_bg,'total_jet_mass',np.linspace(0,2.0,100),saveTag)
   #make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
-  make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  #make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
 
   make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
    
