@@ -17,10 +17,10 @@ from ROOT import *
 def load_arrs(typee,savee):
   X_arr = []
   y_arr=[]
-  print('Getting arrays of type: ', "training_pfn_data/"+savee+"*X*"+typee+"*.npy")
-  for s in glob.glob("training_pfn_data/"+savee+"*X*"+typee+"*.npy"):
+  print('Getting arrays of type: ', "training_data/"+savee+"*X*"+typee+"*.npy")
+  for s in glob.glob("training_data/"+savee+"*X*"+typee+"*.npy"):
     X_arr.append(np.load(s))
-  for s in glob.glob("training_pfn_data/"+savee+"*y*"+typee+"*.npy"):
+  for s in glob.glob("training_data/"+savee+"*y*"+typee+"*.npy"):
     y_arr.append(np.load(s))
   return X_arr, y_arr
 
@@ -52,10 +52,8 @@ if __name__ == "__main__":
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
 
-  #make_npy_plots(X_sig,X_bg,'total_jet_mass',np.linspace(0,2.0,100),saveTag)
-  #make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
   #make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
-
-  make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
+  #make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
    
   print('runtime: ',datetime.now() - startTime)
