@@ -34,17 +34,17 @@ jet_dict=[
     ['angular momment 5',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
 ]
 get_pretty={
-    'measuredXpT':['p$_T$(X)',0.000001,10],
-    'xpT_Over_PhpT':['p$_T$(X) / p$_T$($\gamma$)',0.00001, 10],
-    'ljpT_Over_PhpT':['p$_T$($j_1$) / p$_T$($\gamma$)',0.0001,100],
-    'measuredphotonpT':['Outgoing photon p$_T$ [GeV]',0.000001,10],
-    'njets':['Number of jets',0.000001,10],
-    'nparticles':['Number of particles',0.000001,10],
-    'lny23':['ln(y$_{23}$)',0.00001,50],
-    'aplanarity':['Aplanarity',0.00001,100],
-    'transverse_sphericity':['Transverse sphericity',0.0001,500],
-    'sphericity':['Sphericity',0.001, 1000],
-    'total_jet_mass':['Total jet mass',0.0001,1000],
+    'measuredXpT':['p$_T$(X)',0.000001,10,0.0,1.0],
+    'xpT_Over_PhpT':['p$_T$(X) / p$_T$($\gamma$)',0.00001,10,0.0,5.0],
+    'ljpT_Over_PhpT':['p$_T$($j_1$) / p$_T$($\gamma$)',0.0001,100,0.0,20.0],
+    'measuredphotonpT':['Outgoing photon p$_T$ [GeV]',0.000001,10,0.0,1.0],
+    'njets':['Number of jets',0.000001,100,0.0,5.0],
+    'nparticles':['Number of particles',0.000001,10,0.0, 1.0],
+    'lny23':['ln(y$_{23}$)',0.00001,50,-10.0, 8.0],
+    'aplanarity':['Aplanarity',0.0001,1000,0.0, 100.0],
+    'transverse_sphericity':['Transverse sphericity',0.0001,1000,0.0,300.0],
+    'sphericity':['Sphericity',0.001, 1000,0.0,300.0],
+    'total_jet_mass':['Total jet mass',0.0001,1000,0.0,200.0]
 } 
     #'leadingjetpT':'Leading jet p$_T$ [GeV]',
     #'subleadingjetpT':'Subleading jet p$_T$ [GeV]',
@@ -440,7 +440,7 @@ def make_var_plots(sig_records,s700,bg_records,save):
   #evt_vars = [record['measuredXpT'],record['xpT_Over_PhpT'], record['ljpT_Over_PhpT'],record['leadingjetpT'], record['subleadingjetpT'],record['measuredphotonpT'],record['njets'],record['nparticles'],record['lny23'],record['aplanarity'],record['transverse_sphericity'],record['sphericity'],record['leadingjetmass'],record['subleadingjetmass'],record['total_jet_mass']]
   #plot_something(save,sig_records,s700,bg_records,'leadingjetmass',np.linspace(0,300,150),1)
   #plot_something(save,sig_records,s700,bg_records,'subleadingjetmass',np.linspace(0,300,150),1)
-  plot_something(save,sig_records,s700,bg_records,'njets',np.linspace(0,20,20),1)
+  plot_something(save,sig_records,s700,bg_records,'njets',np.linspace(0,12,12),1)
   plot_something(save,sig_records,s700,bg_records,'nparticles',np.linspace(0,200,200),1)
   plot_something(save,sig_records,s700,bg_records,'lny23',np.linspace(-10,-0.0001,20),1)
   plot_something(save,sig_records,s700,bg_records,'aplanarity',np.linspace(0,0.5,20),1)
@@ -570,7 +570,7 @@ def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
     plt.ylabel("Number of events [A.U.]")
     plt.ylim(get_pretty[var][1],get_pretty[var][2])
     #plt.ylabel("Number of Events / bin")
-    plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
+    plt.text(get_pretty[var][3],get_pretty[var][4],'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     plt.legend()
     plt.savefig("plots_FINAL/"+save+"_"+var+".pdf")
     plt.clf()
