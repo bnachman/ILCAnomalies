@@ -22,29 +22,29 @@ prettySigmas = ['0.0', '0.5', '1.0', '2.0', '3.0', '5.0','$\infty$']
 #--------------------------- Variable defs
 #pretty labels
 jet_dict=[
-    ['p$_T$ [GeV]',np.linspace(0,300,150)],
-    ['$\eta$',np.linspace(-3.0,3.0,30)],
-    ['$\phi$',np.linspace(-3.0,3.0,30)],
-    ['mass [GeV]',np.linspace(0,300,150)],
-    ['flavor',np.linspace(0,10,10)],
-    ['angular momment 1',np.linspace(0,1.0,50)],
-    ['angular momment 2',np.linspace(0,1.0,50)],
-    ['angular momment 3',np.linspace(0,1.0,50)],
-    ['angular momment 4',np.linspace(0,1.0,50)],
-    ['angular momment 5',np.linspace(0,1.0,50)],
+    ['p$_T$ [GeV]',np.linspace(0,300,150),    0.000001,10.0,0.0,1.0],
+    ['$\eta$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,1.0],      
+    ['$\phi$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,1.0],
+    ['mass [GeV]',np.linspace(0,300,150),     0.0000001,10.0,0.0,1.0],
+    ['flavor',np.linspace(0,8,8),           0.0001,10.0,0.0,3.0],
+    ['angular momment 1',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
+    ['angular momment 2',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
+    ['angular momment 3',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
+    ['angular momment 4',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
+    ['angular momment 5',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
 ]
 get_pretty={
-    'measuredXpT':['p$_T$(X)',0.000001,10]
-    'xpT_Over_PhpT':['p$_T$(X) / p$_T$($\gamma$)',0.00001, 10]
-    'ljpT_Over_PhpT':['p$_T$($j_1$) / p$_T$($\gamma$)',0.0001,100]
-    'measuredphotonpT':['Outgoing photon p$_T$ [GeV]',0.000001,10]
-    'njets':['Number of jets',0.000001,10]
-    'nparticles':['Number of particles',0.000001,10]
-    'lny23':['ln(y$_{23}$)',0.00001,50]
-    'aplanarity':['Aplanarity',0.00001,100]
-    'transverse_sphericity':['Transverse sphericity',0.0001,500]
-    'sphericity':['Sphericity',0.001, 1000]
-    'total_jet_mass':['Total jet mass',0.0001,1000]
+    'measuredXpT':['p$_T$(X)',0.000001,10],
+    'xpT_Over_PhpT':['p$_T$(X) / p$_T$($\gamma$)',0.00001, 10],
+    'ljpT_Over_PhpT':['p$_T$($j_1$) / p$_T$($\gamma$)',0.0001,100],
+    'measuredphotonpT':['Outgoing photon p$_T$ [GeV]',0.000001,10],
+    'njets':['Number of jets',0.000001,10],
+    'nparticles':['Number of particles',0.000001,10],
+    'lny23':['ln(y$_{23}$)',0.00001,50],
+    'aplanarity':['Aplanarity',0.00001,100],
+    'transverse_sphericity':['Transverse sphericity',0.0001,500],
+    'sphericity':['Sphericity',0.001, 1000],
+    'total_jet_mass':['Total jet mass',0.0001,1000],
 } 
     #'leadingjetpT':'Leading jet p$_T$ [GeV]',
     #'subleadingjetpT':'Subleading jet p$_T$ [GeV]',
@@ -391,19 +391,20 @@ def make_roc_plots(anomalyRatios,Ylabel,rocs,aucs,sigs,saveTag,finalSaveTag=''):
   for i,r in enumerate(anomalyRatios):
       #print('ar: ', r)
       #Ines plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=r'AnomRatio=%0.3f, $\sigma$ = %0.1f, AUC %0.2f'%(anomaly_ratios[i],significances[i],aucs[i])) 
-      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],3)),color=nice_colors_rtob_mut[i]) #tpr, tpr/sqrt(fpr)
-      #else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],3))),color=nice_colors_rtob_mut[i]
-      else: plt.plot(rocs[i][1],1-rocs[i][0],label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],3)),color=nice_colors_rtob_mut[i])
+      if 'sqrt' in Ylabel: plt.plot(rocs[i][1],rocs[i][1]/np.sqrt(rocs[i][0]),label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],2)),color=nice_colors_rtob_mut[i]) #tpr, tpr/sqrt(fpr)
+      #else: plt.plot(rocs[i][0],rocs[i][1],label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],2))),color=nice_colors_rtob_mut[i]
+      else: plt.plot(rocs[i][1],1-rocs[i][0],label=str(100*np.round(r,3))+"% ($\sigma$="+str(prettySigmas[i])+"): AUC="+str(np.round(aucs[i],2)),color=nice_colors_rtob_mut[i])
   plt.xlabel('Signal efficiency (TPR)')
   if 'sqrt' in Ylabel: 
+    plt.title('SIC: '+finalSaveTag)
     plt.ylim(0.01,80.0)
     plt.yscale('log')
     plt.ylabel('Signal sensitivity ('+Ylabel+')')
     plt.plot([0,1],[1,1], '--',color='tab:gray')
   else:
+    plt.title('ROC: '+finalSaveTag)
     plt.ylabel('Background rejection (1-FPR)')
     plt.plot([0,1],[1,0], '--',color='tab:gray')
-  plt.title('ROC: '+finalSaveTag)
   #plt.figtext(0.7,0.95,"size="+str(sizeeach)+", nvars="+str(nInputs))
   plt.legend()
   plt.savefig(saveTag+'_roc_aucs_'+Ylabel.replace("/","")+'.pdf')
@@ -427,7 +428,7 @@ def plot_loss(h,r,save):
 
 def make_pfn_plots(sig_records,s700,bg_records,save):
   print('Making plots with name ', save)
-  for i in range(2): 
+  for i in range(1,2): 
       for j in range(10): # vars per jet to plot
         plot_jetthing(save,sig_records,s700,bg_records,i,j)
 
@@ -486,10 +487,34 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
 
 def plot_jetthing(save,sig_records,s700,bg_records,jet,var,doLog=True):
 
+    #if jet == 1: #remove 0 padding 
+    #  print('len: ', len(sig_records))
+    #  for i in sig_records: 
+    #    print(i)
+    #    if i[1][0]== 0.0 and i[1][1]==0.0 and  i[1][2] ==0.0 and i[1][3] ==0.0: 
+    #      print("A ZERO PAD! ", i[1][0],i[1][1],i[1][2],i[1][3])
+    #      sig_records = np.delete(sig_records,i[1],0)
+    #  print('len after removal: ', len(sig_records))
+    #  for i in sig_records: 
+    #    print(i)
+    #    if i[1][0]== 0.0 and i[1][1]==0.0 and  i[1][2] ==0.0 and i[1][3] ==0.0: print('STILL A ZERO PAD')
+
+    print('len: ', len(sig_records), ' shape ', sig_records.shape)
+    print(sig_records[:,1])
+    print('np where: ', np.where(~sig_records.any(axis=1))[0])
+    #print('len not all: ', len(sig_records[~np.all(sig_records[:,1] == 0.0)]))
+    sig_records = sig_records[~np.all(sig_records[:,:] == 0, axis=1)]
+    print('len AFTER: ', len(sig_records), ' shape ', sig_records.shape)
+
+    print(sig_records[:,1])
+
+    #sig_arr = np.array([float(i[jet][var]) for i in sig_records if not np.allclose(i[:],0)])
+    #sig700_arr = np.array([float(i[jet][var]) for i in s700 if not np.allclose(i[:],0)])
+    #bkg_arr = np.array([float(i[jet][var]) for i in bg_records if not np.allclose(i[:],0)])
     sig_arr = np.array([float(i[jet][var]) for i in sig_records])
     sig700_arr = np.array([float(i[jet][var]) for i in s700])
-    bkg_arr = np.array([float(i[jet][var]) for i in bg_records])
-
+    bkg_arr = np.array([float(i[jet][var]) for i in bg_records]) 
+   
     prettyLabel = jet_dict[var][0]
     R = jet_dict[var][1]
     
@@ -505,9 +530,8 @@ def plot_jetthing(save,sig_records,s700,bg_records,jet,var,doLog=True):
     else: plt.xlabel('Jet '+prettyLabel)
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of events [A.U.]")
-    #plt.ylim(0.000001,1.0)
-    #plt.ylabel("Number of Events / bin")
-    plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
+    plt.ylim(jet_dict[var][2],jet_dict[var][3])
+    plt.text(jet_dict[var][4],jet_dict[var][5],'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     plt.legend()
     plt.savefig("plots_FINAL/"+str(save)+"_jet"+str(jet)+"_var"+str(var)+".pdf")
     plt.clf()
