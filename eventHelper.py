@@ -360,7 +360,7 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           np.save(saveTag+"_hist_test_b_scaled",test_b_scaled)
           np.save(saveTag+"_hist_test_s_scaled",test_s_scaled)
           plt.legend()
-          plt.title('Score Hist: '+saveTag)
+          plt.title('Score Hist: '+saveTag.split("/")[-1])
           plt.xlabel('NN Score')  
           #plt.show()
           plt.savefig(saveTag+"_hist.pdf")

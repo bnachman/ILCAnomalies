@@ -1,10 +1,16 @@
+#-- June 18: wider sidebands
+python PFNLevel.py -n '0513_0619wideSB' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1  > 0513_0619wideSB_CWoLa.log
+python PFNLevel.py -n '0513_0619wideSB_s700' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1 -sig '700' > 0513_0619wideSB_CWoLa_s700.log
+python PFNLevel.py -n '0531_0619wideSB' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1  > 0531_0619wideSB_CWoLa.log
+python PFNLevel.py -n '0531_0619wideSB_s700' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1 -sig '700' > 0531_0619wideSB_CWoLa_s700.log
+
 #---- FINAL 
-#python PFNLevel.py -n '0416_0605FINAL' -tr CWoLa -te SvsB -s 25000 -r 1 > 0416_0605FINAL_CWoLa.log
-python PFNLevel.py -n '0416_0608FINAL_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0416_0608FINAL_s700_CWoLa.log
-#python PFNLevel.py -n '0513_0605FINAL' -tr CWoLa -te SvsB -s 25000 -r 1 > 0513_0605FINAL_CWoLa.log
-#python PFNLevel.py -n '0513_0605FINAL_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0513_0605FINAL_s700_CWoLa.log
-#python PFNLevel.py -n '0531_0605FINAL' -tr CWoLa -te SvsB -s 25000 -r 1 > 0531_0605FINAL_CWoLa.log
-#python PFNLevel.py -n '0531_0605FINAL_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0531_0605FINAL_s700_CWoLa.log
+#python PFNLevel.py -n '0416_0618FINAL' -tr CWoLa -te SvsB -s 25000 -r 1 > 0416_0618FINAL_CWoLa.log
+#python PFNLevel.py -n '0416_0618FINAL_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0416_0618FINAL_s700_CWoLa.log
+#python PFNLevel.py -n '0513_0618FINAL' -tr CWoLa -te SvsB -s 25000 -r 1 > 0513_0618FINAL_CWoLa.log
+#python PFNLevel.py -n '0513_0618FINAL_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0513_0618FINAL_s700_CWoLa.log
+#python PFNLevel.py -n '0531_0618FINAL' -tr CWoLa -te SvsB -s 25000 -r 1 > 0531_0618FINAL_CWoLa.log
+#python PFNLevel.py -n '0531_0618FINAL_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0531_0618FINAL_s700_CWoLa.log
 
 
 ##- truthsqrtshat

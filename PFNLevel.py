@@ -28,6 +28,29 @@ import math
 #from prep_shufflesplit_jerry import *
 from prep_shufflesplit import *
 
+d_regions={
+#truth +-25, measuredph +-50, measuredhad +-50 highSB only 
+'350':[[275,425,325,375],[250,450,300,400],[400,500,300,400]],
+'700':[[625,775,675,725],[600,800,650,750],[750,850,650,750]]
+}
+
+#-----------------------------------------------------------------------------------
+def get_region_defs(signal,savename,dowide):
+  if dowide:
+    if '0416' in savename:
+      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
+      return d_regions[signal][0] 
+
+    elif '0513' in savename: 
+      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1])
+      return d_regions[signal][1] 
+
+    elif '0531' in savename: 
+      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][2])
+      return d_regions[signal][2] 
+  else:
+    print('TRUTH REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
+    return d_regions[signal][0] 
 
 #-----------------------------------------------------------------------------------
 def get_ars(sigmas,sizeeach):
@@ -137,6 +160,8 @@ if __name__ == "__main__":
                      help="do random signal init")
   parser.add_argument("-sig", "--signal", default = '350', type=str,
                      help="type of signal run")
+  parser.add_argument("-w", "--doWide", default = 0, type=int,
+                     help="do wider sr/sb defs")
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
@@ -145,6 +170,7 @@ if __name__ == "__main__":
   doEnsemb = args.doEnsemble
   random = args.doRandom
   signal = args.signal
+  dowide = args.doWide
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
@@ -170,18 +196,7 @@ if __name__ == "__main__":
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
   # --  Identify signal and side band 
-  if '350' in signal: 
-    sb_left = 275
-    sb_right = 425
-    sr_left = 325
-    sr_right = 375
-    print('350::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
-  elif '700' in signal:
-    sb_left = 625
-    sb_right = 775
-    sr_left = 675
-    sr_right = 725
-    print('700::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
+  sb_left, sb_right, sr_left, sr_right = get_region_defs(signal,savename.split("_")[0],dowide)
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -229,6 +244,7 @@ if __name__ == "__main__":
   sigs=[]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
+  #sigmas = [0.0, 2.0,5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -279,7 +295,7 @@ if __name__ == "__main__":
       else: 
           X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
-          draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag+"_sigma"+str(sigmas[r]))
+          draw_hist(model,X_train,Y_train,X_test,Y_test,"plots/"+saveTag+"_sigma"+str(sigmas[r]))
           plot_loss(h,sigmas[r],saveTag) 
 
        

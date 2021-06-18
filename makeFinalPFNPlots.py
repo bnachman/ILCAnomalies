@@ -153,7 +153,7 @@ if __name__ == "__main__":
       modelList = glob.glob('models/*'+savename.split("_")[0]+"*"+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*")
       n_models = len(modelList)
       print('Making plot with ', n_models, 'models/*'+savename.split("_")[0]+"*"+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*", modelList)
-    n_models = 2
+    #n_models = 2
 
     thisAucs = []
     thisRocs = []
