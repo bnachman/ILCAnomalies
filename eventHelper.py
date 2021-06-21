@@ -22,16 +22,16 @@ prettySigmas = ['0.0', '0.5', '1.0', '2.0', '3.0', '5.0','$\infty$']
 #--------------------------- Variable defs
 #pretty labels
 jet_dict=[
-    ['p$_T$ [GeV]',np.linspace(0,300,150),    0.000001,10.0,0.0,1.0],
-    ['$\eta$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,1.0],      
-    ['$\phi$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,1.0],
-    ['mass [GeV]',np.linspace(0,300,150),     0.0000001,10.0,0.0,1.0],
+    ['p$_T$ [GeV]',np.linspace(0,550,220),    0.000001,10.0,0.0,3.0],
+    ['$\eta$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,3.0],      
+    ['$\phi$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,3.0],
+    ['mass [GeV]',np.linspace(0,300,150),     0.000001,10.0,0.0,3.0],
     ['flavor',np.linspace(0,8,8),           0.0001,10.0,0.0,3.0],
-    ['angular momment 1',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
-    ['angular momment 2',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
-    ['angular momment 3',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
-    ['angular momment 4',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
-    ['angular momment 5',np.linspace(0,1.0,50),0.00005,100.0,0.0,50.0],
+    ['angular momment 1',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular momment 2',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular momment 3',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular momment 4',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular momment 5',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
 ]
 get_pretty={
     'measuredXpT':['p$_T$(X)',0.000001,10,0.0,1.0],
@@ -428,7 +428,7 @@ def plot_loss(h,r,save):
 
 def make_pfn_plots(sig_records,s700,bg_records,save):
   print('Making plots with name ', save)
-  for i in range(1,2): 
+  for i in range(2): 
       for j in range(10): # vars per jet to plot
         plot_jetthing(save,sig_records,s700,bg_records,i,j)
 
@@ -470,8 +470,8 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     else: 
       saveName = 'truthsqrtshat'
       var = 'Truth $\sqrt{\^{s}}$ [GeV]'
-    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",hatch='|', histtype='step', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='-', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",alpha=0.6,histtype='stepfilled', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='///', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step',hatch='.', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
     plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
@@ -499,27 +499,45 @@ def plot_jetthing(save,sig_records,s700,bg_records,jet,var,doLog=True):
     #    print(i)
     #    if i[1][0]== 0.0 and i[1][1]==0.0 and  i[1][2] ==0.0 and i[1][3] ==0.0: print('STILL A ZERO PAD')
 
-    print('len: ', len(sig_records), ' shape ', sig_records.shape)
-    print(sig_records[:,1])
-    print('np where: ', np.where(~sig_records.any(axis=1))[0])
-    #print('len not all: ', len(sig_records[~np.all(sig_records[:,1] == 0.0)]))
-    sig_records = sig_records[~np.all(sig_records[:,:] == 0, axis=1)]
-    print('len AFTER: ', len(sig_records), ' shape ', sig_records.shape)
+    #print('ALL: len: ', len(sig_records), ' shape ', sig_records.shape)
+    #print('sig_records[0] = event:" ', len(sig_records[0]), ', shape: ', sig_records[0].shape)
+    #print('sig_records[0][0] = leading jet" ', len(sig_records[0][0]), ', shape: ', sig_records[0][0].shape)
+    #sig_records_new = []
+    #for event in range(len(sig_records)):
+    #  sig_records_new.append([])
+    #  print('number of starting jets in this event: ', len(sig_records[event])) 
+    #  for j in range(len(sig_records[event])):
+    #      jet  = sig_records[event][j]
+    #      if jet[0] == 0.0 and jet[1] == 0.0 and jet[2] == 0.0 and jet[3] == 0.0: 
+    #        #print('four vector zero padded! event: ', event, ", jet: ", j)  
+    #        sig_records_new[event] = np.delete(sig_records[event], j,axis=1 )
+    #  print('number of ending jets in this event: ', len(sig_records_new[event])) 
+    #    
 
-    print(sig_records[:,1])
+    #for event in range(len(sig_records_new)):
+    #  for j in range(len(sig_records_new[event])):
+    #      jet  = sig_record_new[event][j]
+    #      if jet[0] == 0.0 and jet[1] == 0.0 and jet[2] == 0.0 and jet[3] == 0.0: print('STILLLLL four vector zero padded! event: ', event, ", jet: ", j)  
+    #      #np.delete(sig_records[event][j])
+
+   
+    #print('np where: ', np.where(~sig_records.any(axis=1))[0])
+    #print('len not all: ', len(sig_records[~np.all(sig_records[:,1] == 0.0)]))
+    #sig_records = sig_records[~np.all(sig_records[:,:] == 0, axis=1)]
+    #print('len AFTER: ', len(sig_records), ' shape ', sig_records.shape)
 
     #sig_arr = np.array([float(i[jet][var]) for i in sig_records if not np.allclose(i[:],0)])
     #sig700_arr = np.array([float(i[jet][var]) for i in s700 if not np.allclose(i[:],0)])
     #bkg_arr = np.array([float(i[jet][var]) for i in bg_records if not np.allclose(i[:],0)])
-    sig_arr = np.array([float(i[jet][var]) for i in sig_records])
-    sig700_arr = np.array([float(i[jet][var]) for i in s700])
-    bkg_arr = np.array([float(i[jet][var]) for i in bg_records]) 
+    sig_arr = np.array([float(i[jet][var]) for i in sig_records if not np.all((i[jet]==0))])
+    sig700_arr = np.array([float(i[jet][var]) for i in s700 if not np.all((i[jet]==0))])
+    bkg_arr = np.array([float(i[jet][var]) for i in bg_records if not np.all((i[jet]==0))]) 
    
     prettyLabel = jet_dict[var][0]
     R = jet_dict[var][1]
     
-    plt.hist(bkg_arr, R, color="steelblue",hatch='|',histtype='step', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, R, color="tomato",hatch='-', histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(bkg_arr, R, color="steelblue",alpha=0.6,histtype='stepfilled', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, R, color="tomato",hatch='///', histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig700_arr, R, color="g",hatch='.', histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
     #plt.xscale('log')
@@ -558,8 +576,8 @@ def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
         sig700_arr = np.array([i[var] for i in s700])
         bkg_arr = np.array([i[var] for i in bg_records])    
 
-    plt.hist(bkg_arr, R, color="steelblue", hatch='|',histtype='step', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, R, color="tomato", hatch='-',histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(bkg_arr, R, color="steelblue", alpha=0.6,histtype='stepfilled', linewidth=2,label='Background',density=True)
+    plt.hist(sig_arr, R, color="tomato", hatch='///',histtype='step', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig700_arr, R, color="g", hatch='.',histtype='step', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     #plt.hist(this_arr, bins=np.logspace(1.5,3,30))
     #plt.xscale('log')

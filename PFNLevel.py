@@ -41,12 +41,12 @@ def get_region_defs(signal,savename,dowide):
       print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
       return d_regions[signal][0] 
 
-    elif '0513' in savename: 
+    elif '0531' in savename:  # photon measured 
       print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1])
       return d_regions[signal][1] 
 
-    elif '0531' in savename: 
-      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][2])
+    elif '0513' in savename: # hadron measured
+      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1]) #Both sbs for hadron measured too!
       return d_regions[signal][2] 
   else:
     print('TRUTH REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
