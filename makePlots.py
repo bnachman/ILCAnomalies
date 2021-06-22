@@ -41,8 +41,8 @@ if __name__ == "__main__":
   startTime = datetime.now()
   print('hello! start time = ', str(startTime))
 
-  #if 'pfn' in sample: X_bg_arr, y_bg_arr = load_arrs("background",saveTag,sample)
-  if 'pfn' in sample: X_bg_arr, y_bg_arr = load_arrs("bigger4_noZ_0to50000",saveTag,sample)
+  if 'pfn' in sample: X_bg_arr, y_bg_arr = load_arrs("background",saveTag,sample)
+  #if 'pfn' in sample: X_bg_arr, y_bg_arr = load_arrs("bigger4_noZ_0to50000",saveTag,sample)
   elif 'evt' in sample: X_bg_arr, y_bg_arr = load_arrs("bg",saveTag,sample)
   X_sig_arr, y_sig_arr = load_arrs("sig",saveTag,sample)
   X_sig_arr700, y_sig_arr700 = load_arrs("s700",saveTag,sample)

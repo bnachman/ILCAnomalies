@@ -56,6 +56,8 @@ if __name__ == "__main__":
                      help="do random signal init")
   parser.add_argument("-sig", "--signal", default = '350', type=str,
                      help="type of signal run")
+  parser.add_argument("-DEBUG", "--DEBUG", default = 0, type=int,
+                     help="debug")
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
@@ -64,6 +66,7 @@ if __name__ == "__main__":
   doEnsemb = args.doEnsemble
   random = args.doRandom
   signal = args.signal
+  debug = args.DEBUG
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
@@ -87,18 +90,7 @@ if __name__ == "__main__":
 
   #make_var_plots(X_sig,X_bg,saveTag+"_npy")
   # --  Identify signal and side band 
-  if '350' in signal: 
-    sb_left = 275
-    sb_right = 425
-    sr_left = 325
-    sr_right = 375
-    print('350::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
-  elif '700' in signal:
-    sb_left = 625
-    sb_right = 775
-    sr_left = 675
-    sr_right = 725
-    print('700::::: SB=',sb_left,sb_right,", SR=",sr_left,sr_right)
+  sb_left, sb_right, sr_left, sr_right = get_region_defs(signal,savename.split("_")[0])
 
   y_bg_binary = np.vectorize(binary_side_band)(y_bg)
   np.unique(y_bg_binary,return_counts = True)
@@ -133,6 +125,7 @@ if __name__ == "__main__":
   rocs = []
   sigs=[]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
+  if debug: sigmas =[5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -153,7 +146,7 @@ if __name__ == "__main__":
       modelList = glob.glob('models/*'+savename.split("_")[0]+"*"+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*")
       n_models = len(modelList)
       print('Making plot with ', n_models, 'models/*'+savename.split("_")[0]+"*"+savename.split("_")[1]+'*s700*sigma'+str(sigmas[r])+"*", modelList)
-    #n_models = 2
+    if debug: n_models = 2
 
     thisAucs = []
     thisRocs = []

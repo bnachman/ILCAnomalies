@@ -35,7 +35,7 @@ d_regions={
 }
 
 #-----------------------------------------------------------------------------------
-def get_region_defs(signal,savename,dowide):
+def get_region_defs(signal,savename,dowide=True):
   if dowide:
     if '0416' in savename:
       print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
