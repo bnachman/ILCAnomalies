@@ -18,8 +18,7 @@ import random
 #-----------------------------------------------------------------------------------
 #def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
 #                               train = 0.8, val = 0.2, test_size_each = 5000):
-def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
-                               train = 0.8, val = 0.2, test = 0.1,doRandom=False):
+def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig, anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,train = 0.8, val = 0.2, test = 0.1,doRandom=False):
    
     if doRandom: print('--------------------> IMPORTANT: RANDOM = TRUE !') 
     #how much bg and signal data to take?
@@ -28,11 +27,24 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     test_size_each = int(size_each * test)   
     print('test_size_each: ', test_size_each)
 
+    #determine amount of signal to put in the SB
+    print('total sig: ', len(X_sig))
+    print('total sig in SR: ', len(X_sig_sr))
+    print('total sig in SB: ', len(X_sig_sb))
+    print('total sig that I will put in the SR: ', anom_size)
+    sigNormalization = np.divide(anom_size,len(X_sig))
+    print('which is '+str(sigNormalization)+" of the total signal.")
+    print('size of X_sig in the sb: ', len(X_sig_sb))
+    sigSB_size = sigNormalization * len(X_sig_sb)
+    print('so I want to include '+str(sigSB_size)+" signal events in the SB")
 
-    # select sideband datapoints
-    if train_set=='CWoLa':
-      this_X_sb = X_sideband[:size_each]
-      this_y_sb = np.zeros(size_each) # 0 for bg in SB
+    #-----  select CWoLa pts
+    if train_set=='CWoLa': #bg+sig in SB vs. bg+sig in SR
+      #this_X_sb = X_sideband[:size_each]
+      #this_y_sb = np.zeros(size_each) 
+      if sigSB_size > 0: this_X_sb = np.concatenate(X_sideband[:size_each-sigSB_size],X_sig_sb[:sigSB_size])
+      else: this_X_sb = X_sideband[:size_each]
+      this_y_sb = np.zeros(size_each) # 0 for bg+sig in SB
       
       # select bg in SR datapoints
       this_X_bgsig = X_selected[:bgsig_size]
@@ -40,29 +52,28 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       
       # select anomaly datapoints
       if doRandom: 
-        if anom_size == 0: this_X_sig = np.zeros((0, 15, 10))
-        else: this_X_sig = np.array(random.sample(list(X_sig), anom_size))
-      else: this_X_sig = X_sig[:anom_size]
-      print('************ X_Sig shape: ', np.shape(this_X_sig))
+        if anom_size == 0: this_X_sig_sr = np.zeros((0, 15, 10))
+        else: this_X_sig_sr = np.array(random.sample(list(X_sig_sr), anom_size))
+      else: this_X_sig_sr = X_sig_sr[:anom_size]
+      print('************ X_Sig shape: ', np.shape(this_X_sig_sr))
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
   
-    # 0128 benchmark
-    # select bg in SR datapoints
+    # 0128----------- benchmark
     elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
-      #print('# inputs of X: ', len(X_selected[0]))
       this_X_sb= X_selected[:size_each]
       this_y_sb = np.zeros(size_each) # 0 for bg in SR
-      
-      # select anomaly datapoints
-      if doRandom: #this_X_sig = random.sample(X_sig, anom_size)
-        if anom_size == 0: this_X_sig = np.zeros((0, 15, 10))
-        else: this_X_sig = np.array(random.sample(list(X_sig), anom_size))
-      else: this_X_sig = X_sig[:anom_size]
-      this_y_sig = np.ones(anom_size) # 1 for signal in SR
-   
+
       # select bg in SR datapoints
       this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
       this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
+      
+      # select anomaly datapoints
+      if doRandom: #this_X_sig_sr = random.sample(X_sig_sr, anom_size)
+        if anom_size == 0: this_X_sig_sr = np.zeros((0, 15, 10))
+        else: this_X_sig_sr = np.array(random.sample(list(X_sig_sr), anom_size))
+      else: this_X_sig_sr = X_sig_sr[:anom_size]
+      this_y_sig = np.ones(anom_size) # 1 for signal in SR
+   
    
     #import ipdb
     #ipdb.set_trace()
@@ -71,7 +82,7 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     """
     Shuffle + Train-Val-Test Split (not test set) """
     # Combine all 3 data sets
-    this_X = np.concatenate([this_X_sb, this_X_bgsig, this_X_sig])
+    this_X = np.concatenate([this_X_sb, this_X_bgsig, this_X_sig_sr])
     this_y = np.concatenate([this_y_sb, this_y_bgsig, this_y_sig])
     
     # Shuffle before we split
@@ -82,11 +93,11 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     if 'benchmark' in train_set:      
       print('Size of bkg #1 in SR (0s):',this_X_sb.shape)
       print('Size of bkg #2 in SR (1s):',this_X_bgsig.shape)
-      print('Size of sig in SR (1s):',this_X_sig.shape)
+      print('Size of sig in SR (1s):',this_X_sig_sr.shape)
     elif 'CWoLa' in train_set:      
-      print('Size of bg in SB (0s):',this_X_sb.shape)
+      print('Size of bg+sig in SB (0s):',this_X_sb.shape)
       print('Size of bg in SR (1s):',this_X_bgsig.shape)
-      print('Size of sig in SR (1s):',this_X_sig.shape)
+      print('Size of sig in SR (1s):',this_X_sig_sr.shape)
     
     
       
@@ -94,11 +105,11 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
     Get the test set  """ 
     #---  test = truth S vs truth B in SR only 
     if train_set=='CWoLa' and test_set == 'SvsB':
-      if doRandom: this_X_test_P = random.sample(list(X_sig), test_size_each)
-      else: this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
+      if doRandom: this_X_test_P = random.sample(list(X_sig_sr), test_size_each)
+      else: this_X_test_P = X_sig_sr[anom_size:anom_size+test_size_each] #truth sig 
       this_X_test_N = X_selected[bgsig_size:bgsig_size+test_size_each] #truth bkg in SR
     #---  test = mixed sig + bkg in sr vs. bkg sb
-    #this_X_test_P = np.concatenate([X_sig[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
+    #this_X_test_P = np.concatenate([X_sig_sr[anom_size:anom_size+test_size_each/2], X_selected[bgsig_size:bgsig_size+test_size_each/2]]) #sig and bkg in SR
     #this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = bkg sr vs. bkg sb
     elif test_set == 'BvsB':
@@ -106,8 +117,8 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig, anomaly_ratio,trai
       this_X_test_N = X_sideband[size_each:size_each+test_size_each] #sb 
     #---  test = truth S vs truth B in SR only, benchmark training
     elif train_set=='benchmark' and test_set == 'SvsB':
-      if doRandom: this_X_test_P = random.sample(list(X_sig), test_size_each)
-      else: this_X_test_P = X_sig[anom_size:anom_size+test_size_each] #truth sig 
+      if doRandom: this_X_test_P = random.sample(list(X_sig_sr), test_size_each)
+      else: this_X_test_P = X_sig_sr[anom_size:anom_size+test_size_each] #truth sig 
       this_X_test_N = X_selected[size_each+bgsig_size:size_each+bgsig_size+test_size_each] #truth bkg in SR
 
     #labels

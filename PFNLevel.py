@@ -162,6 +162,9 @@ if __name__ == "__main__":
                      help="type of signal run")
   parser.add_argument("-w", "--doWide", default = 0, type=int,
                      help="do wider sr/sb defs")
+  parser.add_argument("-DEBUG", "--DEBUG", default = 0, type=int,
+                     help="debug")
+
   args = parser.parse_args()
   sizeeach = int(args.sizeeach[0])
   savename = args.savename[0]
@@ -171,6 +174,7 @@ if __name__ == "__main__":
   random = args.doRandom
   signal = args.signal
   dowide = args.doWide
+  debug = args.DEBUG
   saveTag = savename+"_"+testset+"_"+trainset
 
   startTime = datetime.now()
@@ -179,7 +183,7 @@ if __name__ == "__main__":
 
 
   # -- Get input files 
-  X_bg_arr, y_bg_arr = load_arrs("background",savename.split("_")[0])
+  X_bg_arr, y_bg_arr = load_arrs("background*noZ",savename.split("_")[0])
   if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
   elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
@@ -223,6 +227,7 @@ if __name__ == "__main__":
   print('Bkg in SB: ', len(X_sideband))
   print('Sig in SR: ', len(X_sig_sr))
   print('Sig in SB: ', len(X_sig_sb))
+  print('total sig :', len(X_sig))
 
 
 
@@ -235,7 +240,9 @@ if __name__ == "__main__":
   # network training parameters
   num_epoch = 30
   batch_size = 100
-  if doEnsemb: n_models=50
+  if doEnsemb: 
+    if debug: n_models=2
+    else: n_models=50
   else: n_models=1
   saveTag += 'ep'+str(num_epoch)+"bt"+str(batch_size)+"nm"+str(n_models)
  
@@ -244,7 +251,7 @@ if __name__ == "__main__":
   sigs=[]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
-  #sigmas = [0.0, 2.0,5.0]
+  if debug: sigmas =[5.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -265,7 +272,8 @@ if __name__ == "__main__":
         for i in range(n_models):
           perSaveTag = saveTag+str(i)+"_sigma"+str(sigmas[r])
           print('~~~~~~~~~~ MODEL '+str(i)+', perSaveTag='+str(perSaveTag))
-          X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
+          X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
+          break
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,perSaveTag)
           ensembModels.append(model)
           # do some plotting
