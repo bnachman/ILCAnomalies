@@ -21,8 +21,10 @@ def load_arrs(typee,savee,sample):
   if 'pfn' in sample: dirname = 'training_pfn_data'
   print('Getting arrays of type: ', dirname+"/"+savee+"*X*"+typee+"*.npy")
   for s in glob.glob(dirname+"/"+savee+"*X*"+typee+"*.npy"):
+    if 'noZ' in s: continue
     X_arr.append(np.load(s))
   for s in glob.glob(dirname+"/"+savee+"*y*"+typee+"*.npy"):
+    if 'noZ' in s: continue
     y_arr.append(np.load(s))
   return X_arr, y_arr
 
