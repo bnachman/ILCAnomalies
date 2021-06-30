@@ -35,14 +35,14 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
     sigNormalization = np.divide(anom_size,len(X_sig))
     print('which is '+str(sigNormalization)+" of the total signal.")
     print('size of X_sig in the sb: ', len(X_sig_sb))
-    sigSB_size = sigNormalization * len(X_sig_sb)
+    sigSB_size = int(sigNormalization * len(X_sig_sb))
     print('so I want to include '+str(sigSB_size)+" signal events in the SB")
 
     #-----  select CWoLa pts
     if train_set=='CWoLa': #bg+sig in SB vs. bg+sig in SR
       #this_X_sb = X_sideband[:size_each]
       #this_y_sb = np.zeros(size_each) 
-      if sigSB_size > 0: this_X_sb = np.concatenate(X_sideband[:size_each-sigSB_size],X_sig_sb[:sigSB_size])
+      if sigSB_size > 0: this_X_sb = np.concatenate([X_sideband[:size_each-sigSB_size],X_sig_sb[:sigSB_size]])
       else: this_X_sb = X_sideband[:size_each]
       this_y_sb = np.zeros(size_each) # 0 for bg+sig in SB
       
@@ -58,6 +58,15 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
       print('************ X_Sig shape: ', np.shape(this_X_sig_sr))
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
   
+      #                             SR contribution,         SB contribution
+      if sigSB_size > 0: 
+        X_train_s = np.concatenate([this_X_sig_sr, X_sig_sb[:sigSB_size]]) 
+        X_train_b = np.concatenate([X_selected[:bgsig_size], X_sideband[:size_each-sigSB_size]])
+      else: 
+        X_train_s = this_X_sig_sr
+        X_train_b = np.concatenate([X_selected[:bgsig_size], X_sideband[:size_each]])
+  
+
     # 0128----------- benchmark
     elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
       this_X_sb= X_selected[:size_each]
@@ -74,9 +83,13 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
       else: this_X_sig_sr = X_sig_sr[:anom_size]
       this_y_sig = np.ones(anom_size) # 1 for signal in SR
    
+      #                             SR contribution,         SB contribution
+      X_train_s = this_X_sig_sr
+      X_train_b = np.concatenate([this_X_sb, this_X_bgsig])
    
     #import ipdb
     #ipdb.set_trace()
+
 
  
     """
@@ -213,5 +226,5 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
     print('Test set size, distribution:',X_test.shape)
     #print(np.unique(y_test,return_counts = True))
 
-    return X_train, X_val, X_test, Y_train,Y_val,Y_test
+    return X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test,
 

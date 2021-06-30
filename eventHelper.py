@@ -334,10 +334,13 @@ def get_sqrts_type(saveTag):
 
 
 #---------------------------  Plotting help
-def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
+def draw_hist(model,X_train,X_train_b,X_train_s,Y_train,X_test,Y_test,saveTag):
           # draw this nets s vs. b hist 
-          train_s =  model.predict(X_train[Y_train[:,0] >0])[:,0] #select signal from train
-          train_b =  model.predict(X_train[Y_train[:,0] <1])[:,0] 
+          if len(X_train_s) > 0: train_truth_s = model.predict(X_train_s)[:,0]
+          else: train_truth_s = []
+          train_truth_b = model.predict(X_train_b)[:,0] 
+          train_1 =  model.predict(X_train[Y_train[:,0] >0])[:,0] #select signal from train
+          train_0 =  model.predict(X_train[Y_train[:,0] <1])[:,0] 
           test_s =  model.predict(X_test[Y_test[:,0] >0])[:,0] #select signal from test
           test_b =  model.predict(X_test[Y_test[:,0] <1])[:,0] 
           #BUGGY 
@@ -346,19 +349,24 @@ def draw_hist(model,X_train,Y_train,X_test,Y_test,saveTag):
           test_s_scaled =  quantile_transform(model.predict(X_test))[Y_test[:,0] >0][:,0] #select signal from test
           test_b_scaled =  quantile_transform(model.predict(X_test))[Y_test[:,0] <1][:,0] 
 
-          bins = np.arange(0,1,0.01)
-          plt.hist(train_b,bins,density=True,label="Train: background",alpha=0.6)
-          plt.hist(train_s,bins,density=True,label="Train: signal",alpha=0.6)
-          plt.hist(test_b, bins,histtype='step',density=True,label="Test: background",color="b")
-          plt.hist(test_s, bins,histtype='step',density=True,label="Test: signal",color="r")
-          plt.hist(test_s_scaled, bins,histtype='step',density=True,label="Scaled test: signal",color="r", linestyle="dashed")
-          plt.hist(test_b_scaled, bins,histtype='step',density=True,label="Scaled test: background",color="b", linestyle="dashed")
-          np.save(saveTag+"_hist_train_b",train_b)
-          np.save(saveTag+"_hist_train_s",train_s)
+          bins = np.arange(-0.1,1.1,0.02)
+          plt.hist(train_truth_b,bins,density=True,label="Train: bkg ("+str(len(train_truth_b))+")",alpha=0.6)
+          plt.hist(train_truth_s,bins,density=True,label="Train: sig ("+str(len(train_truth_s))+")",alpha=0.6)
+          plt.hist(train_0,bins,density=True,label="Train: 0s ("+str(len(train_0))+")",alpha=0.5,hatch='.',color='green')
+          plt.hist(train_1,bins,density=True,label="Train: 1s ("+str(len(train_1))+")",alpha=0.5,hatch='.',color='darkviolet')
+          plt.hist(test_b, bins,histtype='step',density=True,label="Test: bkg ("+str(len(test_b))+")",color="b")
+          plt.hist(test_s, bins,histtype='step',density=True,label="Test: sig ("+str(len(test_s))+")",color="r")
+          plt.hist(test_s_scaled, bins,histtype='step',density=True,label="Scaled test: sig ("+str(len(test_s_scaled))+")",color="r", linestyle="dashed")
+          plt.hist(test_b_scaled, bins,histtype='step',density=True,label="Scaled test: bkg ("+str(len(test_b_scaled))+")",color="b", linestyle="dashed")
+          np.save(saveTag+"_hist_train_0",train_0)
+          np.save(saveTag+"_hist_train_1",train_1)
+          np.save(saveTag+"_hist_train_truth_b",train_truth_b)
+          np.save(saveTag+"_hist_train_truth_s",train_truth_s)
           np.save(saveTag+"_hist_test_b",test_b)
           np.save(saveTag+"_hist_test_s",test_s)
           np.save(saveTag+"_hist_test_b_scaled",test_b_scaled)
           np.save(saveTag+"_hist_test_s_scaled",test_s_scaled)
+          plt.yscale('log')
           plt.legend()
           plt.title('Score Hist: '+saveTag.split("/")[-1])
           plt.xlabel('NN Score')  
