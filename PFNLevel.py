@@ -251,7 +251,7 @@ if __name__ == "__main__":
   sigs=[]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
-  if debug: sigmas =[5.0]
+  if debug: sigmas =[0.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
@@ -323,8 +323,10 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
-  else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
+  if 'BvsB' in testset: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename) 
+  else:
+    if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
+    else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
   make_roc_plots(anomalyRatios,'TPR',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
   make_roc_plots(anomalyRatios,'TPR/$\sqrt{(FPR)}$',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
   #make_roc_plots(anomalyRatios,'fpr',rocs,aucs,sigs,"plots/"+saveTag)

@@ -27,11 +27,11 @@ jet_dict=[
     ['$\phi$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,3.0],
     ['mass [GeV]',np.linspace(0,300,150),     0.000001,10.0,0.0,3.0],
     ['flavor',np.linspace(0,8,8),           0.0001,10.0,0.0,3.0],
-    ['angular momment 1',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
-    ['angular momment 2',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
-    ['angular momment 3',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
-    ['angular momment 4',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
-    ['angular momment 5',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular radiation moment 1',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular radiation moment 2',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular radiation moment 3',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular radiation moment 4',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
+    ['angular radiation moment 5',np.linspace(0,1.0,50),0.00005,100.0,0.0,40.0],
 ]
 get_pretty={
     'measuredXpT':['p$_T$(X)',0.000001,10,0.0,1.0],
@@ -335,6 +335,7 @@ def get_sqrts_type(saveTag):
 
 #---------------------------  Plotting help
 def draw_hist(model,X_train,X_train_b,X_train_s,Y_train,X_test,Y_test,saveTag):
+
           # draw this nets s vs. b hist 
           if len(X_train_s) > 0: train_truth_s = model.predict(X_train_s)[:,0]
           else: train_truth_s = []
@@ -479,7 +480,7 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
       saveName = 'truthsqrtshat'
       var = 'Truth $\sqrt{\^{s}}$ [GeV]'
     plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",alpha=0.6,histtype='stepfilled', linewidth=2,label='Background',density=True)
-    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='///', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    #plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='///', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step',hatch='.', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
     plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
@@ -488,7 +489,7 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     plt.ylim(0.000001,30.0)
     plt.ylabel("Number of events [A.U.]")
     plt.legend()
-    plt.savefig("plots_FINAL/"+saveName+".pdf")
+    plt.savefig("plots_FINAL/only700"+saveName+".pdf")
     plt.clf()
   
 
