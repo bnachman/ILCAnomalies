@@ -16,6 +16,17 @@ import math
 import random
 
 #-----------------------------------------------------------------------------------
+def normalize(X_train):
+    for x in X_train:
+        mask = x[:,0] > 0
+        if len(x[mask,0]) < 1: continue
+        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+        x[mask,1:3] -= yphi_avg
+        x[mask,0] /= x[:,0].sum()
+
+    return X_train
+
+#-----------------------------------------------------------------------------------
 #def prep_and_shufflesplit_data(anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,
 #                               train = 0.8, val = 0.2, test_size_each = 5000):
 def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig, anomaly_ratio,train_set,test_set, size_each = 76000, shuffle_seed = 69,train = 0.8, val = 0.2, test = 0.1,doRandom=False):
@@ -42,50 +53,68 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
     if train_set=='CWoLa': #bg+sig in SB vs. bg+sig in SR
       #this_X_sb = X_sideband[:size_each]
       #this_y_sb = np.zeros(size_each) 
-      if sigSB_size > 0: this_X_sb = np.concatenate([X_sideband[:size_each-sigSB_size],X_sig_sb[:sigSB_size]])
-      else: this_X_sb = X_sideband[:size_each]
-      this_y_sb = np.zeros(size_each) # 0 for bg+sig in SB
+      #if sigSB_size > 0: 
+      if sigSB_size > 0: 
+        this_X_sb_bg =X_sideband[:size_each-sigSB_size]
+        this_y_sb_bg = np.zeros(size_each-sigSB_size)
+        this_X_sb_sig = X_sig_sb[:sigSB_size]
+        this_y_sb_sig = np.zeros(sigSB_size)
+      else: 
+        this_X_sb_bg =X_sideband[:size_each]
+        this_y_sb_bg = np.zeros(size_each)
+      #this_X_sb_sig = X_sideband[:size_each]
       
       # select bg in SR datapoints
-      this_X_bgsig = X_selected[:bgsig_size]
-      this_y_bgsig = np.ones(bgsig_size) # 1 for bg in SR
-      
-      # select anomaly datapoints
+      this_X_sr_bg = X_selected[:bgsig_size]
+      this_y_sr_bg = np.ones(bgsig_size) # 1 for bg in SR
+
+      # select anomaly datapoints in SR
       if doRandom: 
-        if anom_size == 0: this_X_sig_sr = np.zeros((0, 15, 10))
-        else: this_X_sig_sr = np.array(random.sample(list(X_sig_sr), anom_size))
-      else: this_X_sig_sr = X_sig_sr[:anom_size]
-      print('************ X_Sig shape: ', np.shape(this_X_sig_sr))
-      this_y_sig = np.ones(anom_size) # 1 for signal in SR
+        if anom_size == 0: this_X_sr_sig = np.zeros((0, 15, 10))
+        else: this_X_sr_sig = np.array(random.sample(list(X_sig_sr), anom_size))
+      else: this_X_sr_sig = X_sig_sr[:anom_size]
+      print('************ X_Sig shape: ', np.shape(this_X_sr_sig))
+      this_y_sr_sig = np.ones(anom_size) # 1 for signal in SR
   
+
+      #----- just nmaing convenntions
+      if sigSB_size> 0: this_X_sb = np.concatenate([this_X_sb_bg,this_X_sb_sig])
+      else: this_X_sb = this_X_sb_bg
+      this_y_sb = np.zeros(size_each) # 0 for bg+sig in SB
+      this_X_bgsig = this_X_sr_bg
+      this_y_bgsig = this_y_sr_bg
+      this_X_sig_sr = this_X_sr_sig
+      this_y_sig_sr = this_y_sr_sig
       #                             SR contribution,         SB contribution
-      if sigSB_size > 0: 
-        X_train_s = np.concatenate([this_X_sig_sr, X_sig_sb[:sigSB_size]]) 
-        X_train_b = np.concatenate([X_selected[:bgsig_size], X_sideband[:size_each-sigSB_size]])
-      else: 
-        X_train_s = this_X_sig_sr
-        X_train_b = np.concatenate([X_selected[:bgsig_size], X_sideband[:size_each]])
+      if sigSB_size > 0: X_train_s = np.concatenate([this_X_sb_sig, this_X_sr_sig]) 
+      else: X_train_s = this_X_sr_sig
+      X_train_b = np.concatenate([this_X_sb_bg, this_X_sr_bg]) 
+      #X_train_b = np.concatenate([X_selected[:bgsig_size], X_sideband[:size_each-sigSB_size]])
+      #else: 
+      #  X_train_s = this_X_sig_sr
+      #  X_train_b = np.concatenate([X_selected[:bgsig_size], X_sideband[:size_each]])
   
 
     # 0128----------- benchmark
-    elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
-      this_X_sb= X_selected[:size_each]
-      this_y_sb = np.zeros(size_each) # 0 for bg in SR
+    #TODO 
+    #elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
+    #  this_X_sb= X_selected[:size_each]
+    #  this_y_sb = np.zeros(size_each) # 0 for bg in SR
 
-      # select bg in SR datapoints
-      this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
-      this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
-      
-      # select anomaly datapoints
-      if doRandom: #this_X_sig_sr = random.sample(X_sig_sr, anom_size)
-        if anom_size == 0: this_X_sig_sr = np.zeros((0, 15, 10))
-        else: this_X_sig_sr = np.array(random.sample(list(X_sig_sr), anom_size))
-      else: this_X_sig_sr = X_sig_sr[:anom_size]
-      this_y_sig = np.ones(anom_size) # 1 for signal in SR
+    #  # select bg in SR datapoints
+    #  this_X_bgsig = X_selected[size_each:size_each+bgsig_size]
+    #  this_y_bgsig = np.ones(bgsig_size) #1 for other bg in SR
+    #  
+    #  # select anomaly datapoints
+    #  if doRandom: #this_X_sig_sr = random.sample(X_sig_sr, anom_size)
+    #    if anom_size == 0: this_X_sig_sr = np.zeros((0, 15, 10))
+    #    else: this_X_sig_sr = np.array(random.sample(list(X_sig_sr), anom_size))
+    #  else: this_X_sig_sr = X_sig_sr[:anom_size]
+    #  this_y_sig = np.ones(anom_size) # 1 for signal in SR
    
-      #                             SR contribution,         SB contribution
-      X_train_s = this_X_sig_sr
-      X_train_b = np.concatenate([this_X_sb, this_X_bgsig])
+    #  #                             SR contribution,         SB contribution
+    #  X_train_s = np.concatenate([this_X_sr_bg, this_X_sb_sig])
+    #  X_train_b = np.concatenate([this_X_sb_bg, this_X_bgsig])
    
     #import ipdb
     #ipdb.set_trace()
@@ -95,13 +124,26 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
     """
     Shuffle + Train-Val-Test Split (not test set) """
     # Combine all 3 data sets
+    #this_X_sb = sig +bkg in SB 
+    #this_X_bgsig = bkg in SR 
+    #this_X_sig_sr = sig in SR
     this_X = np.concatenate([this_X_sb, this_X_bgsig, this_X_sig_sr])
-    this_y = np.concatenate([this_y_sb, this_y_bgsig, this_y_sig])
-    
+    this_y = np.concatenate([this_y_sb, this_y_bgsig, this_y_sig_sr])
+
+
     # Shuffle before we split
-    this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
+    #this_X, this_y = shuffle(this_X, this_y, random_state = shuffle_seed)
+    #************ TODO JULIA DEBUG 
+    print('STEP0=================') 
+    print('X_train_b: ', X_train_b[0:1])
+    print('X_train unshuffed = this_X_tr: ', this_X[0:1])
     
     (this_X_tr, this_X_v, _,this_y_tr, this_y_v, _) = data_split(this_X, this_y, val=val, test=0)
+
+    #************ TODO JULIA DEBUG 
+    print('STEP1=================') 
+    print('X_train_b: ', X_train_b[0:1])
+    print('X_train unshuffed = this_X_tr: ', this_X_tr[0:1])
   
     if 'benchmark' in train_set:      
       print('Size of bkg #1 in SR (0s):',this_X_sb.shape)
@@ -111,7 +153,6 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
       print('Size of bg+sig in SB (0s):',this_X_sb.shape)
       print('Size of bg in SR (1s):',this_X_bgsig.shape)
       print('Size of sig in SR (1s):',this_X_sig_sr.shape)
-    
     
       
     """
@@ -149,7 +190,10 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
        
     X_train, X_val, X_test, y_train, y_val, y_test \
     = this_X_tr, this_X_v, this_X_te, this_y_tr, this_y_v, this_y_te
-    
+   
+    print('STEP2=================') 
+    print('X_train_b: ', X_train_b[0:5])
+    print('X_train unshuffed = this_X_tr: ', this_X_tr[0:5])
 
 
     """
@@ -170,24 +214,29 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
 
     # --------------> PFN 
     # Centre and normalize all the Xs
-    for x in X_train:
-        mask = x[:,0] > 0
-        if len(x[mask,0]) < 1: continue
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
-    for x in X_val:
-        mask = x[:,0] > 0
-        if len(x[mask,0]) < 1: continue
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
-    for x in X_test:
-        mask = x[:,0] > 0
-        if len(x[mask,0]) < 1: continue
-        yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
-        x[mask,1:3] -= yphi_avg
-        x[mask,0] /= x[:,0].sum()
+    X_train = normalize(X_train)
+    X_train_b = normalize(X_train_b)
+    X_train_s = normalize(X_train_s)
+    X_val = normalize(X_val)
+    X_test = normalize(X_test)
+    #for x in X_train:
+    #    mask = x[:,0] > 0
+    #    if len(x[mask,0]) < 1: continue
+    #    yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+    #    x[mask,1:3] -= yphi_avg
+    #    x[mask,0] /= x[:,0].sum()
+    #for x in X_val:
+    #    mask = x[:,0] > 0
+    #    if len(x[mask,0]) < 1: continue
+    #    yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+    #    x[mask,1:3] -= yphi_avg
+    #    x[mask,0] /= x[:,0].sum()
+    #for x in X_test:
+    #    mask = x[:,0] > 0
+    #    if len(x[mask,0]) < 1: continue
+    #    yphi_avg = np.average(x[mask,1:3], weights=x[mask,0], axis=0)
+    #    x[mask,1:3] -= yphi_avg
+    #    x[mask,0] /= x[:,0].sum()
     # Centre and normalize all the Xs
     #for x in X_train:
     #    #print(x)
@@ -225,6 +274,10 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
     #print(np.unique(y_val,return_counts = True))
     print('Test set size, distribution:',X_test.shape)
     #print(np.unique(y_test,return_counts = True))
+
+    print('STEP3=================') 
+    print('X_train_b: ', X_train_b[0:5])
+    print('X_train unshuffed = this_X_tr: ', this_X_tr[0:5])
 
     return X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test,
 
