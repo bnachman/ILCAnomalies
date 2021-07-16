@@ -184,8 +184,10 @@ if __name__ == "__main__":
 
   # -- Get input files 
   X_bg_arr, y_bg_arr = load_arrs("background*noZ",savename.split("_")[0])
-  if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
-  elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
+  #if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
+  #elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
+  if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_fixed",savename.split("_")[0])
+  elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_700_fixed",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
 
   X_bg = np.vstack(X_bg_arr)#[:,0:14]

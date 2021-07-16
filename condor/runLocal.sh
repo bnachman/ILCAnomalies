@@ -16,4 +16,6 @@
 #python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe007_signal.txt 0 10000
 #python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe008_signal.txt 0 10000
 #python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe009_signal.txt 0 10000
-python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe_signal_700.txt 0 90000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe_signal_700.txt 0 90000
+python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe_signal_700_fixed.txt 0 90000
+python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe_signal_fixed.txt 0 90000

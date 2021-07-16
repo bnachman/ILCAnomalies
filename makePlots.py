@@ -45,9 +45,9 @@ if __name__ == "__main__":
 
   if 'pfn' in sample: X_bg_arr, y_bg_arr = load_arrs("background",saveTag,sample)
   #if 'pfn' in sample: X_bg_arr, y_bg_arr = load_arrs("bigger4_noZ_0to50000",saveTag,sample)
-  elif 'evt' in sample: X_bg_arr, y_bg_arr = load_arrs("bg",saveTag,sample)
-  X_sig_arr, y_sig_arr = load_arrs("sig",saveTag,sample)
-  X_sig_arr700, y_sig_arr700 = load_arrs("s700",saveTag,sample)
+  elif 'evt' in sample: X_bg_arr, y_bg_arr = load_arrs("background",saveTag,sample)
+  X_sig_arr, y_sig_arr = load_arrs("signal_fixed",saveTag,sample)
+  X_sig_arr700, y_sig_arr700 = load_arrs("signal_700_fixed",saveTag,sample)
   #X_bg_arr, y_bg_arr = load_arrs("bg",'0405')
   #X_sig_arr, y_sig_arr = load_arrs("sig",'0415_sig700')
 
@@ -61,8 +61,8 @@ if __name__ == "__main__":
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
 
-  #make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
-  make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  #make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
   #make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
    
   print('runtime: ',datetime.now() - startTime)

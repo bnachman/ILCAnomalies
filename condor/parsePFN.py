@@ -8,7 +8,7 @@
 # also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import sys
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import glob
 import logging
 from eventHelper import *
@@ -28,6 +28,7 @@ def parse_file(file_object,startNum,endNum,filename,tag):
     chargedPts=  []
     neutronPts = []
     sqrtSDiff = []
+    jetEtas=[]
     for line in file_object:
         if count < int(startNum): 
           count += 1
@@ -83,7 +84,8 @@ def parse_file(file_object,startNum,endNum,filename,tag):
         jets_vec = np.array(jets_list).astype('float')
         jets_vec = np.reshape(jets_vec, (-1, 11))
         jets_vec = jets_vec[:,1:] #omit index 0 
-        #for i in range(njets):
+        for i in range(njets):
+             jetEtas.append(float(jets_vec[i][1]))
         #    jet = np.zeros(11)
         #    #order:
         #    # - index
@@ -168,7 +170,7 @@ if __name__ == "__main__":
   X = make_pfn_arrays(records)
   #y = np.array([i['truthsqrtshat'] for i in records])
   y = np.array([i['measuredsqrtshatwphoton'] for i in records])
-  #y = np.array([i['hadronsqrtshat'] for i in records])
+  #y = np.array([i['measuredsqrtshat'] for i in records])
   np.save(tag+"_X_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), X)
   np.save(tag+"_y_"+filename.split('/')[-1].split('.')[0]+"_"+str(startNum)+"to"+str(endNum), y)
 

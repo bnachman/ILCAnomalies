@@ -279,9 +279,11 @@ if __name__ == "__main__":
   #X_bg_arr, y_bg_arr = load_arrs("bg",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
   # -- Get input files
-  X_bg_arr, y_bg_arr = load_arrs("background",savename.split("_")[0])
-  if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal",savename.split("_")[0])
-  elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
+  X_bg_arr, y_bg_arr = load_arrs("background*noZ",savename.split("_")[0])
+  #if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_",savename.split("_")[0])
+  #elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
+  if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_fixed",savename.split("_")[0])
+  elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_700_fixed",savename.split("_")[0])
   #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
 
   X_bg = np.vstack(X_bg_arr)#[:,0:14]
@@ -361,8 +363,8 @@ if __name__ == "__main__":
   # network architecture parameters
   dense_sizes = (100, 100)
   # network training parameters
-  num_epoch = 500
-  batch_size = 500
+  num_epoch = 30
+  batch_size = 100
  
   aucs = []
   rocs = []
@@ -394,7 +396,7 @@ if __name__ == "__main__":
       dnn.save(filename)
       print('>Saved %s' % filename)
  
-      plot_loss(h,sigmas[r],saveTag) 
+      plot_loss(h,sigmas[r],"plots/"+saveTag) 
        
       # ROCs for SB vs. SR  
       Y_predict = dnn.predict(X_test)
