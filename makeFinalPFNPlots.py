@@ -154,14 +154,15 @@ if __name__ == "__main__":
     for i in range(n_models):
       perSaveTag = saveTag+str(i)+"_sigma"+str(sigmas[r])
       print('~~~~~~~~~~ MODEL '+str(i)+', perSaveTag='+str(perSaveTag))
-      X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
-
+      #X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig,anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
+      X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test =  prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig,anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random)
       #model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,saveTag,i)
       model = models.load_model(modelList[i])
       ensembModels.append(model)
 
       # do some plotting
-      draw_hist(model,X_train,Y_train,X_test,Y_test,"plots_FINAL/"+perSaveTag)
+      draw_hist(model,X_train,X_train_b,X_train_s,Y_train,X_test,Y_test,"plots_FINAL/"+perSaveTag)
+      #draw_hist(model,X_train,Y_train,X_test,Y_test,"plots_FINAL/"+perSaveTag)
       #plot_loss(h,sigmas[r],"plots_FINAL/"+perSaveTag) 
       thisYPredict = model.predict(X_test)
       thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
@@ -186,8 +187,12 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
-  else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
+  if 'BvsB' in testset: finalSaveTag = 'Background in SB vs. background in SR, \n'+get_sqrts_type(savename) 
+  else:
+    if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
+    else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
+  #if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
+  #else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
   make_roc_plots(anomalyRatios,'TPR',rocs,aucs,sigs,"plots_FINAL/"+saveTag,finalSaveTag)
   make_roc_plots(anomalyRatios,'TPR/$\sqrt{(FPR)}$',rocs,aucs,sigs,"plots_FINAL/"+saveTag,finalSaveTag)
    

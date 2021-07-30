@@ -23,7 +23,7 @@ prettySigmas = ['0.0', '0.5', '1.0', '2.0', '3.0', '5.0','$\infty$']
 #pretty labels
 jet_dict=[
     ['p$_T$ [GeV]',np.linspace(0,550,220),    0.000001,10.0,0.0,3.0],
-    ['$\eta$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,3.0],      
+    ['$\eta$',np.linspace(-4.0,4.0,40),       0.0001,10.0,-3.0,3.0],      
     ['$\phi$',np.linspace(-3.0,3.0,30),       0.0001,10.0,-3.0,3.0],
     ['mass [GeV]',np.linspace(0,300,150),     0.000001,10.0,0.0,3.0],
     ['flavor',np.linspace(0,8,8),           0.0001,10.0,0.0,3.0],
@@ -438,7 +438,8 @@ def plot_loss(h,r,save):
 def make_pfn_plots(sig_records,s700,bg_records,save):
   print('Making plots with name ', save)
   for i in range(2): 
-      for j in range(10): # vars per jet to plot
+      #for j in range(10): # vars per jet to plot
+      for j in range(2): # vars per jet to plot
         plot_jetthing(save,sig_records,s700,bg_records,i,j)
 
 
@@ -480,7 +481,7 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
       saveName = 'truthsqrtshat'
       var = 'Truth $\sqrt{\^{s}}$ [GeV]'
     plt.hist(bkg_arr, np.linspace(0,1000,250), color="steelblue",alpha=0.6,histtype='stepfilled', linewidth=2,label='Background',density=True)
-    #plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='///', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
+    plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='///', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step',hatch='.', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
     plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
@@ -489,7 +490,7 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     plt.ylim(0.000001,30.0)
     plt.ylabel("Number of events [A.U.]")
     plt.legend()
-    plt.savefig("plots_FINAL/only700"+saveName+".pdf")
+    plt.savefig("plots_FINAL/"+saveName+".pdf")
     plt.clf()
   
 

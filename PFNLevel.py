@@ -29,28 +29,29 @@ import math
 from prep_shufflesplit import *
 
 d_regions={
-#truth +-25, measuredph +-50, measuredhad +-50 highSB only 
-'350':[[275,425,325,375],[250,450,300,400],[400,500,300,400]],
-'700':[[625,775,675,725],[600,800,650,750],[750,850,650,750]]
+#truth +-25
+'350':[275,425,325,375],
+'700':[625,775,675,725]
 }
 
 #-----------------------------------------------------------------------------------
 def get_region_defs(signal,savename,dowide=True):
-  if dowide:
-    if '0416' in savename:
-      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
-      return d_regions[signal][0] 
+  #if dowide:
+  #  if '0416' in savename:
+  #    print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
+  #    return d_regions[signal][0] 
 
-    elif '0531' in savename:  # photon measured 
-      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1])
-      return d_regions[signal][1] 
+  #  elif '0531' in savename:  # photon measured 
+  #    print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1])
+  #    return d_regions[signal][1] 
 
-    elif '0513' in savename: # hadron measured
-      print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1]) #Both sbs for hadron measured too!
-      return d_regions[signal][2] 
-  else:
-    print('TRUTH REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
-    return d_regions[signal][0] 
+  #  elif '0513' in savename: # hadron measured
+  #    print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1]) #Both sbs for hadron measured too!
+  #    return d_regions[signal][1] 
+  #else:
+  #  print('TRUTH REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
+  print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal]) #Both sbs for hadron measured too!
+  return d_regions[signal]
 
 #-----------------------------------------------------------------------------------
 def get_ars(sigmas,sizeeach):
@@ -71,31 +72,8 @@ def load_arrs(typee,savee):
   for s in glob.glob("training_pfn_data/"+savee+"*X*"+typee+"*.npy"):
     X_arr.append(np.load(s))
   for s in glob.glob("training_pfn_data/"+savee+"*y*"+typee+"*.npy"):
-    y_arr.append(np.load(s))
+    y_arr.append(np.load(s)) 
   return X_arr, y_arr
-
-#-----------------------------------------------------------------------------------
-def get_sigma_rs(size_each=900):
-  goal_sigs = [0.5,1,2,3]
-  returnVals = []
-  sTry = 0.5
-  rTry = 1.0
-  for num in goal_sigs:
-    print('Goal sig: ', num)
-    sigYield = rTry*size_each
-    bkgYield = size_each-sigYield
-    sigTry=  RooStats.NumberCountingUtils.BinomialExpZ(sigYield,bkgYield,0.3)
-    print('test sig: ', sigTry)
-    if rTry> num-0.1*num and rTry < num+0.1*num: 
-      print('found it! ', rTry)
-      returnVals.append(rTry)
-      continue
-    else: 
-      if sigTry > num: rTry -= sTry
-      elif sigTry < num: rTry += sTry  
-      sTry = sTry  /2 #make interval smaller
-
-  return returnVals
 
 #-----------------------------------------------------------------------------------
 def binary_side_band(y_thing):
@@ -183,7 +161,7 @@ if __name__ == "__main__":
 
 
   # -- Get input files 
-  X_bg_arr, y_bg_arr = load_arrs("background*noZ",savename.split("_")[0])
+  X_bg_arr, y_bg_arr = load_arrs("lumifix*bg",savename.split("_")[0])
   #if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
   #elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
   if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_fixed",savename.split("_")[0])
@@ -274,7 +252,7 @@ if __name__ == "__main__":
         for i in range(n_models):
           perSaveTag = saveTag+str(i)+"_sigma"+str(sigmas[r])
           print('~~~~~~~~~~ MODEL '+str(i)+', perSaveTag='+str(perSaveTag))
-          X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
+          X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random,debug=debug) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,perSaveTag)
           ensembModels.append(model)
 
@@ -308,7 +286,7 @@ if __name__ == "__main__":
         plt.clf()
 
       else: 
-          X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random) 
+          X_train, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random,debug=debug) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size) 
           draw_hist(model,X_train,Y_train,X_test,Y_test,"plots/"+saveTag+"_sigma"+str(sigmas[r]))
           plot_loss(h,sigmas[r],saveTag) 
@@ -325,7 +303,7 @@ if __name__ == "__main__":
 
 
   print('FINAL AUCs: ', aucs)
-  if 'BvsB' in testset: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename) 
+  if 'BvsB' in testset: finalSaveTag = 'Background in SB vs. background in SR, \n'+get_sqrts_type(savename) 
   else:
     if '350' in signal: finalSaveTag = 'Signal (m$_X$ = 350 GeV) vs. background, \n'+get_sqrts_type(savename)
     else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)

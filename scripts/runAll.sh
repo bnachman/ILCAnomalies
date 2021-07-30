@@ -1,6 +1,56 @@
+# July 16: fixed signals 
+python PFNLevel.py -n '0416_0729lumifix' -tr CWoLa -te SvsB -s 25000 -r 1 > 0416_0729lumifix_CWoLa.log
+python PFNLevel.py -n '0416_0729lumifix_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0416_0729lumifix_s700_CWoLa.log
+python PFNLevel.py -n '0513_0729lumifix' -tr CWoLa -te SvsB -s 25000 -r 1 > 0513_0729lumifix_CWoLa.log
+python PFNLevel.py -n '0513_0729lumifix_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0513_0729lumifix_s700_CWoLa.log
+python PFNLevel.py -n '0531_0729lumifix' -tr CWoLa -te SvsB -s 25000 -r 1 > 0531_0729lumifix_CWoLa.log
+python PFNLevel.py -n '0531_0729lumifix_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0531_0729lumifix_s700_CWoLa.log
+# BvsB
+python PFNLevel.py -n '0416_0729lumifix' -tr CWoLa -te BvsB -s 25000 -r 1  > 0416_0729lumifix_s350_CWoLa.log
+python PFNLevel.py -n '0416_0729lumifix_s700' -tr CWoLa -te BvsB -s 25000 -r 1 -sig '700' > 0416_0729lumifix_s700_CWoLa.log
+## benchmark
+python PFNLevel.py -n '0416_0729lumifix' -tr benchmark -te SvsB -s 25000 -r 1 > 0416_0729lumifix_benchmark.log
+python PFNLevel.py -n '0416_0729lumifix_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700' > 0416_0729lumifix_s700_benchmark.log
+
+#------------------------------------------------------------
+#python PFNLevel.py -n '0513_0630fixedSiginSB' -tr benchmark -te SvsB -s 25000 -r 1 > 0513_0630fixedSiginSB_benchmark.log
+#python PFNLevel.py -n '0513_0630fixedSiginSB_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700' > 0513_0630fixedSiginSB_s700_benchmark.log
+#python PFNLevel.py -n '0531_0630fixedSiginSB' -tr benchmark -te SvsB -s 25000 -r 1 > 0531_0630fixedSiginSB_benchmark.log
+#python PFNLevel.py -n '0531_0630fixedSiginSB_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700' > 0531_0630fixedSiginSB_s700_benchmark.log
+
+# June 30: benchmark
+#python PFNLevel.py -n '0416_0630fixedSiginSB' -tr benchmark -te SvsB -s 25000 -r 1 > 0416_0630fixedSiginSB_benchmark.log
+#python PFNLevel.py -n '0416_0630fixedSiginSB_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700' > 0416_0630fixedSiginSB_s700_benchmark.log
+#python PFNLevel.py -n '0513_0630fixedSiginSB' -tr benchmark -te SvsB -s 25000 -r 1 > 0513_0630fixedSiginSB_benchmark.log
+#python PFNLevel.py -n '0513_0630fixedSiginSB_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700' > 0513_0630fixedSiginSB_s700_benchmark.log
+#python PFNLevel.py -n '0531_0630fixedSiginSB' -tr benchmark -te SvsB -s 25000 -r 1 > 0531_0630fixedSiginSB_benchmark.log
+#python PFNLevel.py -n '0531_0630fixedSiginSB_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700' > 0531_0630fixedSiginSB_s700_benchmark.log
+
+#-- June 23: fixed signal in SBs
+#python PFNLevel.py -n '0416_0716sigfix' -tr CWoLa -te SvsB -s 25000 -r 1 > 0416_0625fixedSiginSB_CWoLa.log
+#python PFNLevel.py -n '0416_0625fixedSiginSB_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0416_0625fixedSiginSB_s700_CWoLa.log
+#python PFNLevel.py -n '0513_0625fixedSiginSB' -tr CWoLa -te SvsB -s 25000 -r 1 > 0513_0625fixedSiginSB_CWoLa.log
+#python PFNLevel.py -n '0513_0625fixedSiginSB_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0513_0625fixedSiginSB_s700_CWoLa.log
+#python PFNLevel.py -n '0531_0625fixedSiginSB' -tr CWoLa -te SvsB -s 25000 -r 1 > 0531_0625fixedSiginSB_CWoLa.log
+#python PFNLevel.py -n '0531_0625fixedSiginSB_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0531_0625fixedSiginSB_s700_CWoLa.log
+##wide SBs
+#python PFNLevel.py -n '0513_0625fixedSiginSB_wide' -tr CWoLa -te SvsB -s 25000 -r 1 -w 1 > 0513_0625fixedSiginSB_wide_CWoLa.log
+#python PFNLevel.py -n '0513_0625fixedSiginSB_wide_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -w 1 -sig '700' > 0513_0625fixedSiginSB_wide_s700_CWoLa.log
+#python PFNLevel.py -n '0531_0625fixedSiginSB_wide' -tr CWoLa -te SvsB -s 25000 -r 1 -w 1 > 0531_0625fixedSiginSB_wide_CWoLa.log
+#python PFNLevel.py -n '0531_0625fixedSiginSB_wide_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -w 1 -sig '700' > 0531_0625fixedSiginSB_wide_s700_CWoLa.log
+##truth, in case theres time
+#python PFNLevel.py -n '0416_0625fixedSiginSB' -tr CWoLa -te SvsB -s 25000 -r 1 > 0416_0625fixedSiginSB_CWoLa.log
+#python PFNLevel.py -n '0416_0625fixedSiginSB_s700' -tr CWoLa -te SvsB -s 25000 -r 1 -sig '700' > 0416_0625fixedSiginSB_s700_CWoLa.log
+
+
+#-- June 23: benchmark
+#python PFNLevel.py -n '0416_0622bnchmark' -tr benchmark -te SvsB -s 25000 -w 0 -r 1 -sig '700'  > 0416_0622benchmark_s700.log
+#python PFNLevel.py -n '0513_0622bnchmark' -tr benchmark -te SvsB -s 25000 -w 0 -r 1 -sig '700'  > 0513_0622benchmark_s700.log
+#python PFNLevel.py -n '0531_0622bnchmark' -tr benchmark -te SvsB -s 25000 -w 0 -r 1 -sig '700' >  0531_0622benchmark_s700.log
+
 #-- June 18: wider sidebands
-python PFNLevel.py -n '0513_0620wideSB' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1  > 0513_0620wideSB_CWoLa.log
-python PFNLevel.py -n '0513_0620wideSB_s700' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1 -sig '700' > 0513_0620wideSB_CWoLa_s700.log
+#python PFNLevel.py -n '0513_0620wideSB' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1  > 0513_0620wideSB_CWoLa.log
+#python PFNLevel.py -n '0513_0620wideSB_s700' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1 -sig '700' > 0513_0620wideSB_CWoLa_s700.log
 #python PFNLevel.py -n '0531_0619wideSB' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1  > 0531_0619wideSB_CWoLa.log
 #python PFNLevel.py -n '0531_0619wideSB_s700' -tr CWoLa -te SvsB -s 25000 -w 1 -r 1 -sig '700' > 0531_0619wideSB_CWoLa_s700.log
 
