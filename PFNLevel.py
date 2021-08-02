@@ -36,20 +36,6 @@ d_regions={
 
 #-----------------------------------------------------------------------------------
 def get_region_defs(signal,savename,dowide=True):
-  #if dowide:
-  #  if '0416' in savename:
-  #    print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
-  #    return d_regions[signal][0] 
-
-  #  elif '0531' in savename:  # photon measured 
-  #    print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1])
-  #    return d_regions[signal][1] 
-
-  #  elif '0513' in savename: # hadron measured
-  #    print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][1]) #Both sbs for hadron measured too!
-  #    return d_regions[signal][1] 
-  #else:
-  #  print('TRUTH REGIONS:::::::  ', savename, signal, '== ',d_regions[signal][0])
   print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal]) #Both sbs for hadron measured too!
   return d_regions[signal]
 
@@ -66,12 +52,12 @@ def get_ars(sigmas,sizeeach):
 
 #-----------------------------------------------------------------------------------
 def load_arrs(typee,savee):
-  print('getting files of form ', "training_pfn_data/"+savee+"*X*"+typee+"*.npy")
+  print('getting files of form ', "lumifix_pfn_data/"+savee+"*X*"+typee+"*.npy")
   X_arr = []
   y_arr=[]
-  for s in glob.glob("training_pfn_data/"+savee+"*X*"+typee+"*.npy"):
+  for s in glob.glob("lumifix_pfn_data/"+savee+"*X*"+typee+"*.npy"):
     X_arr.append(np.load(s))
-  for s in glob.glob("training_pfn_data/"+savee+"*y*"+typee+"*.npy"):
+  for s in glob.glob("lumifix_pfn_data/"+savee+"*y*"+typee+"*.npy"):
     y_arr.append(np.load(s)) 
   return X_arr, y_arr
 
@@ -124,17 +110,17 @@ def ensemble_predictions(members, testX):
 if __name__ == "__main__":
 
   parser = argparse.ArgumentParser()
-  parser.add_argument("-n", "--savename", default = '', type=str, nargs='+',
+  parser.add_argument("-n", "--savename", default = '', type=str, 
                      help="savename")
-  parser.add_argument("-s", "--sizeeach", default = 75000, type=int, nargs='+',
+  parser.add_argument("-s", "--sizeeach", default = 25000, type=int, 
                      help="sizeeach")
-  parser.add_argument("-te", "--testset", default = '', type=str, nargs='+',
+  parser.add_argument("-te", "--testset", default = '', type=str,
                      help="testset")
-  parser.add_argument("-tr", "--trainset", default = '', type=str, nargs='+',
+  parser.add_argument("-tr", "--trainset", default = '', type=str,
                      help="trainset")
   parser.add_argument("-e", "--doEnsemble", default = 1, type=int,
                      help="do ensembling")
-  parser.add_argument("-r", "--doRandom", default = 0, type=int,
+  parser.add_argument("-r", "--doRandom", default = 1, type=int,
                      help="do random signal init")
   parser.add_argument("-sig", "--signal", default = '350', type=str,
                      help="type of signal run")
@@ -144,10 +130,10 @@ if __name__ == "__main__":
                      help="debug")
 
   args = parser.parse_args()
-  sizeeach = int(args.sizeeach[0])
-  savename = args.savename[0]
-  testset = args.testset[0]
-  trainset = args.trainset[0]
+  sizeeach = args.sizeeach
+  savename = args.savename
+  testset = args.testset
+  trainset = args.trainset
   doEnsemb = args.doEnsemble
   random = args.doRandom
   signal = args.signal
@@ -161,12 +147,9 @@ if __name__ == "__main__":
 
 
   # -- Get input files 
-  X_bg_arr, y_bg_arr = load_arrs("lumifix*bg",savename.split("_")[0])
-  #if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("sig",savename.split("_")[0])
-  #elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
+  X_bg_arr, y_bg_arr = load_arrs("run",savename.split("_")[0])
   if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_fixed",savename.split("_")[0])
   elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_700_fixed",savename.split("_")[0])
-  #X_sig_arr, y_sig_arr = load_arrs("s700",savename.split("_")[0])
 
   X_bg = np.vstack(X_bg_arr)#[:,0:14]
   X_sig = np.vstack(X_sig_arr)#[:,0:14] 
@@ -203,13 +186,11 @@ if __name__ == "__main__":
 
 
   print('Yields!') 
-  print('Bkg in SR: ', len(X_selected))
   print('Bkg in SB: ', len(X_sideband))
-  print('Sig in SR: ', len(X_sig_sr))
+  print('Bkg in SR: ', len(X_selected))
   print('Sig in SB: ', len(X_sig_sb))
+  print('Sig in SR: ', len(X_sig_sr))
   print('total sig :', len(X_sig))
-
-
 
 
   # ---------------------------- Building the model 
@@ -235,11 +216,12 @@ if __name__ == "__main__":
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
+
   for r in range(len(anomalyRatios)):
-      anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
-      bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
-      sigs.append(np.round(anom_size/np.sqrt(bgsig_size),3))
-      print('S labelled 1s:', anom_size, ", B labelled 1s: ", bgsig_size, ", sig: ", anom_size/np.sqrt(bgsig_size))
+      #anom_size = int(round(anomalyRatios[r]* sizeeach)) #amount of sig contamination
+      #bgsig_size = int(sizeeach - anom_size) #remaining background to get to 100%
+      #sigs.append(np.round(anom_size/np.sqrt(bgsig_size),3))
+      #print('S labelled 1s:', anom_size, ", B labelled 1s: ", bgsig_size, ", sig: ", anom_size/np.sqrt(bgsig_size))
       print('-------------- Anomaly Ratio = '+str(anomalyRatios[r]))
       
       # ---- ensembling ! 
@@ -258,10 +240,6 @@ if __name__ == "__main__":
 
           # do some plotting
           draw_hist(model,X_train,X_train_b,X_train_s,Y_train,X_test,Y_test,"plots/"+perSaveTag)
-
-
-
-
 
           plot_loss(h,sigmas[r],"plots/"+perSaveTag) 
           thisYPredict = model.predict(X_test)
