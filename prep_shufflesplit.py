@@ -64,14 +64,14 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
       this_X_sb_bg =X_sideband[:n_bkg_sb]
       this_y_sb_bg = np.zeros(n_bkg_sb)
       this_X_sb_sig = get_sig(X_sig_sb, n_sig_sb, doRandom)
-      this_y_sb_sig = np.zeros(n_sig) 
+      this_y_sb_sig = np.zeros(n_sig_sb) 
       
       # SR = 1s
       this_X_sr_bg = X_selected[:n_bkg_sr]
       this_y_sr_bg = np.ones(n_bkg_sr) 
       # select anomaly datapoints = 1s
       this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
-      this_y_sr_sig = np.ones(n_sig) 
+      this_y_sr_sig = np.ones(n_sig_sr) 
 
 
     ###################  benchmark
@@ -87,7 +87,7 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
       this_y_sr_bg = np.ones(n_bkg_sr) # 1 for bg in SR
       # select anomaly datapoints = 1s
       this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
-      this_y_sr_sig = np.ones(n_sig) 
+      this_y_sr_sig = np.ones(n_sig_sr) 
       
 
     return this_X_sb_bg,this_y_sb_bg,this_X_sr_bg,this_y_sr_bg,    this_X_sb_sig,this_y_sb_sig,this_X_sr_sig,this_y_sr_sig 
