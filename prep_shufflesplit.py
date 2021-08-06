@@ -17,9 +17,9 @@ import random
 
 #-----------------------------------------------------------------------------------
 def get_sf(prefix): #normalized to 25000 events in the 350 GeV signal SB
-  if '0416' in prefix or '0606' in prefix: sf = 0.0818 #25000 / 305496
-  if '0513' in prefix: sf = 0.0812 #25000 / 307885
-  if '0531' in prefix: sf = 0.0927 #25000 / 269585
+  if '0416' in prefix or '0606' in prefix: sf = 0.08183413203446199 #25000 / 305496
+  if '0513' in prefix: sf = 0.08119914903291814 #25000 / 307885
+  if '0531' in prefix: sf = 0.09273512992191701 #25000 / 269585
   return sf
 
 #-----------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ def prep_and_shufflesplit_data(prefix,signal,X_selected, X_sideband, X_sig_sr, X
     #compute SF: amount to scale bkg hist down 
     sf = get_sf(prefix)
     if '350' in signal: n_bkg_sb = size_each
-    elif '700' in signal: n_bkg_sb = size_each*sf
+    elif '700' in signal: n_bkg_sb = int(sf*len(X_sideband))
     #sf =np.divide(n_bkg_sb, len(X_sideband))
     n_bkg_sr = int(sf*len(X_selected))
     n_sig_sr = int(anomaly_ratio*n_bkg_sr) 
