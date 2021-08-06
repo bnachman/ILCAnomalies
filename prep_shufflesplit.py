@@ -47,14 +47,13 @@ def normalize(X_train):
 
 #-----------------------------------------------------------------------------------
 def get_sig(X_sig,n_sig,doRandom):
-      print("number of signal events :", n_sig)
+      print("number of signal events :", n_sig, ', random injection? ', doRandom)
       if doRandom: 
         if n_sig == 0: this_X_sr_sig = np.zeros((0, 15, 10))
         else: this_X_sr_sig = np.array(random.sample(list(X_sig), n_sig))
       else: this_X_sr_sig = X_sig[:n_sig]
-      this_y_sr_sig = np.ones(n_sig) # 1 for signal in SR
       
-      return this_X_sr_sig, this_y_sr_sig
+      return this_X_sr_sig 
 
 #-----------------------------------------------------------------------------------
 def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig_sb,X_sig_sr,train_set,doRandom):
@@ -64,13 +63,15 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
       # SB = 0s 
       this_X_sb_bg =X_sideband[:n_bkg_sb]
       this_y_sb_bg = np.zeros(n_bkg_sb)
-      this_X_sb_sig, this_y_sb_sig = get_sig(X_sig_sb, n_sig_sb, doRandom)
+      this_X_sb_sig = get_sig(X_sig_sb, n_sig_sb, doRandom)
+      this_y_sb_sig = np.zeros(n_sig) 
       
       # SR = 1s
       this_X_sr_bg = X_selected[:n_bkg_sr]
       this_y_sr_bg = np.ones(n_bkg_sr) 
       # select anomaly datapoints = 1s
-      this_X_sr_sig, this_y_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
+      this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
+      this_y_sr_sig = np.ones(n_sig) 
 
 
     ###################  benchmark
@@ -85,7 +86,9 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
       this_X_sr_bg = X_selected[n_bkg_sr:2*n_bkg_sr]
       this_y_sr_bg = np.ones(n_bkg_sr) # 1 for bg in SR
       # select anomaly datapoints = 1s
-      this_X_sr_sig, this_y_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
+      this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
+      this_y_sr_sig = np.ones(n_sig) 
+      
 
     return this_X_sb_bg,this_y_sb_bg,this_X_sr_bg,this_y_sr_bg,    this_X_sb_sig,this_y_sb_sig,this_X_sr_sig,this_y_sr_sig 
 
