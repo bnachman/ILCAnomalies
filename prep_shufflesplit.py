@@ -16,6 +16,13 @@ import math
 import random
 
 #-----------------------------------------------------------------------------------
+def get_sf(prefix): #normalized to 25000 events in the 350 GeV signal SB
+  if '0416' in prefix or '0606' in prefix: sf = 0.0818 #25000 / 305496
+  if '0513' in prefix: sf = 0.0812 #25000 / 307885
+  if '0531' in prefix: sf = 0.0927 #25000 / 269585
+  return sf
+
+#-----------------------------------------------------------------------------------
 def get_sig_in_SB(X_sig,X_sig_sr ,X_sig_sb,anom_size):
     print('total sig: ', len(X_sig))
     print('total sig in SR: ', len(X_sig_sr))
@@ -95,7 +102,7 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
 
 
 #-----------------------------------------------------------------------------------
-def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig, anomaly_ratio,train_set,test_set, size_each = 25000, shuffle_seed = 69,train = 0.8, val = 0.2, test = 0.1, doRandom=False,debug=False):
+def prep_and_shufflesplit_data(prefix,signal,X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig, anomaly_ratio,train_set,test_set, size_each = 25000, shuffle_seed = 69,train = 0.8, val = 0.2, test = 0.1, doRandom=False,debug=False):
    
     """
     Get the number of events and training sets """
@@ -104,8 +111,10 @@ def prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr, X_sig_sb, X_sig
     #anom_size = int(round(anomaly_ratio * size_each)) #amount of sig contamination
     #bgsig_size = int(size_each - anom_size) #remaining background to get to 100%
     #compute SF: amount to scale bkg hist down 
-    n_bkg_sb = size_each
-    sf =np.divide(n_bkg_sb, len(X_sideband))
+    sf = get_sf(prefix)
+    if '350' in signal: n_bkg_sb = size_each
+    elif '700' in signal: n_bkg_sb = size_each*sf
+    #sf =np.divide(n_bkg_sb, len(X_sideband))
     n_bkg_sr = int(sf*len(X_selected))
     n_sig_sr = int(anomaly_ratio*n_bkg_sr) 
     n_sig_sb = int(sf*get_sig_in_SB(X_sig, X_sig_sr,X_sig_sb,n_sig_sr))

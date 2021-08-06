@@ -234,7 +234,7 @@ if __name__ == "__main__":
         for i in range(n_models):
           perSaveTag = saveTag+str(i)+"_sigma"+str(sigmas[r])
           print('~~~~~~~~~~ MODEL '+str(i)+', perSaveTag='+str(perSaveTag))
-          X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random,debug=debug) 
+          X_train,X_train_b,X_train_s, X_val, X_test, Y_train,Y_val,Y_test = prep_and_shufflesplit_data(savename.split("_")[0],signal, X_selected, X_sideband, X_sig_sr,X_sig_sb,X_sig, anomaly_ratio=anomalyRatios[r], train_set=trainset, test_set=testset, size_each=sizeeach, shuffle_seed = 69,train = 0.7, val = 0.2, test=0.1,doRandom=random,debug=debug) 
           model, h = fit_model(X_train, Y_train, X_val, Y_val,num_epoch,batch_size,perSaveTag)
           ensembModels.append(model)
 
