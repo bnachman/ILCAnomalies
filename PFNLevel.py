@@ -212,7 +212,7 @@ if __name__ == "__main__":
   sigs=[]
   #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
-  if debug: sigmas =[0.0]
+  if debug: sigmas =[1.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
   sigmas.append('inf')
  
