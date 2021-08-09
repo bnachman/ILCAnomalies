@@ -84,13 +84,13 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
     ###################  benchmark
     elif train_set == 'benchmark': #train bg vs. bg+sig in SR 
       # Bkg in SR = 0s
-      this_X_sb_bg = X_selected[:n_bkg_sr]
-      this_y_sb_bg = np.zeros(n_bkg_sr)
+      this_X_sb_bg = X_selected[:n_bkg_sb]
+      this_y_sb_bg = np.zeros(n_bkg_sb)
       this_X_sb_sig = []
       this_y_sb_sig = []
 
       # Bkg in SR = 1s
-      this_X_sr_bg = X_selected[n_bkg_sr:2*n_bkg_sr]
+      this_X_sr_bg = X_selected[n_bkg_sb:n_bkg_sb+n_bkg_sr]
       this_y_sr_bg = np.ones(n_bkg_sr) # 1 for bg in SR
       # select anomaly datapoints = 1s
       this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
