@@ -484,7 +484,8 @@ def make_sqrts_plot(sig_arr,bkg_arr,sig_arr700,save):
     plt.hist(sig_arr, np.linspace(0,1000,250), color="tomato", histtype='step',hatch='///', linewidth=2,label='Signal, m$_{X}$ = 350 GeV',density=True)
     plt.hist(sig_arr700, np.linspace(0,1000,250), color="g", histtype='step',hatch='.', linewidth=2,label='Signal, m$_{X}$ = 700 GeV',density=True)
     plt.xlabel(var)
-    plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
+    #plt.text(0.1,5.0,'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
+    plt.annotate("$\it{MadGraph5 + Pythia8 + Delphes3}$", (0.05,0.93), xycoords="axes fraction",weight='bold') #IO
     #plt.xticks( np.arange(10) )
     plt.yscale('log')
     plt.ylim(0.000001,30.0)
@@ -559,7 +560,8 @@ def plot_jetthing(save,sig_records,s700,bg_records,jet,var,doLog=True):
     if doLog == True: plt.yscale('log')
     plt.ylabel("Number of events [A.U.]")
     plt.ylim(jet_dict[var][2],jet_dict[var][3])
-    plt.text(jet_dict[var][4],jet_dict[var][5],'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
+    plt.annotate("$\it{MadGraph5 + Pythia8 + Delphes3}$", (0.05,0.93), xycoords="axes fraction",weight='bold') #IO
+    #plt.text(jet_dict[var][4],jet_dict[var][5],'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     plt.legend()
     plt.savefig("plots_FINAL/"+str(save)+"_jet"+str(jet)+"_var"+str(var)+".pdf")
     plt.clf()
@@ -598,7 +600,8 @@ def plot_something(save,sig_records,s700,bg_records,var,R,doLog):
     plt.ylabel("Number of events [A.U.]")
     plt.ylim(get_pretty[var][1],get_pretty[var][2])
     #plt.ylabel("Number of Events / bin")
-    plt.text(get_pretty[var][3],get_pretty[var][4],'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
+    plt.annotate("$\it{MadGraph5 + Pythia8 + Delphes3}$", (0.05,0.93), xycoords="axes fraction",weight='bold') #IO
+    #plt.text(get_pretty[var][3],get_pretty[var][4],'$\it{MadGraph5 + Pythia8 + Delphes3}$',weight='bold')
     plt.legend()
     plt.savefig("plots_FINAL/"+save+"_"+var+".pdf")
     plt.clf()
