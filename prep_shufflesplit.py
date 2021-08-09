@@ -16,6 +16,17 @@ from datetime import datetime
 import math
 import random
 
+d_regions={
+#truth +-25
+'350':[275,425,325,375],
+'700':[625,775,675,725]
+}
+
+#-----------------------------------------------------------------------------------
+def get_region_defs(signal,savename,dowide=True):
+  print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal]) #Both sbs for hadron measured too!
+  return d_regions[signal]
+
 #-----------------------------------------------------------------------------------
 def get_sf(prefix): #normalized to 25000 events in the 350 GeV signal SB
   if '0606' in prefix: sf = 0.08123054528 #25000 / 307766
