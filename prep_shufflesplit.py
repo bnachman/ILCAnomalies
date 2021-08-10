@@ -8,6 +8,7 @@ from energyflow.utils import data_split, remap_pids, to_categorical
 from keras.models import Sequential
 from keras.layers import Dense 
 import sklearn
+from sklearn import preprocessing
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import shuffle
 from eventHelper import *
@@ -15,9 +16,21 @@ from datetime import datetime
 import math
 import random
 
+d_regions={
+#truth +-25
+'350':[275,425,325,375],
+'700':[625,775,675,725]
+}
+
+#-----------------------------------------------------------------------------------
+def get_region_defs(signal,savename,dowide=True):
+  print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal]) #Both sbs for hadron measured too!
+  return d_regions[signal]
+
 #-----------------------------------------------------------------------------------
 def get_sf(prefix): #normalized to 25000 events in the 350 GeV signal SB
-  if '0416' in prefix or '0606' in prefix: sf = 0.08183413203446199 #25000 / 305496
+  if '0606' in prefix: sf = 0.08123054528 #25000 / 307766
+  if '0416' in prefix: sf = 0.08183413203446199 #25000 / 305496
   if '0513' in prefix: sf = 0.08119914903291814 #25000 / 307885
   if '0531' in prefix: sf = 0.09273512992191701 #25000 / 269585
   return sf
@@ -53,31 +66,33 @@ def normalize(X_train):
     return X_train
 
 #-----------------------------------------------------------------------------------
-def get_sig(X_sig,n_sig,doRandom):
+def get_sig(X_sig,n_sig,doRandom,doEvt=False):
       print("number of signal events :", n_sig, ', random injection? ', doRandom)
       if doRandom: 
-        if n_sig == 0: this_X_sr_sig = np.zeros((0, 15, 10))
+        if n_sig == 0: 
+          if doEvt:  this_X_sr_sig = np.zeros((0, 15))
+          else: this_X_sr_sig = np.zeros((0, 15, 10))
         else: this_X_sr_sig = np.array(random.sample(list(X_sig), n_sig))
       else: this_X_sr_sig = X_sig[:n_sig]
       
       return this_X_sr_sig 
 
 #-----------------------------------------------------------------------------------
-def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig_sb,X_sig_sr,train_set,doRandom):
+def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig_sb,X_sig_sr,train_set,doRandom,doEvt):
 
     ###################  CWoLa
     if train_set=='CWoLa': #bg+sig in SB vs. bg+sig in SR
       # SB = 0s 
       this_X_sb_bg =X_sideband[:n_bkg_sb]
       this_y_sb_bg = np.zeros(n_bkg_sb)
-      this_X_sb_sig = get_sig(X_sig_sb, n_sig_sb, doRandom)
+      this_X_sb_sig = get_sig(X_sig_sb, n_sig_sb, doRandom,doEvt)
       this_y_sb_sig = np.zeros(n_sig_sb) 
       
       # SR = 1s
       this_X_sr_bg = X_selected[:n_bkg_sr]
       this_y_sr_bg = np.ones(n_bkg_sr) 
       # select anomaly datapoints = 1s
-      this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
+      this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom,doEvt)
       this_y_sr_sig = np.ones(n_sig_sr) 
 
 
@@ -93,7 +108,7 @@ def get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig
       this_X_sr_bg = X_selected[n_bkg_sb:n_bkg_sb+n_bkg_sr]
       this_y_sr_bg = np.ones(n_bkg_sr) # 1 for bg in SR
       # select anomaly datapoints = 1s
-      this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom)
+      this_X_sr_sig = get_sig(X_sig_sr, n_sig_sr, doRandom,doEvt)
       this_y_sr_sig = np.ones(n_sig_sr) 
       
 
@@ -119,7 +134,8 @@ def prep_and_shufflesplit_data(prefix,signal,X_selected, X_sideband, X_sig_sr, X
     n_sig_sr = int(anomaly_ratio*n_bkg_sr) 
     n_sig_sb = int(sf*get_sig_in_SB(X_sig, X_sig_sr,X_sig_sb,n_sig_sr))
     test_size_each = int(size_each * test)   
-
+    doEvt = False
+    if '0606' in prefix: doEvt = True
 
     print('SCALED Yields!') 
     print('Bkg in SB: ', n_bkg_sb)
@@ -130,7 +146,7 @@ def prep_and_shufflesplit_data(prefix,signal,X_selected, X_sideband, X_sig_sr, X
    
 
     #      get   datasets
-    this_X_sb_bg,this_y_sb_bg,this_X_sr_bg,this_y_sr_bg,this_X_sb_sig,this_y_sb_sig,this_X_sr_sig,this_y_sr_sig  = get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig_sb,X_sig_sr,train_set,doRandom)
+    this_X_sb_bg,this_y_sb_bg,this_X_sr_bg,this_y_sr_bg,this_X_sb_sig,this_y_sb_sig,this_X_sr_sig,this_y_sr_sig  = get_datasets(n_bkg_sb,n_bkg_sr,n_sig_sb,n_sig_sr,X_sideband,X_selected,X_sig_sb,X_sig_sr,train_set,doRandom,doEvt)
     
 
 
@@ -148,21 +164,22 @@ def prep_and_shufflesplit_data(prefix,signal,X_selected, X_sideband, X_sig_sr, X
 
 
     #------------- check duplicates
-    if debug:
-      jets = []
-      for e in X_train_b: 
-        for j in e:
-          if j[0]==0 and j[1] == 0: continue 
-          else: 
-            jets.append(j)
-      vals,inds,cts = np.unique(jets,axis=0,return_index= True, return_counts=True)
-      print('###################    duplicate check???? X_train_b: ',len(X_train_b)*15,len(jets),', unique events: ', len(vals)) 
+    #if debug:
+    #  jets = []
+    #  for e in X_train_b: 
+    #    for j in e:
+    #      if j[0]==0 and j[1] == 0: continue 
+    #      else: 
+    #        jets.append(j)
+    #  vals,inds,cts = np.unique(jets,axis=0,return_index= True, return_counts=True)
+    #  print('###################    duplicate check???? X_train_b: ',len(X_train_b)*15,len(jets),', unique events: ', len(vals)) 
 
 
  
     """
     Shuffle + Train-Val-Test Split (not test set) """
-    # Combine all 3 data sets
+    # Combine all 3 data sets 
+    print('sb shape: ', np.shape(this_X_sb), ', sr bg shape: ', np.shape(this_X_sr_bg), ', sr sig shape: ', np.shape(this_X_sr_sig))
     this_X = np.concatenate([this_X_sb, this_X_sr_bg, this_X_sr_sig])
     this_y = np.concatenate([this_y_sb, this_y_sr_bg, this_y_sr_sig])
 
@@ -216,13 +233,21 @@ def prep_and_shufflesplit_data(prefix,signal,X_selected, X_sideband, X_sig_sr, X
 
     """
     Data processing """
+    # --------------> Evt
+    if doEvt: 
+      X_train = preprocessing.scale(X_train)
+      X_train_b = preprocessing.scale(X_train_b)
+      if n_sig_sb > 0: X_train_s = preprocessing.scale(X_train_s)
+      X_val = preprocessing.scale(X_val)
+      X_test = preprocessing.scale(X_test)
     # --------------> PFN 
-    # Centre and normalize all the Xs
-    X_train = normalize(X_train)
-    X_train_b = normalize(X_train_b)
-    X_train_s = normalize(X_train_s)
-    X_val = normalize(X_val)
-    X_test = normalize(X_test)
+    else:
+      # Centre and normalize all the Xs
+      X_train = normalize(X_train)
+      X_train_b = normalize(X_train_b)
+      X_train_s = normalize(X_train_s)
+      X_val = normalize(X_val)
+      X_test = normalize(X_test)
 
     # change Y to categorical Matrix
     Y_train = to_categorical(y_train, num_classes=2)

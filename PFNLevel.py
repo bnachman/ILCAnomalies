@@ -28,17 +28,6 @@ import math
 #from prep_shufflesplit_jerry import *
 from prep_shufflesplit import *
 
-d_regions={
-#truth +-25
-'350':[275,425,325,375],
-'700':[625,775,675,725]
-}
-
-#-----------------------------------------------------------------------------------
-def get_region_defs(signal,savename,dowide=True):
-  print('REGIONS:::::::  ', savename, signal, '== ',d_regions[signal]) #Both sbs for hadron measured too!
-  return d_regions[signal]
-
 #-----------------------------------------------------------------------------------
 def get_ars(sigmas,sizeeach):
   ars = []
@@ -118,12 +107,12 @@ if __name__ == "__main__":
                      help="testset")
   parser.add_argument("-tr", "--trainset", default = '', type=str,
                      help="trainset")
+  parser.add_argument("-sig", "--signal", default = '350', type=str,
+                     help="type of signal run")
   parser.add_argument("-e", "--doEnsemble", default = 1, type=int,
                      help="do ensembling")
   parser.add_argument("-r", "--doRandom", default = 1, type=int,
                      help="do random signal init")
-  parser.add_argument("-sig", "--signal", default = '350', type=str,
-                     help="type of signal run")
   parser.add_argument("-w", "--doWide", default = 0, type=int,
                      help="do wider sr/sb defs")
   parser.add_argument("-DEBUG", "--DEBUG", default = 0, type=int,
@@ -134,9 +123,9 @@ if __name__ == "__main__":
   savename = args.savename
   testset = args.testset
   trainset = args.trainset
+  signal = args.signal
   doEnsemb = args.doEnsemble
   random = args.doRandom
-  signal = args.signal
   dowide = args.doWide
   debug = args.DEBUG
   saveTag = savename+"_"+testset+"_"+trainset
@@ -146,21 +135,19 @@ if __name__ == "__main__":
   print('arguments: signal = ', signal, ', sizeeach: ', sizeeach, ', saveTag: ', saveTag, ', testSet: ', testset, ", training: ", trainset, ", doing ensembling ?", doEnsemb)
 
 
-  # -- Get input files 
-  X_bg_arr, y_bg_arr = load_arrs("run",savename.split("_")[0])
+  # -- Get input files
+  X_bg_arr, y_bg_arr = load_arrs("run_lhe",savename.split("_")[0])
   if '350' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_fixed",savename.split("_")[0])
   elif '700' in signal: X_sig_arr, y_sig_arr = load_arrs("signal_700_fixed",savename.split("_")[0])
 
-  X_bg = np.vstack(X_bg_arr)#[:,0:14]
-  X_sig = np.vstack(X_sig_arr)#[:,0:14] 
+  X_bg = np.vstack(X_bg_arr)
+  X_sig = np.vstack(X_sig_arr)
   y_bg = np.concatenate(y_bg_arr)
   y_sig = np.concatenate(y_sig_arr)
   print(np.shape(X_bg))
   print(np.shape(X_sig))
   print('Running over '+str(len(X_bg))+' background events and '+str(len(X_sig))+' signal events....')
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
-
-  #make_var_plots(X_sig,X_bg,saveTag+"_npy")
 
   # --  Identify signal and side band 
   sb_left, sb_right, sr_left, sr_right = get_region_defs(signal,savename.split("_")[0],dowide)
@@ -210,7 +197,6 @@ if __name__ == "__main__":
   aucs = []
   rocs = []
   sigs=[]
-  #anomalyRatios = [0.0, 0.004, 0.008, 0.016, 0.04, 0.12, 1.0]
   sigmas = [0.0, 0.5, 1.0, 2.0, 3.0, 5.0]
   if debug: sigmas =[1.0]
   anomalyRatios = get_ars(sigmas,sizeeach)
@@ -240,17 +226,16 @@ if __name__ == "__main__":
 
           # do some plotting
           draw_hist(model,X_train,X_train_b,X_train_s,Y_train,X_test,Y_test,"plots/"+perSaveTag)
-
           plot_loss(h,sigmas[r],"plots/"+perSaveTag) 
           thisYPredict = model.predict(X_test)
-          print(' & & & & range of this model prediction on full bkg signal test set!' , np.amax(thisYPredict[:,1])- np.amin(thisYPredict[:,1]))
-          if (np.amax(thisYPredict[:,1]) - np.amin(thisYPredict[:,1])) <= 0.04: #2 bins wide at 0.02 bins width
-            print('&&&&&&&&&&&&&&&&&&&&&&&&&& A BAD MODEL!')
-            plt.hist(thisYPredict[:,1])
-            plt.savefig("plots/BROKEN_"+perSaveTag+"_hist.pdf")
-            plt.clf()
-            i = i-1
-            continue
+          #print(' & & & & range of this model prediction on full bkg signal test set!' , np.amax(thisYPredict[:,1])- np.amin(thisYPredict[:,1]))
+          #if (np.amax(thisYPredict[:,1]) - np.amin(thisYPredict[:,1])) <= 0.04: #2 bins wide at 0.02 bins width
+          #  print('&&&&&&&&&&&&&&&&&&&&&&&&&& A BAD MODEL!')
+          #  plt.hist(thisYPredict[:,1])
+          #  plt.savefig("plots/BROKEN_"+perSaveTag+"_hist.pdf")
+          #  plt.clf()
+          #  i = i-1
+          #  continue
           thisAucs.append(roc_auc_score(Y_test[:,1], thisYPredict[:,1]))
           thisRocs.append(sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]))
           make_single_roc(r,'tpr',sklearn.metrics.roc_curve(Y_test[:,1], thisYPredict[:,1]), roc_auc_score(Y_test[:,1], thisYPredict[:,1]),sigmas[r],"plots/"+saveTag+str(i)+"_sigma"+str(sigmas[r]),sizeeach,len(X_sig_sr[0]))
@@ -287,7 +272,5 @@ if __name__ == "__main__":
     else: finalSaveTag = 'Signal (m$_X$ = 700 GeV) vs. background, \n'+get_sqrts_type(savename)
   make_roc_plots(anomalyRatios,'TPR',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
   make_roc_plots(anomalyRatios,'TPR/$\sqrt{(FPR)}$',rocs,aucs,sigs,"plots/"+saveTag,finalSaveTag)
-  #make_roc_plots(anomalyRatios,'fpr',rocs,aucs,sigs,"plots/"+saveTag)
-  #make_roc_plots(anomalyRatios,'tpr/sqrt(fpr)',rocs,aucs,sigs,"plots/"+saveTag)
    
   print('runtime: ',datetime.now() - startTime)
