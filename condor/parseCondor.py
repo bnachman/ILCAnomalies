@@ -84,28 +84,28 @@ def parse_file(file_object,startNum,endNum,filename,runType):
         mymeasuredenergy+=[measuredcenterofmassenergy]
 
 
-        this_record['njets'] = njets
         # jets for PFN input
+        this_record['njets'] = njets
         jets_list = jets.split()  
         jets_vec = np.array(jets_list).astype('float')
         jets_vec = np.reshape(jets_vec, (-1, 11))
         jets_vec = jets_vec[:,1:] #omit index 0 
-        for i in range(njets):
-            jet = np.zeros(11)
-            #order:
-            # - index
-            # - magnitude of momentum pT (units of GeV)
-            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-            # - azimuthal angle
-            # - mass (units of GeV/c^2)
-            # - bit encoding of the jet "flavor" (not totally sure what the bit means, but will look it up)
-            # - 0th angular moment of jet radiation
-            # - 1th angular moment of jet radiation
-            # - 2th angular moment of jet radiation
-            # - 3th angular moment of jet radiation
-            # - 4th angular moment of jet radiation
-            jet = jets[i*11:i*11+11]
-            jets_vec+=[jet]
+        #for i in range(njets):
+        #    jet = np.zeros(11)
+        #    #order:
+        #    # - index
+        #    # - magnitude of momentum pT (units of GeV)
+        #    # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+        #    # - azimuthal angle
+        #    # - mass (units of GeV/c^2)
+        #    # - bit encoding of the jet "flavor" (not totally sure what the bit means, but will look it up)
+        #    # - 0th angular moment of jet radiation
+        #    # - 1th angular moment of jet radiation
+        #    # - 2th angular moment of jet radiation
+        #    # - 3th angular moment of jet radiation
+        #    # - 4th angular moment of jet radiation
+        #    jet = jets[i*11:i*11+11]
+        #    jets_vec+=[jet]
         j_pad_length = max_n_jets - jets_vec.shape[0]
         padded_jets = np.pad(jets_vec, ((0,j_pad_length),(0,0)))
         assert padded_jets.shape == (max_n_jets, 10)
@@ -129,19 +129,20 @@ def parse_file(file_object,startNum,endNum,filename,runType):
 
         this_record['nparticles'] = nparticles
 
-        #particles = particles.split()
-        #particles_vec = []
-        #for i in range(nparticles):
-        #    particle = np.zeros(5)
-        #    #order:
-        #    # - index
-        #    # - magnitude of momentum pT (units of GeV)
-        #    # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
-        #    # - azimuthal angle
-        #    # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
-        #    particle = particles[i*5:i*5+5]
-        #    particles_vec+=[particle]
-        #this_record['particles'] = particles_vec
+        # process particles
+        particles = particles.split()
+        particles_vec = []
+        for i in range(nparticles):
+            particle = np.zeros(5)
+            #order:
+            # - index
+            # - magnitude of momentum pT (units of GeV)
+            # - pseudorapidity (~polar angle - see e.g. https://en.wikipedia.org/wiki/Pseudorapidity)
+            # - azimuthal angle
+            # - particle identifier (https://pdg.lbl.gov/2006/reviews/pdf-files/montecarlo-web.pdf)
+            particle = particles[i*5:i*5+5]
+            particles_vec+=[particle]
+        this_record['particles'] = particles_vec
         
         isNan = False
         for ele in particles_vec:
@@ -193,7 +194,7 @@ if __name__ == "__main__":
   file = open(str(filename))
   records += parse_file(file,startNum,endNum,filename,runType)
   if 'evt' in runType: X = make_evt_arrays(records)
-  elif 'pfn' in runType: X_make_pfn_arrays(records)
+  elif 'pfn' in runType: X = make_pfn_arrays(records)
   y = np.array([i['truthsqrtshat'] for i in records])
   #y = np.array([i['measuredsqrtshatwphoton'] for i in records])
   #y = np.array([i['measuredsqrtshat'] for i in records])
