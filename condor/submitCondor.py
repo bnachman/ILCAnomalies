@@ -27,16 +27,16 @@ d_maxLines={
 #-------------------------------------------------------------------------
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()
-   parser.add_argument("-f", "--fileName", default = [], type=str, nargs='+',
+   parser.add_argument("-f", "--fileName", default = '', type=str,
                       help="file name")
+   parser.add_argument("-r", "--runType", default = '', type=str, 
+                      help="pfn or evt")
    args = parser.parse_args()
    #myFile = args.fileName[0]
+   runType = args.runType
 
 
-   #files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/*noZ.txt")
    files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/*bigger*.txt")
-   #files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe*.txt")
-   #files = glob.glob("/data/users/jgonski/Snowmass/LHE_txt_fils/processed_lhe001_signal.txt")
 
    increment = 50000
 
@@ -46,15 +46,12 @@ if __name__ == "__main__":
      shortName = myFile.split('/')[-1]
      if 'lhe' in shortName: maxLines = 10000
      else: maxLines = int(d_maxLines[shortName][0])
-     #fileNum = int(shortName.split(".")[0][-1])
-     #if fileNum > 5: continue
      
      for i in range(0,maxLines,increment): # number of events in largest file
-     #for i in range(0,1,increment): # number of events in largest file
        print("SUBMITTING: "+shortName+" from  "+str(i)+" to "+str(i+increment))
        args = open("args.txt","w")
-       if 'lhe' not in myFile: os.system("echo '0606_final "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
-       else: os.system("echo '0606_final "+shortName+" " + str(i) + " " +str(i+increment)+"'>>  args.txt")
+       if 'lhe' not in myFile: os.system("echo '0606_final "+d_maxLines[shortName][2]+" " + str(i) + " " +str(i+increment)+" "+runType+"'>>  args.txt")
+       else: os.system("echo '0606_final "+shortName+" " + str(i) + " " +str(i+increment)+" "+runType+"'>>  args.txt")
        args.close()
        open("submit.sub","w")
 
@@ -67,23 +64,16 @@ if __name__ == "__main__":
        #os.system("echo 'getenv           = True' >> submit.sub")
        #os.system("echo 'Rank            = Mips' >> submit.sub")
        os.system("echo '' >> submit.sub")
-       #os.system("echo '#some other stuff from Bill's twiki' >> submit.sub")
        if not 'lhe' in myFile: os.system("echo 'Requirements = (machine == \""+d_maxLines[shortName][1]+ "\")' >> submit.sub")
-       #else: os.system("echo 'Requirements = (machine == \"xenia21.nevis.columbia.edu\")' >> submit.sub")
        os.system("echo 'should_transfer_files = YES' >> submit.sub")
        os.system("echo 'when_to_transfer_output = ON_EXIT' >> submit.sub")
        os.system("echo 'initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/condor' >> submit.sub")
-       #os.system("echo 'workdir = /data/users/jgonski/Snowmass/LHE_txt_fils/' >> submit.sub")
-       #os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, "+myFile+" ' >> submit.sub")
-       #if 'lhe' in myFile: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(initialdir)/eventiso_condor.tar.gz, "+myFile+"' >> submit.sub")  
-       #else: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/event_isotropy.tar.gz, $(initialdir)/eventiso_condor.tar.gz' >> submit.sub")  
-       if 'lhe' in myFile: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parsePFN.py,$(initialdir)/parsCondor.py, $(initialdir)/eventHelper.py, "+myFile+"' >> submit.sub")  
-       else: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parsePFN.py, $(initialdir)/parseCondor.py, $(initialdir)/eventHelper.py' >> submit.sub")  
+       if 'lhe' in myFile: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parseCondor.py, $(initialdir)/../eventHelper.py, "+myFile+"' >> submit.sub")  
+       else: os.system("echo 'transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parseCondor.py, $(initialdir)/../eventHelper.py' >> submit.sub")  
        os.system("echo 'queue arguments from args.txt' >> submit.sub")
 
        os.system("condor_submit submit.sub")
        time.sleep(0.2)
        
-       #open('submit.sub', 'w').close()
 
        print("DONE SUBMITTING... ")
