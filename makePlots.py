@@ -57,8 +57,8 @@ if __name__ == "__main__":
   print('Running over '+str(len(y_bg))+' background events and '+str(len(y_sig))+' signal events....')
 
 
-  make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
-  #make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
-  #make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
+  #make_var_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  make_pfn_plots(X_sig,X_sig700,X_bg,saveTag+"npy")
+  make_sqrts_plot(y_sig,y_bg,y_sig700,saveTag+"npy")
    
   print('runtime: ',datetime.now() - startTime)

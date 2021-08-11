@@ -1,17 +1,17 @@
 # July 16: fixed signals 
 # August 6: fixed lumi 
-python PFNLevel.py -n '0416_0806lumifix'      -tr CWoLa     -te SvsB -s 25000 -r 1             > 0416_0806lumifix_CWoLa.log   
-python PFNLevel.py -n '0416_0806lumifix_s700' -tr CWoLa     -te SvsB -s 25000 -r 1 -sig '700'  > 0416_0806lumifix_s700_CWoLa.log
-python PFNLevel.py -n '0513_0806lumifix'      -tr CWoLa     -te SvsB -s 25000 -r 1             > 0513_0806lumifix_CWoLa.log
-python PFNLevel.py -n '0513_0806lumifix_s700' -tr CWoLa     -te SvsB -s 25000 -r 1 -sig '700'  > 0513_0806lumifix_s700_CWoLa.log
-python PFNLevel.py -n '0531_0806lumifix'      -tr CWoLa     -te SvsB -s 25000 -r 1             > 0531_0806lumifix_CWoLa.log
-python PFNLevel.py -n '0531_0806lumifix_s700' -tr CWoLa     -te SvsB -s 25000 -r 1 -sig '700'  > 0531_0806lumifix_s700_CWoLa.log
+#python PFNLevel.py -n '0416_0806lumifix3'      -tr CWoLa     -te SvsB -s 25000 -r 1             > 0416_0806lumifix3_CWoLa.log   
+#python PFNLevel.py -n '0416_0806lumifix2_s700' -tr CWoLa     -te SvsB -s 25000 -r 1 -sig '700'  > 0416_0806lumifix2_s700_CWoLa.log
+#python PFNLevel.py -n '0513_0806lumifix2'      -tr CWoLa     -te SvsB -s 25000 -r 1             > 0513_0806lumifix2_CWoLa.log
+#python PFNLevel.py -n '0513_0806lumifix2_s700' -tr CWoLa     -te SvsB -s 25000 -r 1 -sig '700'  > 0513_0806lumifix2_s700_CWoLa.log
+#python PFNLevel.py -n '0531_0806lumifix2'      -tr CWoLa     -te SvsB -s 25000 -r 1             > 0531_0806lumifix2_CWoLa.log
+#python PFNLevel.py -n '0531_0806lumifix2_s700' -tr CWoLa     -te SvsB -s 25000 -r 1 -sig '700'  > 0531_0806lumifix2_s700_CWoLa.log
 ## benchmark
-python PFNLevel.py -n '0416_0806lumifix'      -tr benchmark -te SvsB -s 25000 -r 1             > 0416_0806lumifix_benchmark.log
-python PFNLevel.py -n '0416_0806lumifix_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700'  > 0416_0806lumifix_s700_benchmark.log
-# BvsB
-python PFNLevel.py -n '0416_0806lumifix'      -tr CWoLa     -te BvsB -s 25000 -r 1             > 0416_0806lumifix_CWoLa_BvsB.log
-python PFNLevel.py -n '0416_0806lumifix_s700' -tr CWoLa     -te BvsB -s 25000 -r 1 -sig '700'  > 0416_0806lumifix_s700_CWoLa_BvsB.log
+python PFNLevel.py -n '0416_0806lumifix2'      -tr benchmark -te SvsB -s 25000 -r 1             > 0416_0806lumifix2_benchmark.log
+python PFNLevel.py -n '0416_0806lumifix2_s700' -tr benchmark -te SvsB -s 25000 -r 1 -sig '700'  > 0416_0806lumifix2_s700_benchmark.log
+## BvsB
+#python PFNLevel.py -n '0416_0806lumifix2'      -tr CWoLa     -te BvsB -s 25000 -r 1             > 0416_0806lumifix2_CWoLa_BvsB.log    
+#python PFNLevel.py -n '0416_0806lumifix2_s700' -tr CWoLa     -te BvsB -s 25000 -r 1 -sig '700'  > 0416_0806lumifix2_s700_CWoLa_BvsB.log
 
 #------------------------------------------------------------
 #python PFNLevel.py -n '0513_0630fixedSiginSB' -tr benchmark -te SvsB -s 25000 -r 1 > 0513_0630fixedSiginSB_benchmark.log
