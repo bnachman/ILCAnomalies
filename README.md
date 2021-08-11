@@ -15,7 +15,7 @@ Pre-made numpy files can be found on Zenodo (TODO: link).
 * 5 = type of processing (evt or pfn)
 
 ## Plots (`makePlots.py`)
-Makes plots of $\sqrt{s}$ and input variables used in training.
+Makes plots of collison center-of-mass energy and input variables used in training.
 
 `python makePlots.py -t yourDataTag -s pfn`
 * s = pfn or evt 
@@ -26,7 +26,9 @@ Makes plots of $\sqrt{s}$ and input variables used in training.
 Does training and makes output ROC/SIC curves.
 
 `python PFNLevel.py -n 'yourDataTag' -sig 350 -tr CWoLa -te SvsB -s 25000 -r 1 -e 1 -DEBUG 0`
+
 `python EvtLevel.py -n 'yourDataTag' -sig 350 -tr CWoLa -te SvsB -s 25000`
+
 * n = data tag, stylized as `inputFilePrefix_saveName`
 * sig = signal to train with (350 or 700)
 * tr = training type (CWoLa or benchmark)
@@ -36,6 +38,6 @@ Does training and makes output ROC/SIC curves.
 * e = do ensembling\*
 * DEBUG = add various helpful print statements\*
 
-\*: PFN only option
+\* PFN only option
 
 
