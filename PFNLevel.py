@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-# IO: do this:
-#source activate fullenv
-#python -m ipykernel install --user --name fullenv --display-name "fullenv"
-# also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 import glob
 import energyflow as ef
 from energyflow.archs import DNN, PFN
-#from energyflow.datasets import qg_jets
 from energyflow.utils import data_split, remap_pids, to_categorical
 from keras.models import Sequential
 from keras.layers import Dense 
@@ -25,7 +19,6 @@ from eventHelper import *
 from datetime import datetime
 #from ROOT import *
 import math
-#from prep_shufflesplit_jerry import *
 from prep_shufflesplit import *
 
 #-----------------------------------------------------------------------------------
@@ -113,8 +106,6 @@ if __name__ == "__main__":
                      help="do ensembling")
   parser.add_argument("-r", "--doRandom", default = 1, type=int,
                      help="do random signal init")
-  parser.add_argument("-w", "--doWide", default = 0, type=int,
-                     help="do wider sr/sb defs")
   parser.add_argument("-DEBUG", "--DEBUG", default = 0, type=int,
                      help="debug")
 
@@ -126,7 +117,6 @@ if __name__ == "__main__":
   signal = args.signal
   doEnsemb = args.doEnsemble
   random = args.doRandom
-  dowide = args.doWide
   debug = args.DEBUG
   saveTag = savename+"_"+testset+"_"+trainset
 

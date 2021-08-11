@@ -64,7 +64,7 @@ def get_npy_dict(save):
     'total_jet_mass':14
     }
 
-  return d_npy
+    return d_npy
 
 
 #--------------------------- Variable defs

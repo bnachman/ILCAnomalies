@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-# IO: do this:
-#source activate fullenv
-#python -m ipykernel install --user --name fullenv --display-name "fullenv"
-# also see this https://anbasile.github.io/posts/2017-06-25-jupyter-venv/
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import energyflow as ef
 from energyflow.archs import DNN
-#from energyflow.datasets import qg_jets
 from energyflow.utils import data_split, remap_pids, to_categorical
 from keras.models import Sequential
 from keras.layers import Dense 
