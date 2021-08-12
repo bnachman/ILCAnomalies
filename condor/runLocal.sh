@@ -1,0 +1,21 @@
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe001_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe002_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe003_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe004_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe005_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe006_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe007_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe008_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe009_background.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe001_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe002_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe003_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe004_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe005_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe006_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe007_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe008_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe009_signal.txt 0 10000
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe_signal_700.txt 0 90000
+python parseCondor.py '0810_test' ../../LHE_txt_fils/processed_lhe_signal_700_fixed.txt 0 1000 evt
+#python parseCondor.py '0606_final' ../../LHE_txt_fils/processed_lhe_signal_fixed.txt 0 90000 

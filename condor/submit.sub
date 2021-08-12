@@ -1,0 +1,13 @@
+#!/bin/bash
+executable            = condor_parse.sh
+output                = logs.$(ClusterId).$(ProcId).out
+error                 = logs.$(ClusterId).$(ProcId).err
+log                   = logs.$(ClusterId).log
+universe         = vanilla
+
+Requirements = (machine == "xenia20.nevis.columbia.edu")
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+initialdir = /data/users/jgonski/Snowmass/ILCAnomalies_fork/condor
+transfer_input_files = $(initialdir)/condor_parse.sh, $(initialdir)/parsePFN.py, $(initialdir)/parseCondor.py, $(initialdir)/eventHelper.py
+queue arguments from args.txt
