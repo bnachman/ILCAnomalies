@@ -1,6 +1,6 @@
 import sm-full
 generate e+ e- > a h
-output ee_ah125_aa40
+output ee_ah700_aa100
 
 launch
 
@@ -17,15 +17,14 @@ set etaa 5.0
 set ptj 10.0
 set etaj 5.0
 
-set param_card mass 25 1.2500000e+02
+set param_card mass 25 5.00000e+02
 set param_card decay 25 0.00407
-
 
 #for pythia8 card
 #partonlevel:mpi = off
 #
 #Higgs:useBSM = on
-#35:m0 = 125.0
+#35:m0 = 700.0
 #35:mWidth = 0.00407
 #35:doForceWidth = on
 #35:onMode = off
@@ -33,5 +32,5 @@ set param_card decay 25 0.00407
 #
 #36:onMode = off
 #36:onIfAny = 5
-#36:m0 = 40
+#36:m0 = 100
 #36:tau0 = 0
